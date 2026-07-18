@@ -3,9 +3,10 @@ export interface FormatFCFAOptions {
 }
 
 const NBSP_RE = /[  ]/g;
+const NUM_FMT = new Intl.NumberFormat('fr-FR');
 
 export function formatFCFA(amount: number, opts: FormatFCFAOptions = {}): string {
-  const grouped = new Intl.NumberFormat('fr-FR').format(amount).replace(NBSP_RE, ' ');
+  const grouped = NUM_FMT.format(amount).replace(NBSP_RE, ' ');
   return opts.withoutSuffix ? grouped : `${grouped} FCFA`;
 }
 
