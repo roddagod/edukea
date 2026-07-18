@@ -6,3 +6,4 @@ export * from './primitives/avatar';
 export * from './primitives/button';
 export * from './patterns/status-pill';
 export * from './patterns/sparkline';
+export * from './patterns/progress-ring';
