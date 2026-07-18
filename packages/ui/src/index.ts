@@ -12,3 +12,5 @@ export * from './patterns/kpi-stat';
 export * from './patterns/tx-row';
 export * from './patterns/tx-table';
 export * from './patterns/refresh-button';
+export * from './layout/context-pill';
+export * from './layout/topbar';
