@@ -7,3 +7,5 @@ export * from './primitives/button';
 export * from './patterns/status-pill';
 export * from './patterns/sparkline';
 export * from './patterns/progress-ring';
+export * from './patterns/hero-kpi';
+export * from './patterns/kpi-stat';
