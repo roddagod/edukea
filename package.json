@@ -1,0 +1,21 @@
+{
+  "name": "edukea",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "dev:web": "turbo dev --filter=@edukea/web",
+    "dev:mobile": "turbo dev --filter=@edukea/mobile",
+    "build:web": "turbo build --filter=@edukea/web"
+  },
+  "devDependencies": {
+    "pg": "^8.20.0",
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@10.22.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

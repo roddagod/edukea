@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edukea — Rôles & Fonctionnalités</title>
+<style>
+  :root {
+    --primary: #E97423;
+    --primary-light: #FEF1E9;
+    --bg: #FFFFFF;
+    --text: #030303;
+    --muted: #6b6b6b;
+    --border: #e6e6e6;
+    --code-bg: #f7f7f7;
+    --header-bg: #fafafa;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 16px;
+  }
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 48px 32px 96px;
+  }
+  header.doc-header {
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 24px;
+    margin-bottom: 40px;
+  }
+  header.doc-header h1 {
+    margin: 0 0 8px;
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  header.doc-header .subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+  }
+  header.doc-header .badge {
+    display: inline-block;
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+  h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-top: 56px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 28px;
+    margin-bottom: 8px;
+    color: var(--primary);
+  }
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 16px;
+    margin-bottom: 4px;
+  }
+  p { margin: 8px 0; }
+  ul { padding-left: 22px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  ul ul { margin: 4px 0; }
+  strong { font-weight: 600; }
+  code {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9em;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  blockquote {
+    border-left: 4px solid var(--primary);
+    background: var(--primary-light);
+    margin: 16px 0;
+    padding: 12px 16px;
+    color: var(--text);
+    border-radius: 0 6px 6px 0;
+  }
+  .toc {
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 28px;
+    margin-bottom: 40px;
+  }
+  .toc h2 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    border: none;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 0;
+  }
+  .toc ol {
+    margin: 0;
+    padding-left: 22px;
+  }
+  .toc a {
+    color: var(--text);
+    text-decoration: none;
+  }
+  .toc a:hover {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+  .role-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin: 24px 0 40px;
+    background: #fff;
+  }
+  .role-card h2 {
+    margin-top: 0;
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .role-card .role-num {
+    background: var(--primary);
+    color: white;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .role-card .role-summary {
+    color: var(--muted);
+    font-style: italic;
+    margin: 0 0 16px;
+  }
+  .restriction {
+    background: #fff5ee;
+    border-left: 4px solid var(--primary);
+    padding: 12px 16px;
+    margin-top: 20px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.95rem;
+  }
+  .restriction strong { color: var(--primary); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.9rem;
+    overflow-x: auto;
+    display: block;
+  }
+  table thead {
+    background: var(--header-bg);
+  }
+  table th, table td {
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: middle;
+  }
+  table th {
+    font-weight: 600;
+    text-align: center;
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+  table th:first-child {
+    text-align: left;
+  }
+  table td.cell-r,
+  table td.cell-rw,
+  table td.cell-none,
+  table td.cell-mixed {
+    text-align: center;
+    font-weight: 600;
+  }
+  table td.cell-rw { color: #2e7d32; background: #f1f8f1; }
+  table td.cell-r { color: #1565c0; background: #f0f6fb; }
+  table td.cell-none { color: #aaa; }
+  table td.cell-mixed { color: var(--primary); background: #fff8f1; font-size: 0.85em; }
+  .legend {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    margin: 12px 0 16px;
+    color: var(--muted);
+  }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+  .legend-dot {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+  .arbre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .decisions {
+    background: var(--primary-light);
+    border-radius: 8px;
+    padding: 20px 28px;
+    margin: 24px 0;
+  }
+  .decisions ol {
+    margin: 12px 0;
+    padding-left: 22px;
+  }
+  .decisions li {
+    margin: 8px 0;
+  }
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-align: center;
+    font-style: italic;
+  }
+  @media print {
+    .toc { page-break-after: always; }
+    .role-card { page-break-inside: avoid; }
+    table { page-break-inside: avoid; }
+  }
+  @media (max-width: 720px) {
+    .container { padding: 24px 16px 64px; }
+    header.doc-header h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.3rem; }
+    table { font-size: 0.8rem; }
+    table th, table td { padding: 6px 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="doc-header">
+  <h1>Edukea — Rôles &amp; Fonctionnalités</h1>
+  <p class="subtitle">
+    <span class="badge">Version 1.0</span>
+    <span class="badge">2026-04-27</span>
+    Document de référence pour la conception produit et la matrice de permissions.
+  </p>
+</header>
+
+<nav class="toc">
+  <h2>Sommaire</h2>
+  <ol>
+    <li><a href="#hierarchie">Hiérarchie des rôles</a></li>
+    <li><a href="#fondateur">Fondateur</a></li>
+    <li><a href="#gestionnaire">Gestionnaire d'établissement</a></li>
+    <li><a href="#directeur">Directeur</a></li>
+    <li><a href="#censeur">Censeur</a></li>
+    <li><a href="#enseignant">Enseignant</a></li>
+    <li><a href="#parent">Parent</a></li>
+    <li><a href="#matrice">Matrice transversale</a></li>
+    <li><a href="#decisions">Décisions ouvertes</a></li>
+  </ol>
+</nav>
+
+<section id="hierarchie">
+  <h2>Hiérarchie des rôles</h2>
+  <div class="arbre">Fondateur (multi-écoles, lecture seule)
+    └── Gestionnaire d'établissement (1 école, plein pouvoir opérationnel)
+            ├── Directeur (1 école, pédagogique + RH)
+            │      └── Censeur (sous-périmètre = N classes/cycles assignés)
+            │             └── Enseignant (ses classes &amp; matières)
+            └── Parent (ses enfants uniquement)</div>
+  <p>
+    Chaque rôle hérite du périmètre du rôle parent <strong>dans son propre scope</strong> ;
+    le scope est calculé via <code>school_id</code>, <code>classroom_id</code> ou table d'assignation explicite.
+  </p>
+</section>
+
+<section id="fondateur" class="role-card">
+  <h2><span class="role-num">1</span> Fondateur</h2>
+  <p class="role-summary">Propriétaire SaaS / investisseur. Vue exécutive cross-écoles, lecture seule.</p>
+
+  <h3>Dashboard exécutif</h3>
+  <ul>
+    <li>Chiffre d'affaires consolidé (mensuel, trimestriel, annuel)</li>
+    <li>CA par école avec comparaison période précédente</li>
+    <li>Taux de recouvrement global et par école</li>
+    <li>Marge brute estimée par école</li>
+    <li>Top 5 / Flop 5 écoles (CA, croissance, satisfaction)</li>
+  </ul>
+
+  <h3>KPIs scolaires consolidés</h3>
+  <ul>
+    <li>Effectifs totaux (élèves, enseignants, classes)</li>
+    <li>Évolution des inscriptions par école</li>
+    <li>Taux de réussite par établissement</li>
+    <li>Taux d'absentéisme moyen</li>
+    <li>NPS / satisfaction parents</li>
+  </ul>
+
+  <h3>Finances cross-écoles</h3>
+  <ul>
+    <li>Encaissements ventilés par mode de paiement (Mobile Money, Wave, espèces, virement, carte)</li>
+    <li>Impayés et créances par école</li>
+    <li>Historique des transactions exportable</li>
+  </ul>
+
+  <h3>Pilotage SaaS</h3>
+  <ul>
+    <li>Nombre d'utilisateurs actifs (DAU/MAU)</li>
+    <li>Taux d'adoption par module (notes, paiements, messagerie)</li>
+    <li>Sessions, durée moyenne d'utilisation</li>
+    <li>Croissance des écoles abonnées</li>
+  </ul>
+
+  <h3>Audit &amp; conformité</h3>
+  <ul>
+    <li>Journal des actions sensibles : suppression d'élève, modification de notes après publication, accès admin</li>
+    <li>Filtres par école, par utilisateur, par période</li>
+  </ul>
+
+  <h3>Exports &amp; rapports</h3>
+  <ul>
+    <li>Exports CSV / Excel / PDF</li>
+    <li>Rapports périodiques planifiables (envoi automatique par email)</li>
+    <li>Données prêtes pour conseil d'administration</li>
+  </ul>
+
+  <div class="restriction">
+    <strong>Restrictions :</strong> ne peut créer aucun compte, ne peut modifier aucune donnée opérationnelle.
+  </div>
+</section>
+
+<section id="gestionnaire" class="role-card">
+  <h2><span class="role-num">2</span> Gestionnaire d'établissement</h2>
+  <p class="role-summary">COO / responsable administratif et financier d'une école.</p>
+
+  <h3>Finances</h3>
+  <ul>
+    <li>Définition de la grille tarifaire (frais d'inscription, scolarité par niveau, options : cantine, transport, internat)</li>
+    <li>Création des échéanciers de paiement par élève (tranches, dates limites, pénalités)</li>
+    <li>Encaissement multi-canal : Mobile Money, Wave, espèces, virement, carte bancaire</li>
+    <li>Génération automatique de reçus PDF horodatés</li>
+    <li>Relances automatiques aux parents en retard (SMS, email, push)</li>
+    <li>Gestion des bourses &amp; remises (sociale, mérite, fratrie, personnel)</li>
+    <li>Rapports financiers : balance, journal de caisse, restes à recouvrer, prévisionnel</li>
+    <li>Clôture de période et exports comptables</li>
+  </ul>
+
+  <h3>Gestion d'établissement</h3>
+  <ul>
+    <li>Configuration des salles, infrastructures, capacités</li>
+    <li>Calendrier scolaire annuel (rentrée, vacances, examens, jours fériés)</li>
+    <li>Gestion du personnel : création des comptes (directeur, censeur, enseignant), contrats, paie légère</li>
+    <li>Paramétrage pédagogique global : barème de notation (sur 10/20/100), système de bulletins, langues d'enseignement, coefficients par matière</li>
+  </ul>
+
+  <h3>Emploi du temps</h3>
+  <ul>
+    <li>Construction et publication globale de l'emploi du temps</li>
+    <li>Assistant anti-conflit (salle, prof, classe)</li>
+    <li>Gestion des remplacements et permutations</li>
+    <li>Notifications automatiques aux parties concernées</li>
+  </ul>
+
+  <h3>Inscriptions / Réinscriptions</h3>
+  <ul>
+    <li>Création et publication d'une campagne d'inscription (formulaire public, pièces requises)</li>
+    <li>Validation des dossiers, génération automatique du matricule</li>
+    <li>Affectation à une classe selon les règles définies</li>
+    <li>Réinscriptions en masse en fin d'année (passage automatique de classe)</li>
+    <li>Tableau de pilotage : places restantes, taux de remplissage par classe et niveau</li>
+    <li>Liste d'attente automatique</li>
+  </ul>
+
+  <h3>Communication</h3>
+  <ul>
+    <li>Annonces officielles à toute l'école ou ciblées par niveau/classe</li>
+    <li>Modèles de courriers (admission, réorientation, fin de scolarité)</li>
+  </ul>
+</section>
+
+<section id="directeur" class="role-card">
+  <h2><span class="role-num">3</span> Directeur</h2>
+  <p class="role-summary">Chef pédagogique d'une école.</p>
+
+  <h3>Gestion pédagogique</h3>
+  <ul>
+    <li>Composition des classes : affectation, transfert, mutation d'élèves</li>
+    <li>Affectation enseignants ↔ matières ↔ classes</li>
+    <li>Validation des bulletins avant publication aux parents</li>
+    <li>Organisation et tenue des conseils de classe (PV, décisions de passage, redoublement)</li>
+    <li>Suivi des effectifs en temps réel (entrées, sorties, mutations)</li>
+  </ul>
+
+  <h3>Emploi du temps</h3>
+  <ul>
+    <li>Édition et ajustement de l'EDT (mêmes outils que le gestionnaire)</li>
+    <li>Validation finale avant publication aux parents/élèves</li>
+    <li>Gestion des séances exceptionnelles (devoirs surveillés, sorties)</li>
+  </ul>
+
+  <h3>Vie scolaire (vue transverse)</h3>
+  <ul>
+    <li>Tableau de bord global : sanctions, retards, absences anormales</li>
+    <li>Convocations aux parents pour dossiers sensibles</li>
+    <li>Coordination avec les censeurs</li>
+  </ul>
+
+  <h3>Suivi enseignants</h3>
+  <ul>
+    <li>Tableau d'activité par enseignant (saisie de notes à jour, appel fait, devoirs publiés)</li>
+    <li>Évaluation interne, retours pédagogiques</li>
+  </ul>
+
+  <h3>Communication</h3>
+  <ul>
+    <li>Annonces pédagogiques (réunions parents, événements)</li>
+    <li>Messagerie avec tout le personnel</li>
+  </ul>
+
+  <div class="restriction">
+    <strong>Restrictions :</strong> pas d'accès à la grille tarifaire ni aux encaissements.
+  </div>
+</section>
+
+<section id="censeur" class="role-card">
+  <h2><span class="role-num">4</span> Censeur</h2>
+  <p class="role-summary">Directeur adjoint sur un sous-périmètre défini (N classes, un cycle, un niveau).</p>
+
+  <blockquote>Le périmètre est explicite et stocké en base via une table d'assignation.</blockquote>
+
+  <h3>Périmètre &amp; vue</h3>
+  <ul>
+    <li>Vue par défaut limitée aux classes de son scope</li>
+    <li>Tableau de bord : effectifs, performances, alertes vie scolaire de son périmètre</li>
+  </ul>
+
+  <h3>Pédagogie (sur scope)</h3>
+  <ul>
+    <li>Validation des bulletins de ses classes</li>
+    <li>Suivi de la saisie des notes par les enseignants de son scope</li>
+    <li>Rapports de performance par classe et matière</li>
+  </ul>
+
+  <h3>Vie scolaire (sur scope)</h3>
+  <ul>
+    <li>Suivi des absences, retards, sanctions de ses élèves</li>
+    <li>Validation des justificatifs déposés par les parents</li>
+    <li>Convocation parents pour les dossiers de son périmètre</li>
+    <li>Application de sanctions (retenues, exclusions temporaires)</li>
+  </ul>
+
+  <h3>Emploi du temps (sur scope)</h3>
+  <ul>
+    <li>Lecture EDT des classes de son scope</li>
+    <li>Propositions d'ajustement (validées par le directeur)</li>
+  </ul>
+
+  <h3>Communication</h3>
+  <ul>
+    <li>Messagerie avec parents et enseignants de son périmètre</li>
+    <li>Annonces ciblées sur ses classes</li>
+  </ul>
+
+  <div class="restriction">
+    <strong>Restrictions :</strong> aucun accès aux classes hors scope, aux finances, ni aux inscriptions.
+  </div>
+</section>
+
+<section id="enseignant" class="role-card">
+  <h2><span class="role-num">5</span> Enseignant</h2>
+  <p class="role-summary">Acteur de la salle de classe, en relation directe avec élèves et parents.</p>
+
+  <h3>Saisie des notes</h3>
+  <ul>
+    <li>Création d'évaluations (devoir maison, interrogation, examen) avec coefficient</li>
+    <li>Saisie en grille type tableur, sauvegarde automatique</li>
+    <li>Import CSV pour évaluations massives</li>
+    <li>Mode brouillon avant publication</li>
+    <li>Statistiques par classe : moyenne, médiane, écart-type, distribution</li>
+    <li>Verrouillage automatique après clôture de période</li>
+  </ul>
+
+  <h3>Vie scolaire</h3>
+  <ul>
+    <li>Appel numérique en début de séance (présent / absent / retard / exclu)</li>
+    <li>Saisie de sanctions : avertissement, retenue, mot dans le carnet</li>
+    <li>Réception et validation/refus des justificatifs déposés par les parents</li>
+    <li>Historique des incidents par élève</li>
+  </ul>
+
+  <h3>Carnet de liaison</h3>
+  <ul>
+    <li>Émission d'entrées : information, autorisation, convocation, mot personnel</li>
+    <li>Suivi des accusés de lecture / signatures parents</li>
+    <li>Réponse aux justifications déposées</li>
+    <li>Pièces jointes (photos, documents)</li>
+  </ul>
+
+  <h3>Devoirs à publier</h3>
+  <ul>
+    <li>Création de devoirs (titre, description, pièces jointes, date à rendre, classe(s) concernée(s))</li>
+    <li>Suivi des rendus : qui a déposé, qui n'a pas déposé</li>
+    <li>Correction et retour individuel à l'élève</li>
+    <li>Notation directement liée à une évaluation</li>
+  </ul>
+
+  <h3>Commentaires &amp; échanges parents</h3>
+  <ul>
+    <li>Messagerie scopée à <em>ses</em> élèves uniquement (parents et élèves de ses classes)</li>
+    <li>Saisie d'appréciations par matière sur le bulletin</li>
+    <li>Si prof principal : appréciation générale du bulletin</li>
+    <li>Acceptation et proposition de créneaux de rendez-vous parent-prof</li>
+  </ul>
+
+  <h3>Mon emploi du temps</h3>
+  <ul>
+    <li>Vue personnelle de l'EDT de la semaine</li>
+    <li>Notifications de changements (remplacements, déplacements de cours)</li>
+  </ul>
+
+  <h3>Mon profil</h3>
+  <ul>
+    <li>Mise à jour des coordonnées</li>
+    <li>Préférences de notifications</li>
+  </ul>
+</section>
+
+<section id="parent" class="role-card">
+  <h2><span class="role-num">6</span> Parent</h2>
+  <p class="role-summary">Suivi de la scolarité de son ou ses enfants.</p>
+
+  <h3>Vue académique</h3>
+  <ul>
+    <li>Notes en temps réel à chaque saisie publiée</li>
+    <li>Bulletins publiés (consultation et téléchargement PDF)</li>
+    <li>Devoirs à venir et historique</li>
+    <li>Feedback et corrections des enseignants</li>
+    <li>Emploi du temps de l'enfant</li>
+    <li>Alertes en cas de changement (cours déplacé, remplacement)</li>
+  </ul>
+
+  <h3>Vie scolaire</h3>
+  <ul>
+    <li>Absences, retards, sanctions visibles en temps réel</li>
+    <li><strong>Carnet de liaison :</strong>
+      <ul>
+        <li>Lecture des entrées</li>
+        <li>Accusé de réception obligatoire</li>
+        <li>Signature électronique pour les autorisations</li>
+        <li>Dépôt de justificatif d'absence avec pièce jointe</li>
+      </ul>
+    </li>
+    <li>Convocations : date, motif, accusé de réception, prise de RDV</li>
+  </ul>
+
+  <h3>Échanges</h3>
+  <ul>
+    <li>Messagerie avec les enseignants de l'enfant</li>
+    <li>Demande de rendez-vous (parent-prof, parent-direction)</li>
+    <li>Réception des annonces de l'école (push notifications, email)</li>
+  </ul>
+
+  <h3>Finances</h3>
+  <ul>
+    <li>Échéancier de scolarité par enfant (à payer / payé / en retard)</li>
+    <li>Paiement en ligne : Mobile Money, Wave, carte bancaire</li>
+    <li>Reçus PDF téléchargeables</li>
+    <li>Historique complet des transactions</li>
+    <li>Téléchargement d'attestations : scolarité, paiement, bulletin</li>
+  </ul>
+
+  <h3>Multi-enfants</h3>
+  <ul>
+    <li>Sélecteur d'enfant si plusieurs scolarisés (potentiellement dans des écoles différentes)</li>
+    <li>Vue consolidée des notifications pour tous les enfants</li>
+  </ul>
+
+  <h3>Profil</h3>
+  <ul>
+    <li>Coordonnées d'urgence (numéros, email)</li>
+    <li>Personnes autorisées à récupérer l'enfant</li>
+    <li>Préférences de notifications par canal et par type d'événement</li>
+  </ul>
+</section>
+
+<section id="matrice">
+  <h2>Matrice transversale</h2>
+  <div class="legend">
+    <span><span class="legend-dot" style="background:#f0f6fb"></span><strong style="color:#1565c0">R</strong> = lecture</span>
+    <span><span class="legend-dot" style="background:#f1f8f1"></span><strong style="color:#2e7d32">RW</strong> = lecture + écriture</span>
+    <span><span class="legend-dot" style="background:#fff8f1"></span><strong style="color:var(--primary)">scope</strong> = limité au périmètre</span>
+    <span><span class="legend-dot" style="background:#fff;border:1px solid #ddd"></span><strong style="color:#aaa">—</strong> = pas d'accès</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Module</th>
+        <th>Fondateur</th>
+        <th>Gestionnaire</th>
+        <th>Directeur</th>
+        <th>Censeur</th>
+        <th>Enseignant</th>
+        <th>Parent</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Dashboard global multi-écoles</td><td class="cell-r">R</td><td class="cell-none">—</td><td class="cell-none">—</td><td class="cell-none">—</td><td class="cell-none">—</td><td class="cell-none">—</td></tr>
+      <tr><td>Finances / facturation</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-r">R</td><td class="cell-none">—</td><td class="cell-none">—</td><td class="cell-mixed">R (siennes)</td></tr>
+      <tr><td>Inscriptions / réinscriptions</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-r">R</td><td class="cell-mixed">R (scope)</td><td class="cell-none">—</td><td class="cell-none">—</td></tr>
+      <tr><td>Création comptes personnel</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-mixed">RW (prof)</td><td class="cell-none">—</td><td class="cell-none">—</td><td class="cell-none">—</td></tr>
+      <tr><td>Classes &amp; affectations</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-rw">RW</td><td class="cell-mixed">R (scope)</td><td class="cell-mixed">R (siennes)</td><td class="cell-mixed">R (enfant)</td></tr>
+      <tr><td>Emploi du temps</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-rw">RW</td><td class="cell-mixed">R + propose</td><td class="cell-mixed">R (sien)</td><td class="cell-mixed">R (enfant)</td></tr>
+      <tr><td>Saisie &amp; gestion des notes</td><td class="cell-r">R</td><td class="cell-r">R</td><td class="cell-r">R</td><td class="cell-mixed">R (scope)</td><td class="cell-mixed">RW (siennes)</td><td class="cell-mixed">R (enfant)</td></tr>
+      <tr><td>Validation &amp; publication bulletin</td><td class="cell-r">R</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-mixed">RW (scope)</td><td class="cell-none">—</td><td class="cell-mixed">R (enfant)</td></tr>
+      <tr><td>Vie scolaire (absences, sanctions)</td><td class="cell-r">R</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-mixed">RW (scope)</td><td class="cell-mixed">RW (siennes)</td><td class="cell-mixed">R + justifie</td></tr>
+      <tr><td>Carnet de liaison</td><td class="cell-r">R</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-mixed">RW (scope)</td><td class="cell-mixed">RW (siennes)</td><td class="cell-mixed">R + signe</td></tr>
+      <tr><td>Devoirs</td><td class="cell-r">R</td><td class="cell-r">R</td><td class="cell-r">R</td><td class="cell-mixed">R (scope)</td><td class="cell-rw">RW</td><td class="cell-mixed">R (enfant)</td></tr>
+      <tr><td>Messagerie</td><td class="cell-none">—</td><td class="cell-mixed">RW (école)</td><td class="cell-mixed">RW (école)</td><td class="cell-mixed">RW (scope)</td><td class="cell-mixed">RW (parents)</td><td class="cell-mixed">RW (profs enfant)</td></tr>
+      <tr><td>Annonces école</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-rw">RW</td><td class="cell-mixed">RW (scope)</td><td class="cell-none">—</td><td class="cell-r">R</td></tr>
+      <tr><td>Convocations &amp; RDV</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-rw">RW</td><td class="cell-mixed">RW (scope)</td><td class="cell-mixed">RW (siennes)</td><td class="cell-mixed">R + accepte</td></tr>
+      <tr><td>Audit trail</td><td class="cell-r">R</td><td class="cell-mixed">R (école)</td><td class="cell-mixed">R (école)</td><td class="cell-none">—</td><td class="cell-none">—</td><td class="cell-none">—</td></tr>
+      <tr><td>Paramétrage pédagogique (barème, coef)</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-r">R</td><td class="cell-none">—</td><td class="cell-none">—</td><td class="cell-none">—</td></tr>
+      <tr><td>Calendrier scolaire</td><td class="cell-r">R</td><td class="cell-rw">RW</td><td class="cell-r">R</td><td class="cell-r">R</td><td class="cell-r">R</td><td class="cell-r">R</td></tr>
+    </tbody>
+  </table>
+</section>
+
+
+</div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install --filter @edukea/shared 2>&1)",
+      "Bash(pnpm install --filter @edukea/web 2>&1)",
+      "Bash(pnpm --filter @edukea/web build 2>&1)",
+      "Bash(cp -r /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/apps/parent/src/components/ui/* /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/apps/admin/src/components/ui/ && cp -r /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/apps/parent/src/lib/* /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/apps/admin/src/lib/ 2>&1)",
+      "Bash(grep -A 30 \"CREATE TABLE \\\\`classroom_secondary_subjects\\\\`\" /Users/rodrigue/Documents/GitHub/LAMBANO/edukea-v2/20260301_edukeaapi_backup.sql)",
+      "Bash(grep -i \"CREATE TABLE \\\\`personel\" /Users/rodrigue/Documents/GitHub/LAMBANO/edukea-v2/20260301_edukeaapi_backup.sql)"
+    ]
+  }
+}

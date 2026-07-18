@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/packages/shared/src/**)",
+      "Read(//Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/packages/shared/**)",
+      "Read(//Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/**)",
+      "Read(//private/tmp/**)",
+      "Bash(unzip -o -q \"/Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/Edukea_Strategie_Lancement.docx\" -d edukea_strat)",
+      "Bash(python3 -c \"import sys, re, html; t=sys.stdin.read\\(\\); t=re.sub\\(r'</w:p>', '\\\\n\\\\n', t\\); t=re.sub\\(r'<w:tab[^/]*/>', '\\\\t', t\\); t=re.sub\\(r'<[^>]+>', '', t\\); print\\(html.unescape\\(t\\)\\)\")",
+      "Bash(PGPASSWORD='siqnak-Setnon-6waqfu' psql \"postgresql://postgres.ejwqvahlnmysxeerqrrv@aws-1-eu-north-1.pooler.supabase.com:5432/postgres\" -v ON_ERROR_STOP=1 -f /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/supabase/migrations/00011_ledger.sql)",
+      "Bash(pnpm --filter @edukea/shared lint)",
+      "Bash(/Users/rodrigue/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh --project-dir /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea)",
+      "Bash(echo \"\")",
+      "Bash(echo \"# brainstorming visual companion\")",
+      "Bash(echo \".superpowers/\")",
+      "Bash(cp \"/Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/docs/Logo Couleur.png\" \"/Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/.superpowers/brainstorm/8881-1784362358/content/logo-couleur.png\")",
+      "Bash(cp \"/Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/docs/Logo Blanc.png\" \"/Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/.superpowers/brainstorm/8881-1784362358/content/logo-blanc.png\")",
+      "Bash(mkdir -p /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/packages/ui-assets)",
+      "Bash(cp \"/Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/docs/Logo Couleur.png\" /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/packages/ui-assets/logo-color.png)",
+      "Bash(cp \"/Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/docs/Logo Blanc.png\" /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/packages/ui-assets/logo-white.png)",
+      "Bash(cp \"/Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/docs/Logo Noir.png\" /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/packages/ui-assets/logo-black.png)",
+      "Bash(curl -s -o /dev/null -w \"HTML: %{http_code}\\\\n\" http://localhost:51597/)",
+      "Bash(curl -s -o /dev/null -w \"PNG couleur: %{http_code}\\\\n\" http://localhost:51597/logo-couleur.png)",
+      "Bash(curl -s -o /dev/null -w \"PNG blanc: %{http_code}\\\\n\" http://localhost:51597/logo-blanc.png)",
+      "Bash(curl -s -o /dev/null -w \"HTML: %{http_code}\\\\n\" http://localhost:50434/)",
+      "Bash(curl -s -o /dev/null -w \"logo-couleur.png: %{http_code}\\\\n\" http://localhost:50434/logo-couleur.png)",
+      "Bash(curl -s -o /dev/null -w \"logo-blanc.png: %{http_code}\\\\n\" http://localhost:50434/logo-blanc.png)",
+      "Bash(cp /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/.superpowers/brainstorm/21984-1784375354/content/logo-couleur.png /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/.superpowers/brainstorm/33343-1784388255/content/logo-couleur.png)",
+      "Bash(cp /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/.superpowers/brainstorm/21984-1784375354/content/logo-blanc.png /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/.superpowers/brainstorm/33343-1784388255/content/logo-blanc.png)",
+      "Bash(cp /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/.superpowers/brainstorm/21984-1784375354/content/preview-v7-inverse.html /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/.superpowers/brainstorm/33343-1784388255/content/preview-v7-inverse.html)",
+      "Bash(curl -s -o /dev/null -w \"html:%{http_code} logo:%{http_code}\\\\n\" http://localhost:61914/)",
+      "Bash(curl -s -o /dev/null -w \"logo: %{http_code}\\\\n\" http://localhost:61914/files/logo-couleur.png)",
+      "Bash(curl -s -o /dev/null -w \"html:%{http_code}\\\\n\" http://localhost:61914/)",
+      "Bash(curl -s -o /dev/null -w \"logo:%{http_code}\\\\n\" http://localhost:61914/files/logo-couleur.png)"
+    ]
+  }
+}
