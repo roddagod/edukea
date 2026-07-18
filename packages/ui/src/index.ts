@@ -19,3 +19,5 @@ export * from './layout/sidebar-section';
 export * from './layout/sidebar-workspace';
 export * from './layout/sidebar-user';
 export * from './layout/sidebar';
+export * from './layout/page-header';
+export * from './layout/app-shell';
