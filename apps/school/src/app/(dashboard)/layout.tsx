@@ -1,88 +1,121 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
+  BookOpen,
   Users,
-  GraduationCap,
+  UserPlus,
+  Coins,
   CreditCard,
-  ClipboardList,
-  Calendar,
   Megaphone,
   Settings,
   Building2,
-  LogOut,
+  BarChart3,
+  RefreshCw,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase-browser';
-import { useRouter } from 'next/navigation';
+import {
+  AppShell,
+  Topbar,
+  ContextPill,
+  Sidebar,
+  SidebarWorkspace,
+  SidebarSection,
+  SidebarItem,
+  SidebarDivider,
+  SidebarUser,
+  Avatar,
+  Badge,
+} from '@edukea/ui';
 
-const navItems = [
-  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/dashboard/students', label: 'Eleves', icon: Users },
-  { href: '/dashboard/grades', label: 'Notes & Bulletins', icon: GraduationCap },
-  { href: '/dashboard/payments', label: 'Paiements', icon: CreditCard },
-  { href: '/dashboard/attendance', label: 'Absences', icon: ClipboardList },
-  { href: '/dashboard/timetable', label: 'Emploi du temps', icon: Calendar },
-  { href: '/dashboard/announcements', label: 'Annonces', icon: Megaphone },
-  { href: '/dashboard/settings', label: 'Parametres', icon: Settings },
+const sections = [
+  {
+    label: 'Pilotage',
+    items: [
+      { href: '/dashboard', label: 'Cockpit', icon: LayoutDashboard, badge: null as React.ReactNode | null },
+      { href: '/dashboard/reports', label: 'Rapports', icon: BarChart3, badge: null as React.ReactNode | null },
+    ],
+  },
+  {
+    label: 'Scolarite',
+    items: [
+      { href: '/dashboard/students', label: 'Eleves', icon: Users, badge: <Badge>1573</Badge> as React.ReactNode | null },
+      { href: '/dashboard/enrollment', label: 'Inscription', icon: UserPlus, badge: null as React.ReactNode | null },
+      { href: '/dashboard/reenrollment', label: 'Reinscription', icon: RefreshCw, badge: null as React.ReactNode | null },
+    ],
+  },
+  {
+    label: 'Finance',
+    items: [
+      { href: '/dashboard/recovery', label: 'Recouvrement', icon: Coins, badge: <Badge tone="danger">12</Badge> as React.ReactNode | null },
+      { href: '/dashboard/payments', label: 'Versements', icon: CreditCard, badge: null as React.ReactNode | null },
+    ],
+  },
+  {
+    label: 'Communication',
+    items: [
+      { href: '/dashboard/announcements', label: 'Annonces', icon: Megaphone, badge: null as React.ReactNode | null },
+    ],
+  },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
-  const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/auth/login');
-  };
+  const topbar = (
+    <Topbar
+      right={
+        <>
+          <ContextPill showDot>Annee 2025-2026</ContextPill>
+          <ContextPill>General</ContextPill>
+          <Avatar initials="JA" tone="accent" size="md" />
+        </>
+      }
+    />
+  );
 
-  return (
-    <div className="flex min-h-screen">
-      <aside className="hidden w-64 flex-col border-r bg-white lg:flex">
-        <div className="flex h-16 items-center gap-3 border-b px-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <Building2 className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <span className="text-lg font-bold">Edukea</span>
-            <p className="text-xs text-muted-foreground">Etablissement</p>
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-1 p-4">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+  const sidebar = (
+    <Sidebar
+      workspace={
+        <SidebarWorkspace
+          icon={<Building2 className="h-[18px] w-[18px]" />}
+          title="Espace direction"
+          sub="College Akonda-Diarra"
+        />
+      }
+      user={<SidebarUser initials="JA" name="Joel Akoun" role="Directeur general" />}
+    >
+      {sections.map((section) => (
+        <div key={section.label}>
+          <SidebarSection>{section.label}</SidebarSection>
+          {section.items.map((item) => {
+            const Icon = item.icon;
             return (
-              <Link
+              <SidebarItem
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-primary-light text-primary'
-                    : 'text-muted-foreground hover:bg-gray-50 hover:text-foreground'
-                }`}
+                active={isActive(item.href)}
+                icon={<Icon />}
+                badge={item.badge}
               >
-                <item.icon className="h-5 w-5" />
                 {item.label}
-              </Link>
+              </SidebarItem>
             );
           })}
-        </nav>
-
-        <div className="border-t p-4">
-          <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground" onClick={handleLogout}>
-            <LogOut className="h-5 w-5" />
-            Deconnexion
-          </Button>
         </div>
-      </aside>
+      ))}
+      <div className="flex-1" />
+      <SidebarDivider />
+      <SidebarItem href="/dashboard/settings" active={isActive('/dashboard/settings')} icon={<Settings />}>
+        Parametrage
+      </SidebarItem>
+    </Sidebar>
+  );
 
-      <main className="flex-1 overflow-auto bg-gray-50/50 p-6">
-        {children}
-      </main>
-    </div>
+  return (
+    <AppShell topbar={topbar} sidebar={sidebar}>
+      {children}
+    </AppShell>
   );
 }
