@@ -14,3 +14,8 @@ export * from './patterns/tx-table';
 export * from './patterns/refresh-button';
 export * from './layout/context-pill';
 export * from './layout/topbar';
+export * from './layout/sidebar-item';
+export * from './layout/sidebar-section';
+export * from './layout/sidebar-workspace';
+export * from './layout/sidebar-user';
+export * from './layout/sidebar';
