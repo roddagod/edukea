@@ -9,3 +9,6 @@ export * from './patterns/sparkline';
 export * from './patterns/progress-ring';
 export * from './patterns/hero-kpi';
 export * from './patterns/kpi-stat';
+export * from './patterns/tx-row';
+export * from './patterns/tx-table';
+export * from './patterns/refresh-button';
