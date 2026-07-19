@@ -3,17 +3,11 @@ import { cn } from '../lib/cn';
 import { formatFCFA, formatDateFr } from '../lib/formatters';
 
 export interface HeroKPIProps {
-  /** Montant en XOF (entier). */
   amount: number;
-  /** Titre du KPI. Ex. "Tresorerie". */
   label: string;
-  /** Date affichee dans l'eyebrow. Defaut : maintenant. */
   date?: Date;
-  /** Heure "hh'h'mm" affichee dans l'eyebrow. Defaut : maintenant. */
   updatedAt?: string;
-  /** Ligne recap sous la hairline. Array de fragments joints par " · ". */
   metrics?: React.ReactNode[];
-  /** Sparkline optionnelle a droite. */
   spark?: React.ReactNode;
   className?: string;
 }
@@ -21,6 +15,10 @@ export interface HeroKPIProps {
 const defaultTime = (d: Date) =>
   `${d.getHours().toString().padStart(2, '0')}h${d.getMinutes().toString().padStart(2, '0')}`;
 
+/**
+ * Hero KPI carte principale. Mobile-first : la valeur passe de 40px (mobile)
+ * a 56px (desktop), la sparkline passe SOUS la valeur sur mobile.
+ */
 export function HeroKPI({
   amount,
   label,
@@ -36,12 +34,11 @@ export function HeroKPI({
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-2xl bg-primary p-6 sm:p-7 text-white shadow-hero',
-        spark ? 'grid grid-cols-1 items-center gap-8 md:grid-cols-[1.4fr_1fr]' : 'block',
+        'relative overflow-hidden rounded-2xl bg-primary p-5 sm:p-6 md:p-7 text-white shadow-hero',
+        spark ? 'flex flex-col gap-5 md:grid md:grid-cols-[1.4fr_1fr] md:items-center md:gap-8' : 'block',
         className,
       )}
     >
-      {/* halo top-right + dot pattern */}
       <div
         aria-hidden
         className="pointer-events-none absolute -right-20 -top-20 h-80 w-80"
@@ -57,19 +54,20 @@ export function HeroKPI({
         }}
       />
       <div className="relative">
-        <div className="mb-2.5 flex flex-wrap items-baseline gap-2.5 text-body-sm font-medium text-white/60">
+        <div className="mb-2.5 flex flex-wrap items-baseline gap-2 text-body-xs sm:text-body-sm font-medium text-white/60">
           <span>{label}</span>
           <span className="font-normal text-white/30">·</span>
           <strong className="font-semibold text-white">{formatDateFr(now)}</strong>
           <span className="font-normal text-white/30">·</span>
           <span>mise a jour a {time}</span>
         </div>
-        <div className="font-display text-display-lg font-bold leading-none tracking-tight">
+        {/* Valeur : 40px mobile, 44px sm, 52px md, 56px lg+ */}
+        <div className="font-display text-[40px] sm:text-[44px] md:text-[52px] lg:text-display-lg font-bold leading-none tracking-tight">
           {formatFCFA(amount, { withoutSuffix: true })}
-          <span className="ml-1.5 font-sans text-body-md font-medium text-white/55">FCFA</span>
+          <span className="ml-1.5 font-sans text-body-sm sm:text-body-md font-medium text-white/55">FCFA</span>
         </div>
         {metrics && metrics.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-baseline gap-2.5 border-t border-white/10 pt-3.5 text-body-sm text-white/80">
+          <div className="mt-4 flex flex-wrap items-baseline gap-2 border-t border-white/10 pt-3.5 text-body-xs sm:text-body-sm text-white/80">
             {metrics.flatMap((m, i) =>
               i === 0
                 ? [<React.Fragment key={i}>{m}</React.Fragment>]
@@ -82,7 +80,7 @@ export function HeroKPI({
         )}
       </div>
       {spark && (
-        <div className="relative h-24 overflow-hidden rounded-xl bg-white/5 p-2">
+        <div className="relative h-20 sm:h-24 overflow-hidden rounded-xl bg-white/5 p-2">
           {spark}
         </div>
       )}
