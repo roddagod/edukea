@@ -95,6 +95,17 @@ export interface StudentReceivable {
   receivable_balance: number;
 }
 
+export interface SchoolTreasuryByYear {
+  school_id: string;
+  school_year_id: string;
+  cash_collected: number;
+  bank_collected: number;
+  momo_pending_collected: number;
+  momo_settled_collected: number;
+  total_collected: number;
+  tx_count: number;
+}
+
 export interface SchoolRecovery {
   school_id: string;
   school_year_id: string;

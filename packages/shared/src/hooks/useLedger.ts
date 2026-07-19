@@ -6,15 +6,46 @@ import type {
   LedgerTransaction,
   LedgerEntry,
   SchoolTreasury,
+  SchoolTreasuryByYear,
   StudentReceivable,
   SchoolRecovery,
   PostLedgerTransactionArgs,
 } from '../types/ledger';
 
+/**
+ * Trésorerie scopée à une année scolaire (montants encaissés dans le contexte
+ * de la sélection année). Utilisé par le cockpit pour refléter l'année active.
+ */
+export function useSchoolTreasuryByYear(schoolId: string | undefined, schoolYearId: string | undefined) {
+  return useQuery<SchoolTreasuryByYear | null>({
+    queryKey: ['ledger', 'treasury-by-year', schoolId, schoolYearId],
+    enabled: !!schoolId && !!schoolYearId,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_school_treasury_by_year')
+        .select('*')
+        .eq('school_id', schoolId!)
+        .eq('school_year_id', schoolYearId!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as SchoolTreasuryByYear | null) ?? null;
+    },
+  });
+}
+
+// Cache tuning : les données ledger changent quand un versement est fait.
+// Le user a un bouton "Actualiser" pour forcer, sinon 30s de fraicheur suffisent.
+const LEDGER_STALE = 30 * 1000;
+const LEDGER_GC = 5 * 60 * 1000;
+
 export function useSchoolRecovery(schoolId: string | undefined, schoolYearId: string | undefined) {
   return useQuery<SchoolRecovery | null>({
     queryKey: ['ledger', 'recovery', schoolId, schoolYearId],
     enabled: !!schoolId && !!schoolYearId,
+    staleTime: LEDGER_STALE,
+    gcTime: LEDGER_GC,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('v_school_recovery')
@@ -32,6 +63,8 @@ export function useSchoolTreasury(schoolId: string | undefined) {
   return useQuery<SchoolTreasury | null>({
     queryKey: ['ledger', 'treasury', schoolId],
     enabled: !!schoolId,
+    staleTime: LEDGER_STALE,
+    gcTime: LEDGER_GC,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('v_school_treasury')
