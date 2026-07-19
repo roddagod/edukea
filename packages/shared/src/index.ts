@@ -15,5 +15,6 @@ export * from './hooks/usePayments';
 export * from './hooks/useMessaging';
 export * from './hooks/useNotifications';
 export * from './hooks/useLedger';
+export * from './hooks/useCurrentSchool';
 export * from './types/ledger';
 export * from './validation/schemas';
