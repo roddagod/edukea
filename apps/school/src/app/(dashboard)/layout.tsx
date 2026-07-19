@@ -1,6 +1,7 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -13,11 +14,11 @@ import {
   BarChart3,
   RefreshCw,
   MoreHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 import {
   AppShell,
   Topbar,
-  ContextPill,
   Sidebar,
   SidebarWorkspace,
   SidebarSection,
@@ -29,6 +30,7 @@ import {
   Avatar,
   Badge,
 } from '@edukea/ui';
+import { useSchoolContext } from '@edukea/shared';
 
 const sections = [
   {
@@ -61,8 +63,6 @@ const sections = [
   },
 ];
 
-// Mobile bottom nav : 5 slots max. Reflete les 4-5 destinations les plus utilisees.
-// « Plus » regroupe le reste (Rapports, Inscription/Reinscription, Versements, Annonces, Parametrage).
 const bottomNavItems = [
   { href: '/dashboard', label: 'Cockpit', icon: LayoutDashboard, badge: null as React.ReactNode | null },
   { href: '/dashboard/students', label: 'Eleves', icon: Users, badge: null as React.ReactNode | null },
@@ -71,36 +71,99 @@ const bottomNavItems = [
   { href: '/dashboard/more', label: 'Plus', icon: MoreHorizontal, badge: null as React.ReactNode | null },
 ];
 
+interface SelectPillProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+  showDot?: boolean;
+  ariaLabel?: string;
+}
+
+// Native <select> stylise comme une ContextPill. Fonctionnel + mobile-friendly + a11y.
+function SelectPill({ value, onChange, options, showDot, ariaLabel }: SelectPillProps) {
+  return (
+    <div className="relative inline-flex items-center">
+      {showDot && <span className="pointer-events-none absolute left-3 h-1.5 w-1.5 rounded-full bg-brand-accent" />}
+      <select
+        aria-label={ariaLabel}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`appearance-none rounded-full border border-line bg-white py-2 pr-9 text-body-sm font-semibold text-ink-2 outline-none transition-colors hover:border-primary hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+          showDot ? 'pl-8' : 'pl-3.5'
+        }`}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 h-3.5 w-3.5 text-ink-3" />
+    </div>
+  );
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
-  // Exact-match pour Cockpit uniquement (sinon TOUS les items sont "active" car ils commencent par /dashboard)
   const isBottomActive = (href: string) =>
     href === '/dashboard' ? pathname === '/dashboard' : pathname === href || pathname.startsWith(href + '/');
 
-  const topbar = (
-    <Topbar
-      right={
-        <>
-          <ContextPill showDot>Annee 2025-2026</ContextPill>
-          <ContextPill>General</ContextPill>
-          <Avatar initials="JA" tone="accent" size="md" />
-        </>
-      }
-      rightMobile={<Avatar initials="JA" tone="accent" size="sm" />}
-    />
+  const requestedSchoolId = searchParams.get('school');
+  const requestedYearId = searchParams.get('year');
+  const { data: ctx } = useSchoolContext({ requestedSchoolId, requestedYearId });
+
+  const setParam = useCallback(
+    (key: 'school' | 'year', value: string) => {
+      const params = new URLSearchParams(Array.from(searchParams.entries()));
+      params.set(key, value);
+      // Un changement d'ecole reset l'annee (car les annees sont school-specifiques)
+      if (key === 'school') params.delete('year');
+      router.replace(`${pathname}?${params.toString()}`);
+    },
+    [pathname, router, searchParams],
   );
+
+  const currentSchoolName = ctx?.current_school?.name ?? '—';
+  const currentYearName = ctx?.current_year?.name ?? '—';
+
+  const topbarRight = (
+    <>
+      {ctx?.is_superadmin && ctx.schools.length > 1 && (
+        <SelectPill
+          ariaLabel="Ecole"
+          showDot
+          value={ctx.current_school?.id ?? ''}
+          onChange={(v) => setParam('school', v)}
+          options={ctx.schools.map((s) => ({ value: s.id, label: s.name }))}
+        />
+      )}
+      {ctx && ctx.years.length > 0 && (
+        <SelectPill
+          ariaLabel="Annee scolaire"
+          value={ctx.current_year?.id ?? ''}
+          onChange={(v) => setParam('year', v)}
+          options={ctx.years.map((y) => ({ value: y.id, label: `Annee ${y.name}` }))}
+        />
+      )}
+      <Avatar initials="JA" tone="accent" size="md" />
+    </>
+  );
+
+  const topbar = <Topbar right={topbarRight} rightMobile={<Avatar initials="JA" tone="accent" size="sm" />} />;
 
   const sidebar = (
     <Sidebar
       workspace={
         <SidebarWorkspace
           icon={<Building2 className="h-[18px] w-[18px]" />}
-          title="Espace direction"
-          sub="College Akonda Divo"
+          title={ctx?.is_superadmin ? 'Espace Lambano' : 'Espace direction'}
+          sub={currentSchoolName}
         />
       }
-      user={<SidebarUser initials="JA" name="Joel Akoun" role="Directeur general" />}
+      user={<SidebarUser initials="JA" name="Joel Akoun" role={ctx?.is_superadmin ? 'Superadmin' : 'Directeur general'} />}
     >
       {sections.map((section) => (
         <div key={section.label}>
@@ -149,6 +212,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <AppShell topbar={topbar} sidebar={sidebar} bottomNav={bottomNav}>
+      {/* Bandeau selectors mobile : sous md uniquement, car les selectors du topbar sont caches */}
+      {ctx && (
+        <div className="flex flex-wrap items-center gap-2 lg:hidden">
+          {ctx.is_superadmin && ctx.schools.length > 1 && (
+            <SelectPill
+              ariaLabel="Ecole"
+              showDot
+              value={ctx.current_school?.id ?? ''}
+              onChange={(v) => setParam('school', v)}
+              options={ctx.schools.map((s) => ({ value: s.id, label: s.name }))}
+            />
+          )}
+          {ctx.years.length > 0 && (
+            <SelectPill
+              ariaLabel="Annee scolaire"
+              value={ctx.current_year?.id ?? ''}
+              onChange={(v) => setParam('year', v)}
+              options={ctx.years.map((y) => ({ value: y.id, label: `Annee ${y.name}` }))}
+            />
+          )}
+        </div>
+      )}
       {children}
     </AppShell>
   );

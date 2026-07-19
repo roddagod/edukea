@@ -15,8 +15,9 @@ import {
   TxTable,
   type TxRowData,
 } from '@edukea/ui';
+import { useSearchParams } from 'next/navigation';
 import {
-  useCurrentSchool,
+  useSchoolContext,
   useSchoolTreasury,
   useSchoolRecovery,
   useRecentPayments,
@@ -35,16 +36,20 @@ function fmtNumber(n: number): string {
 }
 
 export default function CockpitPage() {
-  const { data: school, refetch: refetchSchool } = useCurrentSchool();
-  const schoolId = school?.school_id;
-  const schoolYearId = school?.current_year?.id;
+  const searchParams = useSearchParams();
+  const { data: ctx, refetch: refetchCtx } = useSchoolContext({
+    requestedSchoolId: searchParams.get('school'),
+    requestedYearId: searchParams.get('year'),
+  });
+  const schoolId = ctx?.current_school?.id;
+  const schoolYearId = ctx?.current_year?.id;
 
   const { data: treasury, refetch: refetchTreasury } = useSchoolTreasury(schoolId);
   const { data: recovery, refetch: refetchRecovery } = useSchoolRecovery(schoolId, schoolYearId);
   const { data: recentPayments, refetch: refetchRecent } = useRecentPayments(schoolId, 8);
 
   const handleRefresh = async () => {
-    await Promise.all([refetchSchool(), refetchTreasury(), refetchRecovery(), refetchRecent()]);
+    await Promise.all([refetchCtx(), refetchTreasury(), refetchRecovery(), refetchRecent()]);
   };
 
   const total = Number(treasury?.total_treasury ?? 0);
@@ -67,7 +72,7 @@ export default function CockpitPage() {
     <>
       <PageHeader
         title="Cockpit tresorerie"
-        sub={school?.school?.name ? `${school.school.name} · mise a jour a ${formatTime()}` : `Mise a jour a ${formatTime()}`}
+        sub={ctx?.current_school?.name ? `${ctx.current_school.name} · mise a jour a ${formatTime()}` : `Mise a jour a ${formatTime()}`}
         actions={<RefreshButton onClick={handleRefresh} />}
       />
 
@@ -144,7 +149,7 @@ export default function CockpitPage() {
           <CardHeader>
             <div>
               <CardTitle>Recouvrement annuel</CardTitle>
-              <CardSub>{school?.current_year?.name ? `Annee scolaire ${school.current_year.name}` : '—'}</CardSub>
+              <CardSub>{ctx?.current_year?.name ? `Annee scolaire ${ctx.current_year.name}` : '—'}</CardSub>
             </div>
           </CardHeader>
           <div className="flex justify-center">
