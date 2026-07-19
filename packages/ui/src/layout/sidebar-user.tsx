@@ -14,8 +14,8 @@ export function SidebarUser({ initials, name, role, className }: SidebarUserProp
     <div className={cn('relative z-10 mx-3 mb-3.5 mt-1.5 flex items-center gap-2.5 rounded-md border border-white/[0.06] bg-white/[0.04] p-3', className)}>
       <Avatar initials={initials} tone="accent" size="sm" />
       <div className="min-w-0 flex-1">
-        <div className="text-body-xs font-semibold text-white">{name}</div>
-        {role && <div className="text-caption text-white/45">{role}</div>}
+        <div className="truncate text-body-xs font-semibold leading-tight text-white">{name}</div>
+        {role && <div className="mt-0.5 truncate text-caption leading-tight text-white/45">{role}</div>}
       </div>
     </div>
   );
