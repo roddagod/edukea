@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  BookOpen,
   Users,
   UserPlus,
   Coins,
@@ -13,6 +12,7 @@ import {
   Building2,
   BarChart3,
   RefreshCw,
+  MoreHorizontal,
 } from 'lucide-react';
 import {
   AppShell,
@@ -24,6 +24,8 @@ import {
   SidebarItem,
   SidebarDivider,
   SidebarUser,
+  BottomNav,
+  BottomNavItem,
   Avatar,
   Badge,
 } from '@edukea/ui';
@@ -59,9 +61,22 @@ const sections = [
   },
 ];
 
+// Mobile bottom nav : 5 slots max. Reflete les 4-5 destinations les plus utilisees.
+// « Plus » regroupe le reste (Rapports, Inscription/Reinscription, Versements, Annonces, Parametrage).
+const bottomNavItems = [
+  { href: '/dashboard', label: 'Cockpit', icon: LayoutDashboard, badge: null as React.ReactNode | null },
+  { href: '/dashboard/students', label: 'Eleves', icon: Users, badge: null as React.ReactNode | null },
+  { href: '/dashboard/recovery', label: 'Recouvrer', icon: Coins, badge: <Badge tone="danger">12</Badge> as React.ReactNode | null },
+  { href: '/dashboard/announcements', label: 'Annonces', icon: Megaphone, badge: null as React.ReactNode | null },
+  { href: '/dashboard/more', label: 'Plus', icon: MoreHorizontal, badge: null as React.ReactNode | null },
+];
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  // Exact-match pour Cockpit uniquement (sinon TOUS les items sont "active" car ils commencent par /dashboard)
+  const isBottomActive = (href: string) =>
+    href === '/dashboard' ? pathname === '/dashboard' : pathname === href || pathname.startsWith(href + '/');
 
   const topbar = (
     <Topbar
@@ -72,6 +87,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Avatar initials="JA" tone="accent" size="md" />
         </>
       }
+      rightMobile={<Avatar initials="JA" tone="accent" size="sm" />}
     />
   );
 
@@ -81,7 +97,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <SidebarWorkspace
           icon={<Building2 className="h-[18px] w-[18px]" />}
           title="Espace direction"
-          sub="College Akonda-Diarra"
+          sub="College Akonda Divo"
         />
       }
       user={<SidebarUser initials="JA" name="Joel Akoun" role="Directeur general" />}
@@ -113,8 +129,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </Sidebar>
   );
 
+  const bottomNav = (
+    <BottomNav>
+      {bottomNavItems.map((item) => {
+        const Icon = item.icon;
+        return (
+          <BottomNavItem
+            key={item.href}
+            href={item.href}
+            active={isBottomActive(item.href)}
+            icon={<Icon className="h-5 w-5" />}
+            label={item.label}
+            badge={item.badge}
+          />
+        );
+      })}
+    </BottomNav>
+  );
+
   return (
-    <AppShell topbar={topbar} sidebar={sidebar}>
+    <AppShell topbar={topbar} sidebar={sidebar} bottomNav={bottomNav}>
       {children}
     </AppShell>
   );
