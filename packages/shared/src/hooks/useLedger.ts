@@ -7,8 +7,26 @@ import type {
   LedgerEntry,
   SchoolTreasury,
   StudentReceivable,
+  SchoolRecovery,
   PostLedgerTransactionArgs,
 } from '../types/ledger';
+
+export function useSchoolRecovery(schoolId: string | undefined, schoolYearId: string | undefined) {
+  return useQuery<SchoolRecovery | null>({
+    queryKey: ['ledger', 'recovery', schoolId, schoolYearId],
+    enabled: !!schoolId && !!schoolYearId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_school_recovery')
+        .select('*')
+        .eq('school_id', schoolId!)
+        .eq('school_year_id', schoolYearId!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as SchoolRecovery | null) ?? null;
+    },
+  });
+}
 
 export function useSchoolTreasury(schoolId: string | undefined) {
   return useQuery<SchoolTreasury | null>({

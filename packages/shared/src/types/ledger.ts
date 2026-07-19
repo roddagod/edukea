@@ -95,6 +95,18 @@ export interface StudentReceivable {
   receivable_balance: number;
 }
 
+export interface SchoolRecovery {
+  school_id: string;
+  school_year_id: string;
+  billed_total: number;
+  collected_total: number;
+  remaining_total: number;
+  recovery_pct: number;
+  solde_count: number;
+  debute_count: number;
+  impaye_count: number;
+}
+
 export interface LedgerEntryInput {
   account_id: string;
   direction: LedgerDirection;

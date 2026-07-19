@@ -15,69 +15,127 @@ import {
   TxTable,
   type TxRowData,
 } from '@edukea/ui';
+import {
+  useCurrentSchool,
+  useSchoolTreasury,
+  useSchoolRecovery,
+  useRecentPayments,
+} from '@edukea/shared';
 
-// TODO(sprint 2): brancher sur useSchoolTreasury / v_school_treasury via @edukea/shared
-const FAKE_TREASURY = {
-  total: 1_240_500,
-  cash: 380_000,
-  momo: 625_500,
-  bank: 235_000,
-  todayCollected: 82_500,
-  deltaPct: 7.1,
-  todayCount: 24,
-  sparkValues: [12, 20, 15, 32, 28, 45, 38, 55, 50, 62, 58, 70, 75, 68, 82],
-};
+// Sparkline placeholder — a remplacer par une agregat quotidien (sprint 3)
+const PLACEHOLDER_SPARK = [12, 20, 15, 32, 28, 45, 38, 55, 50, 62, 58, 70, 75, 68, 82];
 
-const FAKE_RECOVERY = { pct: 71, solde: 1249, debute: 312, impaye: 12 };
+function formatTime(): string {
+  const d = new Date();
+  return `${d.getHours().toString().padStart(2, '0')}h${d.getMinutes().toString().padStart(2, '0')}`;
+}
 
-const FAKE_TXS: TxRowData[] = [
-  { id: '132',   studentName: 'SORE Chakira Mounia', studentSub: 'Matr. 0000000132 · MoMo', className: 'CM2 A', status: 'debute', amount: 50000 },
-  { id: '222',   studentName: 'TRAORE Bintou Rahman', studentSub: 'Matr. 0000222333 · Especes', className: 'CM2 A', status: 'solde',  amount: 225000 },
-  { id: '20003', studentName: 'ASSIN Agoua Yvette',   studentSub: 'Matr. 000100020003 · Especes', className: 'MMS',   status: 'debute', amount: 30000 },
-  { id: '0001',  studentName: 'MANGLE Botty Exaucee', studentSub: 'Matr. 0001 · MoMo',           className: 'CE1 A', status: 'impaye', amount: null },
-];
+function fmtNumber(n: number): string {
+  return new Intl.NumberFormat('fr-FR').format(n).replace(/[  ]/g, ' ');
+}
 
 export default function CockpitPage() {
+  const { data: school, refetch: refetchSchool } = useCurrentSchool();
+  const schoolId = school?.school_id;
+  const schoolYearId = school?.current_year?.id;
+
+  const { data: treasury, refetch: refetchTreasury } = useSchoolTreasury(schoolId);
+  const { data: recovery, refetch: refetchRecovery } = useSchoolRecovery(schoolId, schoolYearId);
+  const { data: recentPayments, refetch: refetchRecent } = useRecentPayments(schoolId, 8);
+
+  const handleRefresh = async () => {
+    await Promise.all([refetchSchool(), refetchTreasury(), refetchRecovery(), refetchRecent()]);
+  };
+
+  const total = Number(treasury?.total_treasury ?? 0);
+  const cash = Number(treasury?.cash_balance ?? 0);
+  const momo = Number(treasury?.momo_pending_balance ?? 0) + Number(treasury?.momo_settled_balance ?? 0);
+  const bank = Number(treasury?.bank_balance ?? 0);
+
+  const rows: TxRowData[] = (recentPayments ?? []).map((p) => ({
+    id: p.id,
+    studentName: p.student_name,
+    studentSub: [p.matricule ? `Matr. ${p.matricule}` : null, p.source ? p.source : null]
+      .filter(Boolean)
+      .join(' · '),
+    className: p.class_name || '—',
+    status: p.status,
+    amount: p.amount,
+  }));
+
   return (
     <>
       <PageHeader
         title="Cockpit tresorerie"
-        sub="Mise a jour a 10h24"
-        actions={<RefreshButton onClick={() => location.reload()} />}
+        sub={school?.school?.name ? `${school.school.name} · mise a jour a ${formatTime()}` : `Mise a jour a ${formatTime()}`}
+        actions={<RefreshButton onClick={handleRefresh} />}
       />
 
       <HeroKPI
-        amount={FAKE_TREASURY.total}
+        amount={total}
         label="Tresorerie"
         metrics={[
-          <span key="a"><span className="font-display font-semibold text-white">+{FAKE_TREASURY.todayCollected.toLocaleString('fr-FR')} FCFA</span> encaisses depuis ce matin</span>,
-          <span key="b"><span className="font-display font-semibold text-white">{FAKE_TREASURY.todayCount}</span> versements</span>,
-          <span key="c"><span className="font-display font-bold text-[#86EFAC]">△</span> <span className="font-display font-semibold text-white">{FAKE_TREASURY.deltaPct.toString().replace('.', ',')}%</span> vs hier</span>,
+          <span key="collected">
+            <span className="font-display font-semibold text-white">{fmtNumber(Number(recovery?.collected_total ?? 0))} FCFA</span>{' '}
+            encaisses cette annee
+          </span>,
+          <span key="count">
+            <span className="font-display font-semibold text-white">{recentPayments?.length ?? 0}</span> versements recents
+          </span>,
+          recovery ? (
+            <span key="pct">
+              <span className="font-display font-bold text-[#86EFAC]">△</span>{' '}
+              <span className="font-display font-semibold text-white">
+                {Number(recovery.recovery_pct).toString().replace('.', ',')}%
+              </span>{' '}
+              recouvre
+            </span>
+          ) : null,
         ]}
-        spark={<Sparkline values={FAKE_TREASURY.sparkValues} />}
+        spark={<Sparkline values={PLACEHOLDER_SPARK} />}
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <KPIStat
           label="Caisse"
-          amount={FAKE_TREASURY.cash}
-          icon={<div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#ECFDF5] text-[#059669]"><Coins className="h-4 w-4" /></div>}
-          footLeft="12 versements aujourd'hui"
-          footRight={62000}
+          amount={cash}
+          icon={
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#ECFDF5] text-[#059669]">
+              <Coins className="h-4 w-4" />
+            </div>
+          }
+          footLeft="Especes recues"
         />
         <KPIStat
           label="Mobile Money"
-          amount={FAKE_TREASURY.momo}
-          icon={<div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-accent-soft text-[#B45309]"><Smartphone className="h-4 w-4" /></div>}
-          footLeft={<><span className="text-[#B45309] font-semibold">3</span> en attente d'apurement</>}
-          footRight={18500}
+          amount={momo}
+          icon={
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-accent-soft text-[#B45309]">
+              <Smartphone className="h-4 w-4" />
+            </div>
+          }
+          footLeft={
+            treasury && Number(treasury.momo_pending_balance) > 0 ? (
+              <>
+                <span className="font-semibold text-[#B45309]">
+                  {fmtNumber(Number(treasury.momo_pending_balance))} FCFA
+                </span>{' '}
+                en attente d'apurement
+              </>
+            ) : (
+              'Apure'
+            )
+          }
         />
         <KPIStat
           label="Banque"
-          amount={FAKE_TREASURY.bank}
-          icon={<div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#EEF2FA] text-primary"><Landmark className="h-4 w-4" /></div>}
-          footLeft="Virement recu a 08h12"
-          footRight={2000}
+          amount={bank}
+          icon={
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#EEF2FA] text-primary">
+              <Landmark className="h-4 w-4" />
+            </div>
+          }
+          footLeft="Virements bancaires"
         />
       </div>
 
@@ -86,29 +144,27 @@ export default function CockpitPage() {
           <CardHeader>
             <div>
               <CardTitle>Recouvrement annuel</CardTitle>
-              <CardSub>Annee scolaire 2025-2026</CardSub>
+              <CardSub>{school?.current_year?.name ? `Annee scolaire ${school.current_year.name}` : '—'}</CardSub>
             </div>
           </CardHeader>
           <div className="flex justify-center">
             <ProgressRing
-              value={FAKE_RECOVERY.pct}
-              centerLabel={`${FAKE_RECOVERY.pct}%`}
+              value={Number(recovery?.recovery_pct ?? 0)}
+              centerLabel={recovery ? `${Number(recovery.recovery_pct).toString().replace('.', ',')}%` : '—'}
               centerSub="recouvre"
               size={180}
             />
           </div>
           <div className="mt-2.5 flex justify-around border-t border-dashed border-line pt-2.5">
             {[
-              { color: '#22C55E', val: FAKE_RECOVERY.solde,  label: 'soldes' },
-              { color: '#F69F13', val: FAKE_RECOVERY.debute, label: 'partiel' },
-              { color: '#EF4444', val: FAKE_RECOVERY.impaye, label: 'impayes' },
+              { color: '#22C55E', val: recovery?.solde_count ?? 0, label: 'soldes' },
+              { color: '#F69F13', val: recovery?.debute_count ?? 0, label: 'partiel' },
+              { color: '#EF4444', val: recovery?.impaye_count ?? 0, label: 'impayes' },
             ].map((leg) => (
               <div key={leg.label} className="text-center">
                 <div className="flex items-center justify-center gap-1">
                   <span className="h-2 w-2 rounded-full" style={{ background: leg.color }} />
-                  <span className="font-display text-heading-sm font-semibold">
-                    {leg.val.toLocaleString('fr-FR')}
-                  </span>
+                  <span className="font-display text-heading-sm font-semibold">{fmtNumber(leg.val)}</span>
                 </div>
                 <div className="mt-0.5 text-caption font-medium text-ink-3">{leg.label}</div>
               </div>
@@ -120,12 +176,16 @@ export default function CockpitPage() {
           <div className="flex items-center justify-between px-5 pt-4">
             <div>
               <CardTitle>Derniers versements</CardTitle>
-              <CardSub>Aujourd'hui · {FAKE_TXS.length} operations</CardSub>
+              <CardSub>{rows.length} operations</CardSub>
             </div>
             <RefreshButton size="sm" label="Voir tout →" />
           </div>
           <div className="mt-3.5">
-            <TxTable rows={FAKE_TXS} />
+            {rows.length === 0 ? (
+              <div className="px-5 pb-5 text-body-sm text-ink-3">Aucun versement recent.</div>
+            ) : (
+              <TxTable rows={rows} />
+            )}
           </div>
         </Card>
       </div>
