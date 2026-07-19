@@ -34,8 +34,6 @@ export interface SparklineProps {
   className?: string;
 }
 
-let __gradientCounter = 0;
-
 export function Sparkline({
   values,
   width = 300,
@@ -46,7 +44,9 @@ export function Sparkline({
   className,
 }: SparklineProps) {
   const paths = React.useMemo(() => buildSparkPath(values, { width, height }), [values, width, height]);
-  const gradientId = React.useMemo(() => `spark-fill-${++__gradientCounter}`, []);
+  // useId : SSR-safe et stable entre serveur/client (evite hydration mismatch)
+  const reactId = React.useId();
+  const gradientId = `spark-fill-${reactId.replace(/:/g, '')}`;
   const [endX, endY] = React.useMemo(() => {
     if (values.length < 2) return [width, height];
     const min = Math.min(...values);
