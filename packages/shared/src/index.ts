@@ -30,3 +30,4 @@ export * from './hooks/useClassroomFees';
 export * from './hooks/useEnrollmentStats';
 export * from './hooks/useYearAdvancementPreview';
 export * from './hooks/useEnrollmentMutations';
+export * from './hooks/usePassageClassProgress';
