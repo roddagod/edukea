@@ -45,7 +45,7 @@ const sections = [
     items: [
       { href: '/dashboard/students', label: 'Eleves', icon: Users, badge: <Badge>1573</Badge> as React.ReactNode | null },
       { href: '/dashboard/enrollment', label: 'Inscription', icon: UserPlus, badge: null as React.ReactNode | null },
-      { href: '/dashboard/reenrollment', label: 'Reinscription', icon: RefreshCw, badge: null as React.ReactNode | null },
+      { href: '/dashboard/enrollment/passage', label: "Passage d'annee", icon: RefreshCw, badge: null as React.ReactNode | null },
     ],
   },
   {
