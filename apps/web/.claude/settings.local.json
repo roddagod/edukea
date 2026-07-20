@@ -31,7 +31,32 @@
       "Bash(curl -s -o /dev/null -w \"html:%{http_code} logo:%{http_code}\\\\n\" http://localhost:61914/)",
       "Bash(curl -s -o /dev/null -w \"logo: %{http_code}\\\\n\" http://localhost:61914/files/logo-couleur.png)",
       "Bash(curl -s -o /dev/null -w \"html:%{http_code}\\\\n\" http://localhost:61914/)",
-      "Bash(curl -s -o /dev/null -w \"logo:%{http_code}\\\\n\" http://localhost:61914/files/logo-couleur.png)"
+      "Bash(curl -s -o /dev/null -w \"logo:%{http_code}\\\\n\" http://localhost:61914/files/logo-couleur.png)",
+      "Bash(pnpm install *)",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(new Intl.NumberFormat\\('fr-FR'\\).format\\(1240500\\)\\)\\)\")",
+      "Bash(node *)",
+      "Bash(pnpm --filter @edukea/ui test)",
+      "Bash(xxd packages/ui/src/lib/formatters.ts)",
+      "Bash(npx vitest *)",
+      "Bash(npx tsc *)",
+      "Bash(pnpm --filter @edukea/ui lint)",
+      "Bash(python3 *)",
+      "Bash(mkdir -p apps/school/public)",
+      "Bash(cp packages/ui/assets/logo-color.png apps/school/public/logo-color.png)",
+      "Bash(cp packages/ui/assets/logo-white.png apps/school/public/logo-white.png)",
+      "Bash(pnpm exec *)",
+      "Bash(ipconfig getifaddr *)",
+      "Bash(PGPASSWORD='siqnak-Setnon-6waqfu' psql \"postgresql://postgres.ejwqvahlnmysxeerqrrv@aws-1-eu-north-1.pooler.supabase.com:5432/postgres\" -v ON_ERROR_STOP=1 -f /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/supabase/migrations/00012_school_staff.sql)",
+      "Bash(PGPASSWORD='siqnak-Setnon-6waqfu' psql \"postgresql://postgres.ejwqvahlnmysxeerqrrv@aws-1-eu-north-1.pooler.supabase.com:5432/postgres\" -v ON_ERROR_STOP=1 -f /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/supabase/migrations/00013_ledger_backfill_akonda_divo.sql)",
+      "Bash(PGPASSWORD='siqnak-Setnon-6waqfu' psql \"postgresql://postgres.ejwqvahlnmysxeerqrrv@aws-1-eu-north-1.pooler.supabase.com:5432/postgres\" -v ON_ERROR_STOP=1 -f /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/supabase/migrations/00014_v_school_recovery.sql)",
+      "Bash(PGPASSWORD='siqnak-Setnon-6waqfu' psql \"postgresql://postgres.ejwqvahlnmysxeerqrrv@aws-1-eu-north-1.pooler.supabase.com:5432/postgres\" -v ON_ERROR_STOP=1 -c \"SELECT * FROM v_school_recovery WHERE school_id='06582bf9-d164-478f-afb1-bbb2d245feab';\")",
+      "Bash(PGPASSWORD='siqnak-Setnon-6waqfu' psql \"postgresql://postgres.ejwqvahlnmysxeerqrrv@aws-1-eu-north-1.pooler.supabase.com:5432/postgres\" -v ON_ERROR_STOP=1 -f /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/supabase/migrations/00015_align_roles.sql)",
+      "Bash(PGPASSWORD='siqnak-Setnon-6waqfu' psql \"postgresql://postgres.ejwqvahlnmysxeerqrrv@aws-1-eu-north-1.pooler.supabase.com:5432/postgres\" -v ON_ERROR_STOP=1 -c \"SELECT u.email, ap.role FROM admin_profiles ap JOIN auth.users u ON u.id = ap.user_id;\")",
+      "Bash(PGPASSWORD='siqnak-Setnon-6waqfu' psql \"postgresql://postgres.ejwqvahlnmysxeerqrrv@aws-1-eu-north-1.pooler.supabase.com:5432/postgres\" -v ON_ERROR_STOP=1 -f /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/supabase/migrations/00016_backfill_akonda_all_years.sql)",
+      "Bash(PGPASSWORD='siqnak-Setnon-6waqfu' psql *)",
+      "Bash(mkdir -p /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/apps/school/src/app/\\\\\\(dashboard\\\\\\)/dashboard/recovery/level/\\\\[levelId\\\\])",
+      "Bash(mkdir -p /Users/rodrigue/Documents/GitHub/LAMBANO/Edukea/apps/school/src/app/\\\\\\(dashboard\\\\\\)/dashboard/recovery/class/\\\\[classroomId\\\\])",
+      "Bash(echo \"EXIT $?\")"
     ]
   }
 }
