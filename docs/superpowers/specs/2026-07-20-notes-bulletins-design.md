@@ -92,9 +92,10 @@ apps/school/src/app/(dashboard)/dashboard/
 │   │   └── [cycleId]/page.tsx         → Détail cycle + gestion niveaux/classes
 │   ├── periods/page.tsx               → Étape 4 : périodes T1..T3 ou S1/S2
 │   ├── fees/
-│   │   ├── page.tsx                   → Étape 2e : défauts école + tableau classes
-│   │   ├── school-defaults/page.tsx   → Édition template école (frais + échéances)
-│   │   └── classroom/[classroomId]/page.tsx  → Édition frais + échéances par classe
+│   │   ├── page.tsx                   → Étape 2e : vue école (template + tableau niveaux)
+│   │   ├── school-defaults/page.tsx   → Édition template école (hydrate les niveaux)
+│   │   ├── level/[levelId]/page.tsx   → **Config PRIMAIRE : frais + échéances par niveau** (lignes libres + bouton "Ajouter ligne")
+│   │   └── classroom/[classroomId]/page.tsx  → Override par classe (rare, ex: Terminale D)
 │   ├── subjects/
 │   │   ├── page.tsx                   → Étape 5 : template loader + CRUD matières
 │   │   └── [subjectId]/page.tsx       → Détail matière
@@ -266,10 +267,7 @@ useGeneratePreviewPdf(schoolId)
 | `student_school_year_loggings` | `lv2_subject_id` | UUID FK → `subjects(id)` NULLABLE | Choix LV2 de l'élève (Espagnol / Allemand / autre). Filtre `compute_bulletin` pour n'afficher que le LV2 choisi. Capture UI en S3B.2. |
 | `student_school_year_loggings` | `mat_secondaire_subject_id` | UUID FK → `subjects(id)` NULLABLE | Matière optionnelle/spécialisation. Filtre bulletin. Capture UI en S3B.2. |
 | `student_school_year_loggings` | `eps_exemption` | BOOLEAN DEFAULT false | Dispense EPS annuelle (raison médicale). Bulletin marque "Dispensé" au lieu d'une note. Capture UI en S3B.2. |
-| `schools` | `default_fee_template` | JSONB | Template de frais + échéances par défaut de l'école. Voir §5.1.b pour le shape. Copié dans `classroom_fees` + `classroom_fee_installments` à la création de chaque classe. |
-| `classroom_fees` | `inscription_fee`, `tuition_fee_total`, `insurance_fee`, `canteen_fee`, `transport_fee` | NUMERIC DEFAULT 0 | Ventilation des frais par catégorie (extension de l'existant) |
-| `classroom_fees` | `other_fees` | JSONB DEFAULT '[]' | Frais custom (garderie, sortie scolaire, cotisation APE...) |
-| `classroom_fees` | `overrides_school_default` | BOOLEAN DEFAULT false | Flag : "Défaut" (false) vs "Custom" (true) — permet de propager les changements d'école aux classes qui n'ont pas divergé |
+| `schools` | `default_fee_template` | JSONB | Template de frais + échéances par défaut de l'école. Voir §5.1.b pour le shape. Utilisé comme point de départ pour hydrater `level_fee_lines` + `level_fee_installments` à la création d'un niveau. |
 | `notes` | `is_exempted` | BOOLEAN DEFAULT false | Dispense (médicale, sport) |
 | `notes` | `updated_by` | UUID FK → `auth.users(id)` nullable | Audit trail |
 | `bulletins` | `status` | TEXT enum ('draft','ready_censeur','ready_director','published') DEFAULT 'draft' | State machine |
@@ -281,26 +279,30 @@ useGeneratePreviewPdf(schoolId)
 
 ### 5.1.b Shape de `schools.default_fee_template` (JSONB)
 
+Template initial utilisé pour hydrater `level_fee_lines` + `level_fee_installments` à la création d'un niveau. Modifiable ligne par ligne ensuite via l'éditeur niveau.
+
 ```json
 {
-  "fees": {
-    "inscription": 25000,
-    "tuition_total": 150000,
-    "insurance": 5000,
-    "canteen": 0,
-    "transport": 0,
-    "other": []
-  },
+  "lines": [
+    { "category": "inscription", "label": "Inscription", "amount": 25000, "order": 1, "is_optional": false },
+    { "category": "tuition", "label": "Scolarité annuelle", "amount": 150000, "order": 2, "is_optional": false },
+    { "category": "insurance", "label": "Assurance", "amount": 5000, "order": 3, "is_optional": false },
+    { "category": "other", "label": "Cotisation APE", "amount": 3000, "order": 4, "is_optional": false },
+    { "category": "canteen", "label": "Cantine annuelle", "amount": 45000, "order": 5, "is_optional": true },
+    { "category": "transport", "label": "Transport scolaire", "amount": 30000, "order": 6, "is_optional": true }
+  ],
   "installments": [
-    { "label": "Inscription", "due_date_offset_days": 0, "category": "inscription", "amount": 25000 },
-    { "label": "1re tranche scolarité", "due_date_offset_days": 30, "category": "tuition", "amount_percentage": 40 },
-    { "label": "2e tranche scolarité", "due_date_offset_days": 120, "category": "tuition", "amount_percentage": 30 },
-    { "label": "3e tranche scolarité", "due_date_offset_days": 210, "category": "tuition", "amount_percentage": 30 }
+    { "order": 1, "label": "Inscription + assurance", "category": "inscription", "due_date_offset_days": 0, "amount_percentage": 100 },
+    { "order": 2, "label": "1re tranche scolarité", "category": "tuition", "due_date_offset_days": 30, "amount_percentage": 40 },
+    { "order": 3, "label": "2e tranche scolarité", "category": "tuition", "due_date_offset_days": 120, "amount_percentage": 30 },
+    { "order": 4, "label": "3e tranche scolarité", "category": "tuition", "due_date_offset_days": 210, "amount_percentage": 30 }
   ]
 }
 ```
 
-Montants résolus au moment du clone dans `classroom_fee_installments` : `due_date = school_years.start_date + due_date_offset_days`, `amount = amount OU (tuition_total × amount_percentage / 100)`.
+Résolution `amount` :
+- Si `amount` défini → utilisé tel quel
+- Sinon `amount_percentage` × somme des `level_fee_lines.amount` dont `category = installment.category` (calcul au moment de la résolution finale)
 
 ### 5.2 Shape de `schools.bulletin_config` (JSONB)
 
@@ -343,7 +345,10 @@ Montants résolus au moment du clone dans `classroom_fee_installments` : `due_da
 | `structure_templates` | `id, template_key, cycle_code, level_code, level_order, level_name` | Templates niveaux par cycle (séedés) |
 | `appreciation_templates` | `id, school_id (NULLABLE), label, text, "order"` | Templates appréciations profs. `school_id NULL` = template global séedé disponible pour toutes les écoles ; non-null = template custom école. `useAppreciationTemplates(schoolId)` retourne l'union global + école. |
 | `classroom_periode_status` | `id, classroom_id, periode_id, actual_end_date, notes_locked, locked_at, locked_by, closure_wizard_run_id, UNIQUE(classroom_id, periode_id)` | Override calendrier + verrou par classe |
-| `classroom_fee_installments` | `id, classroom_id, "order", label, category, due_date, amount, UNIQUE(classroom_id, "order")` | Échéances de paiement par classe (1re tranche, 2e tranche…). Copiées depuis `schools.default_fee_template` à la création classe, éditables ensuite. Utilisées par S3A recouvrement et S3B inscription. |
+| `level_fee_lines` | `id, level_id, category, label, amount, "order", is_optional, UNIQUE(level_id, "order")` | **Source de vérité des frais au niveau du niveau scolaire** (ex: 6e). Lignes libres avec catégorie + label + montant. Le manager ajoute autant de lignes qu'il veut (Inscription, Scolarité, Cotisation APE, Manuels, Sortie musée...). `is_optional=true` = frais non-obligatoire (transport, cantine). |
+| `level_fee_installments` | `id, level_id, "order", label, category, due_date_offset_days, amount, amount_percentage, UNIQUE(level_id, "order")` | Calendrier d'échéances par niveau. `due_date_offset_days` = décalage depuis `school_years.start_date`. `amount_percentage` = % du total de la catégorie visée (ex: 40% du tuition). |
+| `classroom_fee_lines` | `id, classroom_id, category, label, amount, "order", overrides_level_line_id UUID FK NULLABLE, UNIQUE(classroom_id, "order")` | **Override par classe (rare)**. Si `overrides_level_line_id` non-null, override d'une ligne niveau ; sinon ligne custom classe. Cas d'usage : Terminale D avec frais supérieurs pour préparation examen. |
+| `classroom_fee_installments` | `id, classroom_id, "order", label, category, due_date, amount, overrides_level_installment_id UUID FK NULLABLE, UNIQUE(classroom_id, "order")` | Override du calendrier par classe. Cas d'usage : Terminale qui doit tout payer avant le BAC (échéances avancées). |
 
 ### 5.4 Nouvelles vues SQL
 
@@ -355,6 +360,8 @@ Montants résolus au moment du clone dans `classroom_fee_installments` : `due_da
 | `v_class_statistics` | Moyennes, médiane, quartiles, distribution par matière/période | `ClassStatsPanel` |
 | `v_bulletin_history` | Toutes les données de bulletins publiés d'un élève sur l'année (join `bulletins` + `bulletin_subjects` + `periodes`) | `useBulletinHistory` (parent + workbook + PDF) |
 | `v_period_closure_overview` | Agrégat école → niveau → classe pour hub bulletins | Hub 3 niveaux de zoom |
+| `v_classroom_effective_fees` | Résolution frais effectifs par classe : UNION des overrides classe + lignes niveau non-overridées. Vue clé consommée par S3A (recouvrement) et S3B (wizard inscription). | S3A / S3B via hook `useClassroomEffectiveFees` |
+| `v_classroom_effective_installments` | Idem pour les échéances (résolution overrides classe ∪ échéances niveau) | S3A / S3B |
 
 ### 5.5 Fonctions SQL
 
@@ -365,8 +372,9 @@ Montants résolus au moment du clone dans `classroom_fee_installments` : `due_da
 | `seed_pedagogy_for_school(school_id, cycle_code)` | Nouvelle — insère `subject_groups` + `subjects` depuis templates | À écrire |
 | `seed_structure_for_school(school_id, template_key)` | Nouvelle — insère `cycles` + `levels` + `classrooms` depuis templates | À écrire |
 | `close_period_for_classrooms(periode_id, classroom_ids[], actor_id, config)` | Nouvelle — orchestre le wizard clôture : insert `classroom_periode_status`, lock notes, trigger `compute_bulletin()` en batch, envoi notifs | À écrire |
-| Trigger `on_classroom_created` | Trigger AFTER INSERT sur `classrooms` : copie `schools.default_fee_template` dans `classroom_fees` + `classroom_fee_installments` (dates calculées depuis `school_years.start_date + due_date_offset_days`) | À écrire |
-| `apply_school_defaults_to_classrooms(school_id, classroom_ids[])` | Nouvelle — bouton "Propager défauts" : re-copie le template école dans les classes non-custom (`overrides_school_default = false`) | À écrire |
+| Trigger `on_level_created` | Trigger AFTER INSERT sur `levels` : copie `schools.default_fee_template` dans `level_fee_lines` + `level_fee_installments`. Le manager peut ensuite tout éditer / ajouter des lignes libres. | À écrire |
+| `resolve_installment_dates(level_id)` | Recalcule `classroom_fee_installments.due_date` (et niveau) depuis `school_years.start_date + due_date_offset_days`. Appelé quand `school_years.start_date` change. | À écrire |
+| `apply_level_fees_to_classrooms(level_id)` | Bouton "Appliquer aux classes du niveau" — nettoie les overrides classe sur les lignes que le manager a marqués "à réinitialiser". Optionnel : dry-run avant application. | À écrire |
 | `compute_annual_average(bulletin_id)` | Nouvelle — calcule moyenne simple des périodes publiées, écrit dans `bulletins.annual_average` | À écrire |
 
 ### 5.6 State machine `bulletins.status`
