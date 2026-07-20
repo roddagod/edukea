@@ -245,7 +245,8 @@ useGeneratePreviewPdf(schoolId)
 | `schools` | `default_max_score` | NUMERIC DEFAULT 20 | Barème école (/10, /20, /100) |
 | `schools` | `display_name` | TEXT | Nom affiché sur le bulletin (défaut = name) |
 | `schools` | `motto` | TEXT | Devise / slogan |
-| `schools` | `address` | TEXT | Adresse multi-ligne |
+| `schools` | `address` | TEXT | Adresse physique multi-ligne |
+| `schools` | `postal_address` | TEXT | Adresse postale (BP), distincte de l'adresse physique (usage CI) |
 | `schools` | `phone` / `email` | TEXT | Coordonnées |
 | `schools` | `accreditation_number` | TEXT | Numéro d'agrément (obligatoire CI officiel) |
 | `schools` | `accent_color` | TEXT DEFAULT '#E97423' | Couleur d'accent bulletin |
@@ -595,6 +596,24 @@ Ce script tourne une seule fois post-déploiement. Le manager de chaque école p
 | PDF paginé pour très grandes classes | 40 élèves = 1-2 pages A4. | V2 |
 | Bulletin annuel séparé (document dédié) | Moyenne annuelle est dans bulletin dernière période V1. | V2 |
 | Dashboard audit trail cross-écoles côté fondateur | Table `notes_audit` existe mais pas de vue fondateur. | Module Fondateur dédié |
+
+---
+
+## 11.b Prérequis explicites hors S3D
+
+S3D assume que **l'école existe déjà en DB** et que **le manager dispose d'un compte Supabase Auth avec `school_staff_profiles.role = 'manager'`**. Le module de création d'école (nom, email, téléphone, adresses, représentant + mdp, config CinetPay, logo initial) est **repoussé dans un Sprint 3E dédié** (module Fondateur / Admin, opéré depuis `apps/admin`).
+
+**Impact sur l'ordonnancement des livraisons** :
+- S3D peut démarrer sans attendre S3E, car les 3 écoles pilotes existent déjà via sync legacy
+- Pour les nouvelles écoles à onboarder pendant la fenêtre S3D → S3E, une création SQL manuelle ou un stub admin minimal fera transition
+- S3E héritera de la responsabilité de câbler : `auth.users` du représentant, `school_staff_profiles` avec role manager, seed initial `schools`, coordonnées de base
+
+**Colonnes ajoutées par S3D à `schools` que S3E pourra pré-remplir** :
+- `email`, `phone`, `address`, `postal_address`, `motto`, `logo_url`, `accreditation_number`
+- La config CinetPay (`cinetpay_api_key`, `cinetpay_site_id`) reste de la responsabilité du **module paiement** — probablement colonnes existantes issues du sync, à confirmer S3E
+
+**Ce que le manager peut compléter dans S3D** :
+- Toutes les colonnes branding (`display_name`, `motto`, `address`, `postal_address`, `logo_url`, `stamp_url`, `director_signature_url`, `accent_color`, `bulletin_config`) via l'éditeur `/pedagogy/bulletin-template` (étape 2b, facultative)
 
 ---
 
