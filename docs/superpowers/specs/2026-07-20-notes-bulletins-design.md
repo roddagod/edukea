@@ -91,6 +91,10 @@ apps/school/src/app/(dashboard)/dashboard/
 │   │   ├── page.tsx                   → Étape 3 : arbre cycles/niveaux/classes + template loader
 │   │   └── [cycleId]/page.tsx         → Détail cycle + gestion niveaux/classes
 │   ├── periods/page.tsx               → Étape 4 : périodes T1..T3 ou S1/S2
+│   ├── fees/
+│   │   ├── page.tsx                   → Étape 2e : défauts école + tableau classes
+│   │   ├── school-defaults/page.tsx   → Édition template école (frais + échéances)
+│   │   └── classroom/[classroomId]/page.tsx  → Édition frais + échéances par classe
 │   ├── subjects/
 │   │   ├── page.tsx                   → Étape 5 : template loader + CRUD matières
 │   │   └── [subjectId]/page.tsx       → Détail matière
@@ -262,6 +266,10 @@ useGeneratePreviewPdf(schoolId)
 | `student_school_year_loggings` | `lv2_subject_id` | UUID FK → `subjects(id)` NULLABLE | Choix LV2 de l'élève (Espagnol / Allemand / autre). Filtre `compute_bulletin` pour n'afficher que le LV2 choisi. Capture UI en S3B.2. |
 | `student_school_year_loggings` | `mat_secondaire_subject_id` | UUID FK → `subjects(id)` NULLABLE | Matière optionnelle/spécialisation. Filtre bulletin. Capture UI en S3B.2. |
 | `student_school_year_loggings` | `eps_exemption` | BOOLEAN DEFAULT false | Dispense EPS annuelle (raison médicale). Bulletin marque "Dispensé" au lieu d'une note. Capture UI en S3B.2. |
+| `schools` | `default_fee_template` | JSONB | Template de frais + échéances par défaut de l'école. Voir §5.1.b pour le shape. Copié dans `classroom_fees` + `classroom_fee_installments` à la création de chaque classe. |
+| `classroom_fees` | `inscription_fee`, `tuition_fee_total`, `insurance_fee`, `canteen_fee`, `transport_fee` | NUMERIC DEFAULT 0 | Ventilation des frais par catégorie (extension de l'existant) |
+| `classroom_fees` | `other_fees` | JSONB DEFAULT '[]' | Frais custom (garderie, sortie scolaire, cotisation APE...) |
+| `classroom_fees` | `overrides_school_default` | BOOLEAN DEFAULT false | Flag : "Défaut" (false) vs "Custom" (true) — permet de propager les changements d'école aux classes qui n'ont pas divergé |
 | `notes` | `is_exempted` | BOOLEAN DEFAULT false | Dispense (médicale, sport) |
 | `notes` | `updated_by` | UUID FK → `auth.users(id)` nullable | Audit trail |
 | `bulletins` | `status` | TEXT enum ('draft','ready_censeur','ready_director','published') DEFAULT 'draft' | State machine |
@@ -270,6 +278,29 @@ useGeneratePreviewPdf(schoolId)
 | `bulletins` | `published_by` / `published_at` | UUID + TIMESTAMPTZ | Directeur qui a publié |
 | `bulletins` | `current_version` | INTEGER DEFAULT 1 | Pointe la dernière version dans `bulletin_versions` |
 | `bulletins` | `annual_average` | NUMERIC nullable | Rempli uniquement au publish du dernier bulletin de l'année |
+
+### 5.1.b Shape de `schools.default_fee_template` (JSONB)
+
+```json
+{
+  "fees": {
+    "inscription": 25000,
+    "tuition_total": 150000,
+    "insurance": 5000,
+    "canteen": 0,
+    "transport": 0,
+    "other": []
+  },
+  "installments": [
+    { "label": "Inscription", "due_date_offset_days": 0, "category": "inscription", "amount": 25000 },
+    { "label": "1re tranche scolarité", "due_date_offset_days": 30, "category": "tuition", "amount_percentage": 40 },
+    { "label": "2e tranche scolarité", "due_date_offset_days": 120, "category": "tuition", "amount_percentage": 30 },
+    { "label": "3e tranche scolarité", "due_date_offset_days": 210, "category": "tuition", "amount_percentage": 30 }
+  ]
+}
+```
+
+Montants résolus au moment du clone dans `classroom_fee_installments` : `due_date = school_years.start_date + due_date_offset_days`, `amount = amount OU (tuition_total × amount_percentage / 100)`.
 
 ### 5.2 Shape de `schools.bulletin_config` (JSONB)
 
@@ -312,6 +343,7 @@ useGeneratePreviewPdf(schoolId)
 | `structure_templates` | `id, template_key, cycle_code, level_code, level_order, level_name` | Templates niveaux par cycle (séedés) |
 | `appreciation_templates` | `id, school_id (NULLABLE), label, text, "order"` | Templates appréciations profs. `school_id NULL` = template global séedé disponible pour toutes les écoles ; non-null = template custom école. `useAppreciationTemplates(schoolId)` retourne l'union global + école. |
 | `classroom_periode_status` | `id, classroom_id, periode_id, actual_end_date, notes_locked, locked_at, locked_by, closure_wizard_run_id, UNIQUE(classroom_id, periode_id)` | Override calendrier + verrou par classe |
+| `classroom_fee_installments` | `id, classroom_id, "order", label, category, due_date, amount, UNIQUE(classroom_id, "order")` | Échéances de paiement par classe (1re tranche, 2e tranche…). Copiées depuis `schools.default_fee_template` à la création classe, éditables ensuite. Utilisées par S3A recouvrement et S3B inscription. |
 
 ### 5.4 Nouvelles vues SQL
 
@@ -333,6 +365,8 @@ useGeneratePreviewPdf(schoolId)
 | `seed_pedagogy_for_school(school_id, cycle_code)` | Nouvelle — insère `subject_groups` + `subjects` depuis templates | À écrire |
 | `seed_structure_for_school(school_id, template_key)` | Nouvelle — insère `cycles` + `levels` + `classrooms` depuis templates | À écrire |
 | `close_period_for_classrooms(periode_id, classroom_ids[], actor_id, config)` | Nouvelle — orchestre le wizard clôture : insert `classroom_periode_status`, lock notes, trigger `compute_bulletin()` en batch, envoi notifs | À écrire |
+| Trigger `on_classroom_created` | Trigger AFTER INSERT sur `classrooms` : copie `schools.default_fee_template` dans `classroom_fees` + `classroom_fee_installments` (dates calculées depuis `school_years.start_date + due_date_offset_days`) | À écrire |
+| `apply_school_defaults_to_classrooms(school_id, classroom_ids[])` | Nouvelle — bouton "Propager défauts" : re-copie le template école dans les classes non-custom (`overrides_school_default = false`) | À écrire |
 | `compute_annual_average(bulletin_id)` | Nouvelle — calcule moyenne simple des périodes publiées, écrit dans `bulletins.annual_average` | À écrire |
 
 ### 5.6 State machine `bulletins.status`
@@ -610,6 +644,8 @@ Ce script tourne une seule fois post-déploiement. Le manager de chaque école p
 | Capture du `students.student_type` à l'inscription | Le champ est ajouté par S3D en DB, mais la mise à jour du wizard d'inscription (StepStudent) est un **patch S3B.1** distinct. En attendant, éditable à la main via un écran fiche élève à créer ou par backfill. | S3B.1 |
 | Filtre recouvrement par `student_type` | Les affectés d'État sont payés par le gouvernement, ne doivent pas apparaître dans le recouvrement standard. → **Patch S3A.1**. | S3A.1 |
 | Découplage création élève / inscription | Le RPC `enroll_new_student` couple identité + affectation classe + ledger. Besoin : pouvoir créer un élève sans l'inscrire (parent visite mais ne finalise pas). Split en `create_student` + `enroll_student_in_classroom`. Champs UI additionnels : `numero_extrait`, `nationalite`, `lieu_naissance`, `photo_url`, `email`, `is_redoublant`, `lv2_subject_id`, `mat_secondaire_subject_id`, `eps_exemption`. | S3B.2 |
+| Wizard inscription step 4 (fees) enrichi | Le step FeesPayment doit lire les nouvelles catégories de frais + montrer le calendrier des échéances `classroom_fee_installments` au parent. Actuellement lit un flat total. | S3B.3 |
+| Recouvrement basé sur échéances | Refonte `useRecoveryStudents` pour calculer les impayés à partir de `classroom_fee_installments.due_date < today` vs `ledger.paid_amount`. Gain : granularité par tranche au lieu d'un total flou. | S3A.2 |
 
 ---
 
