@@ -20,6 +20,7 @@ import {
   useRecoveryLevels,
   useRecoveryStudents,
 } from '@edukea/shared';
+import { StudentSearchDropdown } from './_components/StudentSearchDropdown';
 
 function fmtNumber(n: number): string {
   return new Intl.NumberFormat('fr-FR').format(n).replace(/[  ]/g, ' ');
@@ -111,6 +112,9 @@ export default function RecoveryHubPage() {
             : '—'
         }
       />
+
+      {/* Search bar — jump direct vers une fiche eleve */}
+      <StudentSearchDropdown schoolId={schoolId} schoolYearId={schoolYearId} qsSuffix={qs} />
 
       {/* HERO Recouvrement — grand bloc bleu Edukea avec ProgressRing */}
       {recoveryLoading ? (
