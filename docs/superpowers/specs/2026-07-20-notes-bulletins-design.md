@@ -42,6 +42,33 @@ Après le suivi financier (S3A Recouvrement) et l'inscription (S3B), le Sprint 3
 
 ---
 
+## 2.b Hub Rentrée — étapes finales (mise à jour)
+
+Après plusieurs itérations produit, le hub Rentrée est structuré en **3 étapes globales** (avec sous-étapes dans étape 2) :
+
+**Étape 1 — Année scolaire**
+- Nom, dates début/fin, type de période (trimestre / semestre)
+
+**Étape 2 — Paramétrage de l'année** (8 sous-étapes)
+- 2a. Barème école (/10, /20, /100)
+- 2b. Personnalisation bulletin (facultatif : logo, signatures, couleurs)
+- 2c. **Types d'élèves** (CRUD, seed CI par défaut, `is_default`)
+- 2d. Structure (ordre d'enseignement → niveaux → classes, templates ivoiriens)
+- 2e. Périodes (T1/T2/T3 ou S1/S2 avec dates)
+- 2f. Matières + coefficients + **matières secondaires disponibles cette année**
+- 2g. Frais + échéances **par (niveau × type d'élève)**, override par classe possible
+- 2h. Enseignants (invitations) + Affectations (matière × classe × prof) + prof principal
+
+**Étape 3 — Héritage année N+1** (visible dès la 2ᵉ année)
+- Wizard de clone sélectif de la config précédente
+
+**Dépendances de verrouillage** :
+- Étape 2c (types) débloque 2g (frais)
+- Étape 2d (structure) débloque 2g (frais) + 2h (affectations)
+- Étape 2f (matières) débloque 2h (affectations)
+
+---
+
 ## 3. Décisions produit validées (matrix)
 
 | Décision | Choix | Rationale |
@@ -90,12 +117,14 @@ apps/school/src/app/(dashboard)/dashboard/
 │   ├── structure/
 │   │   ├── page.tsx                   → Étape 3 : arbre cycles/niveaux/classes + template loader
 │   │   └── [cycleId]/page.tsx         → Détail cycle + gestion niveaux/classes
+│   ├── student-types/page.tsx         → Étape 2c : Types d'élèves (CRUD, seed CI, is_default)
 │   ├── periods/page.tsx               → Étape 4 : périodes T1..T3 ou S1/S2
 │   ├── fees/
-│   │   ├── page.tsx                   → Étape 2e : vue école (template + tableau niveaux)
+│   │   ├── page.tsx                   → Étape 2e : vue école (template + tableau niveaux × types)
 │   │   ├── school-defaults/page.tsx   → Édition template école (hydrate les niveaux)
-│   │   ├── level/[levelId]/page.tsx   → **Config PRIMAIRE : frais + échéances par niveau** (lignes libres + bouton "Ajouter ligne")
-│   │   └── classroom/[classroomId]/page.tsx  → Override par classe (rare, ex: Terminale D)
+│   │   ├── level/[levelId]/page.tsx   → **Config PRIMAIRE : frais + échéances par (niveau × type d'élève)** — sélecteur type + lignes libres
+│   │   └── classroom/[classroomId]/page.tsx  → Override par (classe × type) — rare, ex: Terminale D affecté
+│   └── subjects-availability/page.tsx → Toggle matières secondaires disponibles cette année (via subject_school_year_availability)
 │   ├── subjects/
 │   │   ├── page.tsx                   → Étape 5 : template loader + CRUD matières
 │   │   └── [subjectId]/page.tsx       → Détail matière
@@ -262,7 +291,7 @@ useGeneratePreviewPdf(schoolId)
 | `cycles` / `levels` / `classrooms` | `created_natively` | BOOLEAN DEFAULT true | Flag SaaS-native vs sync legacy |
 | `classrooms` | `principal_teacher_id` | UUID FK → `teacher_profiles(id)` nullable | Prof principal de la classe |
 | `teacher_profiles` | `signature_url` | TEXT nullable | Signature scannée du prof principal pour bulletin PDF (Storage `school-assets`) |
-| `students` | `student_type` | TEXT CHECK IN ('affected', 'not_affected', 'social_case') DEFAULT 'not_affected' | Type d'élève (affecté d'État / non-affecté / cas social). Transverse — utilisé par S3B (capture inscription, à patcher), S3A (filtre recouvrement), S3D (affichage bulletin). |
+| `students` | `student_type_id` | UUID FK → `student_types(id)` NULLABLE | Type d'élève (référence table `student_types`, définie librement par école). Nullable jusqu'à la première inscription — set au wizard S3B ou fallback sur le type marqué `is_default`. |
 | `student_school_year_loggings` | `is_redoublant` | BOOLEAN DEFAULT false | Redoublant sur cette inscription (change chaque année). Capture UI en S3B.2. |
 | `student_school_year_loggings` | `lv2_subject_id` | UUID FK → `subjects(id)` NULLABLE | Choix LV2 de l'élève (Espagnol / Allemand / autre). Filtre `compute_bulletin` pour n'afficher que le LV2 choisi. Capture UI en S3B.2. |
 | `student_school_year_loggings` | `mat_secondaire_subject_id` | UUID FK → `subjects(id)` NULLABLE | Matière optionnelle/spécialisation. Filtre bulletin. Capture UI en S3B.2. |
@@ -325,14 +354,11 @@ Résolution `amount` :
     "insuffisant": "Insuffisant"
   },
   "show_student_type": false,
-  "student_type_labels": {
-    "affected": "Élève affecté d'État",
-    "not_affected": "Élève non-affecté",
-    "social_case": "Cas social"
-  },
   "legal_footer": ""
 }
 ```
+
+Note : les libellés d'affichage du type d'élève ne sont plus dans `bulletin_config` — ils viennent directement de `student_types.label` (défini librement par école, source de vérité unique).
 
 ### 5.3 Nouvelles tables
 
@@ -345,10 +371,13 @@ Résolution `amount` :
 | `structure_templates` | `id, template_key, cycle_code, level_code, level_order, level_name` | Templates niveaux par cycle (séedés) |
 | `appreciation_templates` | `id, school_id (NULLABLE), label, text, "order"` | Templates appréciations profs. `school_id NULL` = template global séedé disponible pour toutes les écoles ; non-null = template custom école. `useAppreciationTemplates(schoolId)` retourne l'union global + école. |
 | `classroom_periode_status` | `id, classroom_id, periode_id, actual_end_date, notes_locked, locked_at, locked_by, closure_wizard_run_id, UNIQUE(classroom_id, periode_id)` | Override calendrier + verrou par classe |
-| `level_fee_lines` | `id, level_id, category, label, amount, "order", is_optional, UNIQUE(level_id, "order")` | **Source de vérité des frais au niveau du niveau scolaire** (ex: 6e). Lignes libres avec catégorie + label + montant. Le manager ajoute autant de lignes qu'il veut (Inscription, Scolarité, Cotisation APE, Manuels, Sortie musée...). `is_optional=true` = frais non-obligatoire (transport, cantine). |
-| `level_fee_installments` | `id, level_id, "order", label, category, due_date_offset_days, amount, amount_percentage, UNIQUE(level_id, "order")` | Calendrier d'échéances par niveau. `due_date_offset_days` = décalage depuis `school_years.start_date`. `amount_percentage` = % du total de la catégorie visée (ex: 40% du tuition). |
-| `classroom_fee_lines` | `id, classroom_id, category, label, amount, "order", overrides_level_line_id UUID FK NULLABLE, UNIQUE(classroom_id, "order")` | **Override par classe (rare)**. Si `overrides_level_line_id` non-null, override d'une ligne niveau ; sinon ligne custom classe. Cas d'usage : Terminale D avec frais supérieurs pour préparation examen. |
-| `classroom_fee_installments` | `id, classroom_id, "order", label, category, due_date, amount, overrides_level_installment_id UUID FK NULLABLE, UNIQUE(classroom_id, "order")` | Override du calendrier par classe. Cas d'usage : Terminale qui doit tout payer avant le BAC (échéances avancées). |
+| `student_types` | `id, school_id, code, label, "order", is_default, UNIQUE(school_id, code)` | **Types d'élèves définis librement par école** (ex: affecté / non-affecté / cas social pour CI). 3 types séedés par défaut à la création d'école, éditables. `is_default=true` sur un seul (utilisé si non-choisi à l'inscription). |
+| `level_fee_lines` | `id, level_id, student_type_id, category, label, amount, "order", is_optional, UNIQUE(level_id, student_type_id, "order")` | **Source de vérité des frais par (niveau × type d'élève)**. "Sixième affecté" ≠ "Sixième non-affecté". Lignes libres (Inscription / Scolarité / Assurance / APE / etc.). `is_optional=true` = non-obligatoire (transport, cantine). |
+| `level_fee_installments` | `id, level_id, student_type_id, "order", label, category, due_date_offset_days, amount, amount_percentage, UNIQUE(level_id, student_type_id, "order")` | Calendrier d'échéances par (niveau × type). |
+| `classroom_fee_lines` | `id, classroom_id, student_type_id, category, label, amount, "order", overrides_level_line_id UUID FK NULLABLE, UNIQUE(classroom_id, student_type_id, "order")` | **Override par classe × type (rare)**. Cas d'usage : Terminale D avec frais supérieurs pour préparation examen. |
+| `classroom_fee_installments` | `id, classroom_id, student_type_id, "order", label, category, due_date, amount, overrides_level_installment_id UUID FK NULLABLE, UNIQUE(classroom_id, student_type_id, "order")` | Override du calendrier par (classe × type). |
+| `subject_school_year_availability` | `id, subject_id, school_year_id, is_available, UNIQUE(subject_id, school_year_id)` | Toggle par année scolaire : le manager décide chaque année quelles matières secondaires (LV2, musique, arts...) sont offertes. Les matières obligatoires (français, maths...) sont always available. |
+| `payment_allocations` | `id, payment_tx_id UUID FK → ledger_transactions(id), fee_installment_id UUID FK → classroom_fee_installments(id) NULLABLE, allocated_amount BIGINT, allocated_at TIMESTAMPTZ DEFAULT now(), UNIQUE(payment_tx_id, fee_installment_id)` | **Ventilation d'un paiement sur les échéances**. `fee_installment_id NULL` = allocation "surplus/avance" (trop-perçu au-delà des échéances dues). Écrit automatiquement par `allocate_payment_to_installments()` après chaque `record_student_payment`. |
 
 ### 5.4 Nouvelles vues SQL
 
@@ -360,8 +389,9 @@ Résolution `amount` :
 | `v_class_statistics` | Moyennes, médiane, quartiles, distribution par matière/période | `ClassStatsPanel` |
 | `v_bulletin_history` | Toutes les données de bulletins publiés d'un élève sur l'année (join `bulletins` + `bulletin_subjects` + `periodes`) | `useBulletinHistory` (parent + workbook + PDF) |
 | `v_period_closure_overview` | Agrégat école → niveau → classe pour hub bulletins | Hub 3 niveaux de zoom |
-| `v_classroom_effective_fees` | Résolution frais effectifs par classe : UNION des overrides classe + lignes niveau non-overridées. Vue clé consommée par S3A (recouvrement) et S3B (wizard inscription). | S3A / S3B via hook `useClassroomEffectiveFees` |
-| `v_classroom_effective_installments` | Idem pour les échéances (résolution overrides classe ∪ échéances niveau) | S3A / S3B |
+| `v_classroom_effective_fees` | Résolution frais effectifs par (classe × type d'élève) : UNION des overrides classe + lignes niveau non-overridées. Vue clé consommée par S3A (recouvrement) et S3B (wizard inscription). | S3A / S3B via hook `useClassroomEffectiveFees(classroomId, studentTypeId)` |
+| `v_classroom_effective_installments` | Idem pour les échéances par (classe × type) | S3A / S3B |
+| `v_ssyl_installment_status` | Statut de chaque échéance d'un élève : `(ssyl_id, installment_id, label, due_date, amount_due, amount_paid, status)`. `status IN ('paid', 'partial', 'due', 'overdue', 'future')`. Calculée depuis `payment_allocations` + `classroom_fee_installments`. | Wizard inscription (Step FeesPayment) + reçu paiement + parent app (échéancier) + recouvrement |
 
 ### 5.5 Fonctions SQL
 
@@ -372,9 +402,12 @@ Résolution `amount` :
 | `seed_pedagogy_for_school(school_id, cycle_code)` | Nouvelle — insère `subject_groups` + `subjects` depuis templates | À écrire |
 | `seed_structure_for_school(school_id, template_key)` | Nouvelle — insère `cycles` + `levels` + `classrooms` depuis templates | À écrire |
 | `close_period_for_classrooms(periode_id, classroom_ids[], actor_id, config)` | Nouvelle — orchestre le wizard clôture : insert `classroom_periode_status`, lock notes, trigger `compute_bulletin()` en batch, envoi notifs | À écrire |
-| Trigger `on_level_created` | Trigger AFTER INSERT sur `levels` : copie `schools.default_fee_template` dans `level_fee_lines` + `level_fee_installments`. Le manager peut ensuite tout éditer / ajouter des lignes libres. | À écrire |
-| `resolve_installment_dates(level_id)` | Recalcule `classroom_fee_installments.due_date` (et niveau) depuis `school_years.start_date + due_date_offset_days`. Appelé quand `school_years.start_date` change. | À écrire |
-| `apply_level_fees_to_classrooms(level_id)` | Bouton "Appliquer aux classes du niveau" — nettoie les overrides classe sur les lignes que le manager a marqués "à réinitialiser". Optionnel : dry-run avant application. | À écrire |
+| Trigger `on_level_created` | AFTER INSERT sur `levels` : copie `schools.default_fee_template` dans `level_fee_lines` + `level_fee_installments` **pour chaque `student_type` de l'école**. Le manager peut ensuite tout éditer par (niveau × type). | À écrire |
+| Trigger `on_school_created` | AFTER INSERT sur `schools` : seed les 3 `student_types` par défaut (Affecté / Non-affecté / Cas social) avec `is_default=true` sur "Non-affecté". Note : ce trigger vit en S3D mais est déclenché par S3E (module Fondateur). | À écrire |
+| `resolve_installment_dates(level_id)` | Recalcule `classroom_fee_installments.due_date` depuis `school_years.start_date + due_date_offset_days`. Appelé quand `school_years.start_date` change. | À écrire |
+| `apply_level_fees_to_classrooms(level_id, student_type_id?)` | Bouton "Appliquer aux classes du niveau" — nettoie les overrides classe sur les lignes marquées "à réinitialiser". Filtre optionnel par type d'élève. | À écrire |
+| `allocate_payment_to_installments(ssyl_id, payment_tx_id, amount) RETURNS JSONB` | **Ventilation automatique d'un versement**. 1) Récupère les `v_ssyl_installment_status` de l'élève, tri `due_date ASC`. 2) Pour chaque échéance non-soldée : allocate `min(remaining, payment_left)` dans `payment_allocations`. 3) Si `payment_left > 0` après toutes les échéances : écrit une allocation "surplus" (`fee_installment_id=NULL`). 4) Retourne breakdown JSONB pour affichage reçu. Appelée automatiquement à la fin de `record_student_payment`. | À écrire |
+| `record_student_payment(...)` (existant) | Modifier : après le `ledger_post_transaction`, appeler `allocate_payment_to_installments(ssyl_id, tx_id, amount)`. Idempotent (ne re-ventile pas si déjà fait). | Modif |
 | `compute_annual_average(bulletin_id)` | Nouvelle — calcule moyenne simple des périodes publiées, écrit dans `bulletins.annual_average` | À écrire |
 
 ### 5.6 State machine `bulletins.status`
@@ -535,7 +568,7 @@ Signed URL générée à la demande via `Storage.createSignedUrl(path, 3600)` (e
 ### 7.3 Structure du PDF (ordre standard ivoirien)
 
 1. **En-tête** : logo école (avatar generic si absent), nom école (`display_name` ou `name`), ville, année scolaire, nom de la période
-2. **Bloc élève** : nom + prénom, matricule, classe, effectif, date de naissance, sexe. Si `bulletin_config.show_student_type = true`, ligne supplémentaire "Statut : {student_type_labels[students.student_type]}".
+2. **Bloc élève** : nom + prénom, matricule, classe, effectif, date de naissance, sexe. Si `bulletin_config.show_student_type = true`, ligne supplémentaire "Statut : {student_types.label}" (lu depuis la table `student_types` via `students.student_type_id`).
 3. **Tableau des matières** (groupé par `subject_group`) :
    - Colonnes fixes : Matière | Coef | Moyenne courante | Rang | Appr. prof
    - Colonnes optionnelles (`bulletin_config.show_class_stats`) : Min | Max | Moy classe
@@ -675,6 +708,39 @@ S3D assume que **l'école existe déjà en DB** et que **le manager dispose d'un
 
 **Backfill data one-off à prévoir en 3D.1** :
 - Marquer tous les `students` existants à `student_type = 'not_affected'` par défaut. L'école ajustera les cas via un écran fiche élève (édition ponctuelle) — écran à cadrer dans **S3B.1**.
+
+---
+
+## 11.c Backlog issu de la réunion produit 2026-07-20
+
+Consolidation des besoins remontés en réunion mais **non retenus en V1 S3D** (soit hors scope, soit V2, soit patches à d'autres sprints). Ces items sont **explicitement documentés** pour être repris post-livraison.
+
+### Patches sur sprints déjà livrés
+
+| Item | Sprint cible | Motivation report V1 |
+|---|---|---|
+| **Découplage `create_student` / `enroll_student_in_classroom`** | S3B.2 | Le wizard actuel bundle création + inscription. Refonte du RPC + UI. |
+| **Champs identité élargis** (numero_extrait, nationalité, lieu_naissance, photo, email, EPS, LV2, mat secondaire, is_redoublant) | S3B.2 | Nouveaux champs UI à câbler au wizard step 1 + StepClassroom. |
+| **Wizard step 4 (fees) enrichi** — lit les catégories + montre échéancier `v_ssyl_installment_status` au parent | S3B.3 | Le step actuel affiche un total flat, doit devenir un tableau de tranches détaillées. |
+| **Recherche réinscription sur TOUTES les années** (pas juste N-1) | S3B.4 | Élève parti 3 ans peut revenir. Actuellement le hook `useStudentSearch` ne cherche que sur l'année courante ou N-1 — corriger le SQL. |
+| **Statuts feux à la réinscription** (vert soldé / orange partiel / rouge zéro) | S3B.5 | Utile mais un simple badge sur la ligne élève suffit — pas de wizard modal V1. |
+| **Transfert d'élève intra-année** (change classe + recalcul barèmes) | S3B.6 | Nouvelle feature complexe : historisation classe pendant une année, recalcul du ledger + échéances. À concevoir sérieusement. |
+| **Recouvrement basé sur `classroom_fee_installments`** (au lieu du solde global) | S3A.2 | Refonte `useRecoveryStudents` et vues associées pour granularité par tranche + due_date. |
+| **Réductions ponctuelles ou permanentes** | S3A.3 | Nouvelle table `discounts` + application au ledger. Peut être fait à la main via ledger V1. |
+| **Suppression de paiement** (soft-delete + audit + recalc solde) | S3A.5 | Feature terrain. Nécessite recalcul des `payment_allocations` en cascade. |
+| **Audit ledger double/triple écriture** (vérif somme = 0 par opération) | S3A.6 | À auditer, pas forcément refactorer. Test à ajouter dans la CI. |
+
+### Non-goals confirmés par la réunion
+
+- **Gestion d'effectif par classe** : décision confirmée en réunion — pas géré (les classes évoluent en cours d'année). Une option quota pourra être envisagée V3 si la demande émerge.
+- **Tableau de bord multi-écoles Fondateur** : hors S3D, dans `apps/admin` (module Fondateur / S3E).
+- **Système comptable double/triple écriture** : le ledger existant est conservé tel quel V1. Audit qualité en S3A.6.
+
+### Décisions produit à valider avec les prochaines réunions
+
+- **Volet export** (bulletins, listes élèves, journaux comptables) — sprint dédié à planifier post-S3D
+- **Volet relances** (SMS / email aux parents en retard de paiement) — sprint dédié post-S3D
+- **Auto-inscription publique école** (SaaS self-serve vs création par Fondateur) — à trancher pour S3E
 
 ---
 
