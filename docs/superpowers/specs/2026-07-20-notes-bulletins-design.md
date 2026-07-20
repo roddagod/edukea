@@ -257,6 +257,7 @@ useGeneratePreviewPdf(schoolId)
 | `cycles` / `levels` / `classrooms` | `created_natively` | BOOLEAN DEFAULT true | Flag SaaS-native vs sync legacy |
 | `classrooms` | `principal_teacher_id` | UUID FK → `teacher_profiles(id)` nullable | Prof principal de la classe |
 | `teacher_profiles` | `signature_url` | TEXT nullable | Signature scannée du prof principal pour bulletin PDF (Storage `school-assets`) |
+| `students` | `student_type` | TEXT CHECK IN ('affected', 'not_affected', 'social_case') DEFAULT 'not_affected' | Type d'élève (affecté d'État / non-affecté / cas social). Transverse — utilisé par S3B (capture inscription, à patcher), S3A (filtre recouvrement), S3D (affichage bulletin). |
 | `notes` | `is_exempted` | BOOLEAN DEFAULT false | Dispense (médicale, sport) |
 | `notes` | `updated_by` | UUID FK → `auth.users(id)` nullable | Audit trail |
 | `bulletins` | `status` | TEXT enum ('draft','ready_censeur','ready_director','published') DEFAULT 'draft' | State machine |
@@ -285,6 +286,12 @@ useGeneratePreviewPdf(schoolId)
     "assez_bien": "Assez bien",
     "passable": "Passable",
     "insuffisant": "Insuffisant"
+  },
+  "show_student_type": false,
+  "student_type_labels": {
+    "affected": "Élève affecté d'État",
+    "not_affected": "Élève non-affecté",
+    "social_case": "Cas social"
   },
   "legal_footer": ""
 }
@@ -482,7 +489,7 @@ Signed URL générée à la demande via `Storage.createSignedUrl(path, 3600)` (e
 ### 7.3 Structure du PDF (ordre standard ivoirien)
 
 1. **En-tête** : logo école (avatar generic si absent), nom école (`display_name` ou `name`), ville, année scolaire, nom de la période
-2. **Bloc élève** : nom + prénom, matricule, classe, effectif, date de naissance, sexe
+2. **Bloc élève** : nom + prénom, matricule, classe, effectif, date de naissance, sexe. Si `bulletin_config.show_student_type = true`, ligne supplémentaire "Statut : {student_type_labels[students.student_type]}".
 3. **Tableau des matières** (groupé par `subject_group`) :
    - Colonnes fixes : Matière | Coef | Moyenne courante | Rang | Appr. prof
    - Colonnes optionnelles (`bulletin_config.show_class_stats`) : Min | Max | Moy classe
@@ -596,6 +603,8 @@ Ce script tourne une seule fois post-déploiement. Le manager de chaque école p
 | PDF paginé pour très grandes classes | 40 élèves = 1-2 pages A4. | V2 |
 | Bulletin annuel séparé (document dédié) | Moyenne annuelle est dans bulletin dernière période V1. | V2 |
 | Dashboard audit trail cross-écoles côté fondateur | Table `notes_audit` existe mais pas de vue fondateur. | Module Fondateur dédié |
+| Capture du `students.student_type` à l'inscription | Le champ est ajouté par S3D en DB, mais la mise à jour du wizard d'inscription (StepStudent) est un **patch S3B.1** distinct. En attendant, éditable à la main via un écran fiche élève à créer ou par backfill. | S3B.1 |
+| Filtre recouvrement par `student_type` | Les affectés d'État sont payés par le gouvernement, ne doivent pas apparaître dans le recouvrement standard. → **Patch S3A.1**. | S3A.1 |
 
 ---
 
@@ -614,6 +623,9 @@ S3D assume que **l'école existe déjà en DB** et que **le manager dispose d'un
 
 **Ce que le manager peut compléter dans S3D** :
 - Toutes les colonnes branding (`display_name`, `motto`, `address`, `postal_address`, `logo_url`, `stamp_url`, `director_signature_url`, `accent_color`, `bulletin_config`) via l'éditeur `/pedagogy/bulletin-template` (étape 2b, facultative)
+
+**Backfill data one-off à prévoir en 3D.1** :
+- Marquer tous les `students` existants à `student_type = 'not_affected'` par défaut. L'école ajustera les cas via un écran fiche élève (édition ponctuelle) — écran à cadrer dans **S3B.1**.
 
 ---
 
