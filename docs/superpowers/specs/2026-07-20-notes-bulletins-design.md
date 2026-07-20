@@ -258,6 +258,10 @@ useGeneratePreviewPdf(schoolId)
 | `classrooms` | `principal_teacher_id` | UUID FK → `teacher_profiles(id)` nullable | Prof principal de la classe |
 | `teacher_profiles` | `signature_url` | TEXT nullable | Signature scannée du prof principal pour bulletin PDF (Storage `school-assets`) |
 | `students` | `student_type` | TEXT CHECK IN ('affected', 'not_affected', 'social_case') DEFAULT 'not_affected' | Type d'élève (affecté d'État / non-affecté / cas social). Transverse — utilisé par S3B (capture inscription, à patcher), S3A (filtre recouvrement), S3D (affichage bulletin). |
+| `student_school_year_loggings` | `is_redoublant` | BOOLEAN DEFAULT false | Redoublant sur cette inscription (change chaque année). Capture UI en S3B.2. |
+| `student_school_year_loggings` | `lv2_subject_id` | UUID FK → `subjects(id)` NULLABLE | Choix LV2 de l'élève (Espagnol / Allemand / autre). Filtre `compute_bulletin` pour n'afficher que le LV2 choisi. Capture UI en S3B.2. |
+| `student_school_year_loggings` | `mat_secondaire_subject_id` | UUID FK → `subjects(id)` NULLABLE | Matière optionnelle/spécialisation. Filtre bulletin. Capture UI en S3B.2. |
+| `student_school_year_loggings` | `eps_exemption` | BOOLEAN DEFAULT false | Dispense EPS annuelle (raison médicale). Bulletin marque "Dispensé" au lieu d'une note. Capture UI en S3B.2. |
 | `notes` | `is_exempted` | BOOLEAN DEFAULT false | Dispense (médicale, sport) |
 | `notes` | `updated_by` | UUID FK → `auth.users(id)` nullable | Audit trail |
 | `bulletins` | `status` | TEXT enum ('draft','ready_censeur','ready_director','published') DEFAULT 'draft' | State machine |
@@ -324,7 +328,7 @@ useGeneratePreviewPdf(schoolId)
 
 | Fonction | But | Statut |
 |---|---|---|
-| `compute_bulletin(classroom_id, periode_id)` | Existante — calcul moyennes matière + générale + rang + stats classe | Ajustement mineur : filtrer par `school_year_id` implicite via `periode` |
+| `compute_bulletin(classroom_id, periode_id)` | Existante — calcul moyennes matière + générale + rang + stats classe | Ajustement : filtrer par `school_year_id` implicite via `periode` + **filtrer les matières optionnelles selon `student_school_year_loggings.lv2_subject_id` et `.mat_secondaire_subject_id`** (ne pas noter un élève sur une matière qu'il n'a pas choisie) |
 | `advance_bulletin_status(bulletin_id, target, actor_id, reason?)` | Nouvelle — transitions state machine + write dans `bulletin_versions`, verrou pessimiste `SELECT ... FOR UPDATE` | À écrire |
 | `seed_pedagogy_for_school(school_id, cycle_code)` | Nouvelle — insère `subject_groups` + `subjects` depuis templates | À écrire |
 | `seed_structure_for_school(school_id, template_key)` | Nouvelle — insère `cycles` + `levels` + `classrooms` depuis templates | À écrire |
@@ -605,6 +609,7 @@ Ce script tourne une seule fois post-déploiement. Le manager de chaque école p
 | Dashboard audit trail cross-écoles côté fondateur | Table `notes_audit` existe mais pas de vue fondateur. | Module Fondateur dédié |
 | Capture du `students.student_type` à l'inscription | Le champ est ajouté par S3D en DB, mais la mise à jour du wizard d'inscription (StepStudent) est un **patch S3B.1** distinct. En attendant, éditable à la main via un écran fiche élève à créer ou par backfill. | S3B.1 |
 | Filtre recouvrement par `student_type` | Les affectés d'État sont payés par le gouvernement, ne doivent pas apparaître dans le recouvrement standard. → **Patch S3A.1**. | S3A.1 |
+| Découplage création élève / inscription | Le RPC `enroll_new_student` couple identité + affectation classe + ledger. Besoin : pouvoir créer un élève sans l'inscrire (parent visite mais ne finalise pas). Split en `create_student` + `enroll_student_in_classroom`. Champs UI additionnels : `numero_extrait`, `nationalite`, `lieu_naissance`, `photo_url`, `email`, `is_redoublant`, `lv2_subject_id`, `mat_secondaire_subject_id`, `eps_exemption`. | S3B.2 |
 
 ---
 
