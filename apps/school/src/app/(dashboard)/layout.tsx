@@ -15,6 +15,7 @@ import {
   RefreshCw,
   MoreHorizontal,
   ChevronDown,
+  GraduationCap,
 } from 'lucide-react';
 import {
   AppShell,
@@ -46,6 +47,12 @@ const sections = [
       { href: '/dashboard/students', label: 'Eleves', icon: Users, badge: <Badge>1573</Badge> as React.ReactNode | null },
       { href: '/dashboard/enrollment', label: 'Inscription', icon: UserPlus, badge: null as React.ReactNode | null },
       { href: '/dashboard/enrollment/passage', label: "Passage d'annee", icon: RefreshCw, badge: null as React.ReactNode | null },
+    ],
+  },
+  {
+    label: 'Pedagogie',
+    items: [
+      { href: '/dashboard/pedagogy', label: 'Rentree', icon: GraduationCap, badge: null as React.ReactNode | null },
     ],
   },
   {
