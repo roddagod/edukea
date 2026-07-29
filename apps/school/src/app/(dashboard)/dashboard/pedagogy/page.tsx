@@ -39,20 +39,22 @@ export default async function PedagogyPage({ searchParams }: PageProps) {
   const schoolId = ctx.current_school.id;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <div className="space-y-1">
-        <div className="flex items-center gap-3">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-slate-900">Rentree pedagogique</h1>
+          <p className="text-sm text-slate-600">Point de depart pour parametrer votre annee scolaire</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           {ctx.is_superadmin && (
             <span className="rounded-md bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
               Superadmin · {ctx.current_school.name}
             </span>
           )}
+          {ctx.is_superadmin && ctx.schools.length > 1 && (
+            <SchoolSwitcher schools={ctx.schools} currentId={schoolId} />
+          )}
         </div>
-        <p className="text-sm text-slate-600">Point de depart pour parametrer votre annee scolaire</p>
-        {ctx.is_superadmin && ctx.schools.length > 1 && (
-          <SchoolSwitcher schools={ctx.schools} currentId={schoolId} />
-        )}
       </div>
       <PedagogyChecklist schoolId={schoolId} />
     </div>

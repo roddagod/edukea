@@ -25,7 +25,7 @@ export default async function StructurePage({ searchParams }: PageProps) {
   if (!ctx?.current_school) redirect('/dashboard');
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       <a href="/dashboard/pedagogy" className="text-xs text-slate-500 hover:text-orange-600">← Retour au Hub Rentrée</a>
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-slate-900">Structure école</h1>

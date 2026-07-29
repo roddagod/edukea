@@ -53,8 +53,8 @@ export function PeriodesEditor({ schoolId }: Props) {
   return (
     <div className="space-y-4">
       {hasNone && (
-        <div className="rounded-xl border-2 border-dashed border-orange-200 bg-orange-50 p-4 text-center">
-          <p className="mb-3 text-sm text-slate-700">
+        <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50 p-6 text-center sm:flex-row sm:justify-between sm:text-left">
+          <p className="text-sm text-slate-700">
             Aucune période configurée pour l&apos;année {status?.school_year_name}.
           </p>
           <Button onClick={() => gen.mutate({ schoolYearId: yearId, schoolId })} disabled={gen.isPending}>
@@ -64,37 +64,71 @@ export function PeriodesEditor({ schoolId }: Props) {
         </div>
       )}
 
-      {(periodes ?? []).map((p) => (
-        <div key={p.id} className="rounded-xl border bg-white p-4">
-          <div className="grid grid-cols-6 gap-2 items-center">
-            <input
-              className="col-span-2 rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-              defaultValue={p.name}
-              onBlur={(e) => handleUpsert(p, { name: e.target.value })}
-            />
-            <input
-              type="date"
-              className="col-span-1 rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-              defaultValue={p.start_date}
-              onBlur={(e) => handleUpsert(p, { start_date: e.target.value })}
-            />
-            <input
-              type="date"
-              className="col-span-1 rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-              defaultValue={p.end_date}
-              onBlur={(e) => handleUpsert(p, { end_date: e.target.value })}
-            />
-            <div className="text-sm text-slate-500">#{p.order}</div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => del.mutate({ id: p.id, schoolYearId: yearId, schoolId })}
-            >
-              <Trash2 className="h-4 w-4 text-red-500" />
-            </Button>
-          </div>
+      {(periodes?.length ?? 0) > 0 && (
+        <div className="overflow-x-auto rounded-xl border border-slate-200">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50">
+                <th className="px-4 py-3 text-left font-medium text-slate-600">#</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Nom</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Date début</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Date fin</th>
+                <th className="px-4 py-3 text-left font-medium text-slate-600">Publié</th>
+                <th className="px-4 py-3 text-right font-medium text-slate-600">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(periodes ?? []).map((p, i) => (
+                <tr
+                  key={p.id}
+                  className={`border-b border-slate-100 last:border-0 hover:bg-slate-50 ${i % 2 === 1 ? 'bg-slate-50/40' : 'bg-white'}`}
+                >
+                  <td className="px-4 py-2 text-slate-400">#{p.order}</td>
+                  <td className="px-4 py-2">
+                    <input
+                      className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      defaultValue={p.name}
+                      onBlur={(e) => handleUpsert(p, { name: e.target.value })}
+                    />
+                  </td>
+                  <td className="px-4 py-2">
+                    <input
+                      type="date"
+                      className="rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      defaultValue={p.start_date}
+                      onBlur={(e) => handleUpsert(p, { start_date: e.target.value })}
+                    />
+                  </td>
+                  <td className="px-4 py-2">
+                    <input
+                      type="date"
+                      className="rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      defaultValue={p.end_date}
+                      onBlur={(e) => handleUpsert(p, { end_date: e.target.value })}
+                    />
+                  </td>
+                  <td className="px-4 py-2">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${p.is_published ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                      {p.is_published ? 'Oui' : 'Non'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => del.mutate({ id: p.id, schoolYearId: yearId, schoolId })}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      ))}
+      )}
     </div>
   );
 }

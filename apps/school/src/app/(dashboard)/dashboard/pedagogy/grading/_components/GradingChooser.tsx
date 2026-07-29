@@ -8,6 +8,13 @@ interface Props { schoolId: string; }
 
 const OPTIONS = [10, 20, 100] as const;
 
+/** Returns a representative example score converted to the given max. */
+function exampleScore(max: number): string {
+  // 70% of max, rounded to 1 decimal if needed
+  const raw = max * 0.7;
+  return Number.isInteger(raw) ? String(raw) : raw.toFixed(1);
+}
+
 export function GradingChooser({ schoolId }: Props) {
   const [current, setCurrent] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,24 +35,27 @@ export function GradingChooser({ schoolId }: Props) {
   if (loading) return <Skeleton className="h-24 w-full" />;
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-6">
         {OPTIONS.map((v) => (
           <button
             key={v}
             onClick={() => { setCurrent(v); update.mutate({ schoolId, maxScore: v }); }}
-            className={`rounded-xl border-2 p-6 text-center transition ${
+            className={`rounded-xl border-2 p-8 text-center transition ${
               current === v ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:border-slate-300'
             }`}
           >
-            <div className="text-3xl font-bold text-slate-900">/{v}</div>
+            <div className="text-4xl font-bold text-slate-900">/{v}</div>
             <div className="mt-1 text-xs text-slate-500">Notation sur {v}</div>
+            <div className="mt-3 text-sm text-slate-600">
+              Ex. : {exampleScore(v)}/{v}
+            </div>
           </button>
         ))}
       </div>
-      <p className="text-xs text-slate-500">
+      <div className="rounded-lg bg-slate-50 px-4 py-3 text-xs text-slate-500">
         Modifier le barème n&apos;impacte pas les évaluations déjà saisies. Le nouveau barème s&apos;appliquera aux nouvelles évaluations.
-      </p>
+      </div>
     </div>
   );
 }

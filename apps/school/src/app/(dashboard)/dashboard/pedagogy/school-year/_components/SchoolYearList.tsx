@@ -20,44 +20,77 @@ export function SchoolYearList({ schoolId }: Props) {
   const [editing, setEditing] = useState<SchoolYear | null>(null);
   const [creating, setCreating] = useState(false);
 
-  if (isLoading) return <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <Button onClick={() => setCreating(true)}>
-        <Plus className="mr-2 h-4 w-4" /> Nouvelle année
-      </Button>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-slate-500">{years?.length ?? 0} année(s) scolaire(s)</p>
+        <Button onClick={() => setCreating(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Nouvelle année
+        </Button>
+      </div>
 
-      <div className="space-y-2">
-        {(years ?? []).map((y) => (
-          <div key={y.id} className="flex items-center gap-4 rounded-xl border bg-white p-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <p className="font-medium text-slate-900">{y.name}</p>
-                {isActive(y) && <Badge>Active</Badge>}
-                <span className="text-xs text-slate-500">
-                  {y.periode_type ?? '—'} · {y.date_start ?? '?'} → {y.date_end ?? '?'}
-                </span>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setEditing(y)}><Pencil className="h-4 w-4" /></Button>
-            <Button
-              variant="ghost" size="sm"
-              onClick={() => {
-                if (confirm(`Supprimer ${y.name} ? (soft-delete)`)) {
-                  deleteYear.mutate({ id: y.id, schoolId });
-                }
-              }}
-            >
-              <Trash2 className="h-4 w-4 text-red-500" />
-            </Button>
-          </div>
-        ))}
-        {years?.length === 0 && (
-          <p className="rounded-xl border border-dashed p-6 text-center text-sm text-slate-500">
-            Aucune année scolaire configurée. Créez-en une pour commencer.
-          </p>
-        )}
+      <div className="overflow-x-auto rounded-xl border border-slate-200">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50">
+              <th className="px-4 py-3 text-left font-medium text-slate-600">Nom</th>
+              <th className="px-4 py-3 text-left font-medium text-slate-600">Type</th>
+              <th className="px-4 py-3 text-left font-medium text-slate-600">Début</th>
+              <th className="px-4 py-3 text-left font-medium text-slate-600">Fin</th>
+              <th className="px-4 py-3 text-left font-medium text-slate-600">Statut</th>
+              <th className="px-4 py-3 text-right font-medium text-slate-600">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(years ?? []).map((y, i) => (
+              <tr
+                key={y.id}
+                className={`border-b border-slate-100 last:border-0 hover:bg-slate-50 ${i % 2 === 1 ? 'bg-slate-50/40' : 'bg-white'}`}
+              >
+                <td className="px-4 py-3 font-medium text-slate-900">{y.name}</td>
+                <td className="px-4 py-3 text-slate-500">{y.periode_type ?? '—'}</td>
+                <td className="px-4 py-3 text-slate-500">{y.date_start ?? '—'}</td>
+                <td className="px-4 py-3 text-slate-500">{y.date_end ?? '—'}</td>
+                <td className="px-4 py-3">
+                  {isActive(y) ? <Badge>Active</Badge> : <span className="text-slate-400">—</span>}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => setEditing(y)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm(`Supprimer ${y.name} ? (soft-delete)`)) {
+                          deleteYear.mutate({ id: y.id, schoolId });
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {(years?.length ?? 0) === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                  Aucune année scolaire configurée. Créez-en une pour commencer.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {(editing || creating) && (
