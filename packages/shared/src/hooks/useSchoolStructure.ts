@@ -23,11 +23,16 @@ export interface StructureCycle {
   levels: StructureLevel[];
 }
 
+export interface SchoolStructureData {
+  tree: StructureCycle[];
+  orphanClassrooms: StructureClassroom[];
+}
+
 export function useSchoolStructure(schoolId: string | undefined) {
-  return useQuery<StructureCycle[]>({
+  return useQuery<SchoolStructureData>({
     queryKey: ['school-structure', schoolId],
     queryFn: async () => {
-      if (!schoolId) return [];
+      if (!schoolId) return { tree: [], orphanClassrooms: [] };
       const [cyclesRes, levelsRes, classroomsRes] = await Promise.all([
         supabase.from('cycles').select('*').eq('school_id', schoolId).order('name'),
         supabase.from('levels').select('*').eq('school_id', schoolId).order('order'),
@@ -38,14 +43,27 @@ export function useSchoolStructure(schoolId: string | undefined) {
       if (classroomsRes.error) throw classroomsRes.error;
 
       const classrooms = (classroomsRes.data ?? []) as StructureClassroom[];
-      const levels = ((levelsRes.data ?? []) as StructureLevel[]).map((l) => ({
-        ...l,
-        classrooms: classrooms.filter((c) => c.level_id === l.id),
-      }));
-      return ((cyclesRes.data ?? []) as StructureCycle[]).map((c) => ({
+      const rawLevels = (levelsRes.data ?? []) as StructureLevel[];
+      const schoolLevelIds = new Set(rawLevels.map((l) => l.id));
+
+      // Orphelines : classrooms de school_id dont level_id n'est pas dans les levels de l'école
+      const orphanClassrooms = classrooms.filter((c) => !schoolLevelIds.has(c.level_id));
+
+      const attachedClassrooms = classrooms.filter((c) => schoolLevelIds.has(c.level_id));
+
+      const levels = rawLevels
+        .filter((l) => l.cycle_id) // exclut levels sans cycle (aussi orphelins)
+        .map((l) => ({
+          ...l,
+          classrooms: attachedClassrooms.filter((c) => c.level_id === l.id),
+        }));
+
+      const tree = ((cyclesRes.data ?? []) as StructureCycle[]).map((c) => ({
         ...c,
         levels: levels.filter((l) => l.cycle_id === c.id),
       }));
+
+      return { tree, orphanClassrooms };
     },
     enabled: !!schoolId,
   });
