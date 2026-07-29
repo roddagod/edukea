@@ -13,7 +13,7 @@ export interface StructureLevel {
   school_id: string;
   cycle_id: string;
   name: string;
-  order: number;
+  order_by: number;
   classrooms: StructureClassroom[];
 }
 export interface StructureCycle {
@@ -35,7 +35,7 @@ export function useSchoolStructure(schoolId: string | undefined) {
       if (!schoolId) return { tree: [], orphanClassrooms: [] };
       const [cyclesRes, levelsRes, classroomsRes] = await Promise.all([
         supabase.from('cycles').select('*').eq('school_id', schoolId).order('name'),
-        supabase.from('levels').select('*').eq('school_id', schoolId).order('order'),
+        supabase.from('levels').select('*').eq('school_id', schoolId).order('order_by'),
         supabase.from('classrooms').select('*').eq('school_id', schoolId).order('name'),
       ]);
       if (cyclesRes.error) throw cyclesRes.error;

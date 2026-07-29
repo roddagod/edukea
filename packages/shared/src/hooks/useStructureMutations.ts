@@ -12,7 +12,7 @@ export interface LevelInput {
   school_id: string;
   cycle_id: string;
   name: string;
-  order: number;
+  order_by: number;
 }
 
 export interface ClassroomInput {
@@ -60,7 +60,7 @@ export function useUpsertLevel() {
         school_id: input.school_id,
         cycle_id: input.cycle_id,
         name: input.name,
-        order: input.order,
+        order_by: input.order_by,
       };
       const { data, error } = await supabase.from('levels').upsert(payload).select().single();
       if (error) throw error;

@@ -53,7 +53,7 @@ export function StructureDetail({ schoolId, structure, selected, onSelect }: Pro
     if (selected.type === 'cycle') await uc.mutateAsync({ id: selected.id, school_id: schoolId, name });
     else if (selected.type === 'level') {
       const l = findLevel(selected.id);
-      if (l) await ul.mutateAsync({ id: l.id, school_id: schoolId, cycle_id: l.cycle_id, name, order: l.order });
+      if (l) await ul.mutateAsync({ id: l.id, school_id: schoolId, cycle_id: l.cycle_id, name, order_by: l.order_by });
     } else if (selected.type === 'classroom') {
       const c = findClassroom(selected.id);
       if (c) await ur.mutateAsync({ id: c.id, school_id: schoolId, level_id: c.level_id, name });
@@ -73,8 +73,8 @@ export function StructureDetail({ schoolId, structure, selected, onSelect }: Pro
             if (n) {
               const cycle = findCycle(selected.id);
               if (cycle) {
-                const nextOrder = Math.max(0, ...cycle.levels.map((l) => l.order)) + 1;
-                await ul.mutateAsync({ school_id: schoolId, cycle_id: cycle.id, name: n, order: nextOrder });
+                const nextOrder = Math.max(0, ...cycle.levels.map((l) => l.order_by)) + 1;
+                await ul.mutateAsync({ school_id: schoolId, cycle_id: cycle.id, name: n, order_by: nextOrder });
               }
             }
           }}>
