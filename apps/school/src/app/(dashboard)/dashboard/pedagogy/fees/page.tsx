@@ -26,7 +26,7 @@ export default async function FeesPage({ searchParams }: PageProps) {
   if (!ctx?.current_school) redirect('/dashboard');
 
   return (
-    <div className="mx-auto max-w-6xl p-4 md:p-6 lg:p-8">
+    <div className="mx-auto max-w-7xl p-4 md:p-6 lg:p-8">
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="space-y-1">
           <a href="/dashboard/pedagogy" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-orange-600">
