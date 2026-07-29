@@ -28,3 +28,8 @@ export * from './usePeriodes';
 export * from './useStudentTypes';
 export * from './useSchoolStructure';
 export * from './useStructureTemplates';
+export * from './useSchoolYearMutations';
+export * from './usePeriodeMutations';
+export * from './useStudentTypeMutations';
+export * from './useStructureMutations';
+export * from './useSchoolBaremeMutation';
