@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, UserCheck } from 'lucide-react';
 import {
   FormField, Input, Checkbox, DatePicker, RadioCards, SearchInput,
   Card, Avatar, toneFromSeed,
 } from '@edukea/ui';
-import { useStudentSearch } from '@edukea/shared';
+import { useStudentSearch, useStudentTypes } from '@edukea/shared';
 import type { EnrollmentFormState } from '../_types';
 
 export function StepStudent({
@@ -15,14 +15,26 @@ export function StepStudent({
   qsSuffix,
   value,
   onChange,
+  typeStudentId,
+  onTypeStudentChange,
 }: {
   schoolId: string | undefined;
   qsSuffix: string;
   value: EnrollmentFormState['student'];
   onChange: (v: EnrollmentFormState['student']) => void;
+  typeStudentId: string | undefined;
+  onTypeStudentChange: (id: string) => void;
 }) {
   const [query, setQuery] = useState('');
   const { data: results } = useStudentSearch(schoolId, query);
+  const { data: studentTypes } = useStudentTypes(schoolId);
+
+  // Auto-sélectionner le type par défaut (is_default=true, sinon le premier)
+  useEffect(() => {
+    if (typeStudentId || !studentTypes?.length) return;
+    const defaultType = studentTypes.find((t) => t.is_default) ?? studentTypes[0];
+    if (defaultType) onTypeStudentChange(defaultType.id);
+  }, [studentTypes, typeStudentId, onTypeStudentChange]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -78,6 +90,19 @@ export function StepStudent({
             value={value.sex || undefined}
             onChange={(v) => onChange({ ...value, sex: v as 'M' | 'F' })}
           />
+        </FormField>
+        <FormField label="Type d'élève" required>
+          <select
+            value={typeStudentId ?? ''}
+            onChange={(e) => onTypeStudentChange(e.target.value)}
+            required
+            className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm"
+          >
+            <option value="">— Sélectionner —</option>
+            {(studentTypes ?? []).map((t) => (
+              <option key={t.id} value={t.id}>{t.label}</option>
+            ))}
+          </select>
         </FormField>
         <FormField label="Date de naissance" required>
           <DatePicker value={value.birthdate} onChange={(e) => onChange({ ...value, birthdate: e.target.value })} />

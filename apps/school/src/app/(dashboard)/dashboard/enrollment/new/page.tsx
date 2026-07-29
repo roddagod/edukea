@@ -89,7 +89,7 @@ export default function NewEnrollmentPage() {
 
   const isValid = (() => {
     switch (current) {
-      case 0: return isStepStudentValid(state.student);
+      case 0: return isStepStudentValid(state.student, state.typeStudentId);
       case 1: return isStepFamilyValid(state);
       case 2: return isStepClassroomValid(state);
       case 3: return isStepFeesValid(state);
@@ -243,7 +243,7 @@ export default function NewEnrollmentPage() {
             Brouillon sauvegardé à {savedAtLabel}
           </div>
         )}
-        {current === 0 && <StepStudent schoolId={schoolId} qsSuffix={qs} value={state.student} onChange={(v) => setState({ ...state, student: v })} />}
+        {current === 0 && <StepStudent schoolId={schoolId} qsSuffix={qs} value={state.student} onChange={(v) => setState({ ...state, student: v })} typeStudentId={state.typeStudentId} onTypeStudentChange={(id) => setState({ ...state, typeStudentId: id })} />}
         {current === 1 && <StepFamily schoolId={schoolId} value={state} onChange={setState} />}
         {current === 2 && <StepClassroom schoolId={schoolId} schoolYearId={schoolYearId} value={state} onChange={setState} />}
         {current === 3 && <StepFeesPayment schoolYearId={schoolYearId} value={state} onChange={setState} />}
