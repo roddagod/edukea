@@ -7,6 +7,7 @@ export interface PedagogySetupStatus {
   school_id: string;
   school_year_id: string | null;
   school_year_name: string | null;
+  latest_school_year_name: string | null;
   periode_type: 'trimestre' | 'semestre' | null;
   step_year_done: boolean;
   step_grading_done: boolean;
@@ -54,7 +55,11 @@ function computeSteps(data: PedagogySetupStatus): PedagogyStepsMap {
       order: 1,
       label: 'Année scolaire',
       status: data.step_year_done ? 'done' : 'todo',
-      detail: data.school_year_name ?? 'À créer',
+      detail: data.step_year_done
+        ? (data.school_year_name ?? '—')
+        : data.latest_school_year_name
+          ? `Dernière : ${data.latest_school_year_name} — nouvelle année à créer`
+          : 'Aucune année · À créer',
       route: '/dashboard/pedagogy/school-year',
     },
     grading: {

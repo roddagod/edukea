@@ -4147,6 +4147,7 @@ export type Database = {
           classrooms_count: number | null
           classrooms_with_principal_count: number | null
           fee_lines_count: number | null
+          latest_school_year_name: string | null
           levels_count: number | null
           periode_type: string | null
           periodes_count: number | null
