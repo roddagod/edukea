@@ -5102,6 +5102,10 @@ export type Database = {
         Args: { p_requested_school_id?: string; p_requested_year_id?: string }
         Returns: Json
       }
+      hydrate_fees_from_school_template: {
+        Args: { p_school_id: string }
+        Returns: Json
+      }
       is_admin: { Args: never; Returns: boolean }
       is_school_staff: { Args: never; Returns: boolean }
       ledger_is_balanced: { Args: { p_tx: string }; Returns: boolean }

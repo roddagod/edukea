@@ -39,3 +39,4 @@ export * from './useFeesOverviewMatrix';
 export * from './useClassroomEffectiveFees';
 export * from './useClassroomEffectiveInstallments';
 export * from './useFeeMutations';
+export * from './useHydrateFeesFromTemplate';

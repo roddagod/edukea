@@ -50,3 +50,4 @@ export * from './hooks/useFeesOverviewMatrix';
 export * from './hooks/useClassroomEffectiveFees';
 export * from './hooks/useClassroomEffectiveInstallments';
 export * from './hooks/useFeeMutations';
+export * from './hooks/useHydrateFeesFromTemplate';
