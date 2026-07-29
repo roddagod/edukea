@@ -32,8 +32,8 @@ export const DEFAULT_ENROLLMENT_STATE: EnrollmentFormState = {
   firstPayment: { amount: 0, source: 'cash', memo: '' },
 };
 
-export function isStepStudentValid(s: EnrollmentFormState['student']): boolean {
-  return !!s.firstname.trim() && !!s.lastname.trim() && !!s.sex && !!s.birthdate;
+export function isStepStudentValid(s: EnrollmentFormState['student'], typeStudentId: string | undefined): boolean {
+  return !!s.firstname.trim() && !!s.lastname.trim() && !!s.sex && !!s.birthdate && !!typeStudentId;
 }
 
 export function isStepFamilyValid(state: EnrollmentFormState): boolean {

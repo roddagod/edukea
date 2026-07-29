@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { FormField, Select, RadioCards } from '@edukea/ui';
-import { useRecoveryClasses, useSchoolClassrooms } from '@edukea/shared';
+import { useRecoveryClasses, useSchoolClassrooms, useStudentTypes, useClassroomEffectiveFees } from '@edukea/shared';
 import type { EnrollmentFormState } from '../_types';
 
 export function StepClassroom({
@@ -18,6 +18,12 @@ export function StepClassroom({
 }) {
   const { data: allClassrooms } = useSchoolClassrooms(schoolId, schoolYearId);
   const { data: classesSummary } = useRecoveryClasses(schoolId, schoolYearId);
+  const { data: studentTypes } = useStudentTypes(schoolId);
+
+  const { data: effectiveFees, isLoading: feesLoading } = useClassroomEffectiveFees(
+    value.classroomId || undefined,
+    value.typeStudentId || undefined,
+  );
 
   // Options triées par nom
   const classroomOptions = useMemo(
@@ -25,7 +31,16 @@ export function StepClassroom({
     [allClassrooms],
   );
 
+  const studentTypeOptions = useMemo(
+    () => (studentTypes ?? []).map((t) => ({ value: t.id, label: t.label })),
+    [studentTypes],
+  );
+
   const selectedSummary = classesSummary?.find((c) => c.classroom_id === value.classroomId);
+
+  const totalMandatory = (effectiveFees ?? [])
+    .filter((f) => !['canteen', 'transport'].includes(f.category))
+    .reduce((s, f) => s + f.amount, 0);
 
   return (
     <div className="flex flex-col gap-4">
@@ -49,15 +64,41 @@ export function StepClassroom({
         <RadioCards
           name="type_student"
           columns={3}
-          options={[
-            { value: 'new', label: 'Nouveau' },
-            { value: 'repeat', label: 'Redoublant' },
-            { value: 'transfer', label: 'Transfert' },
-          ]}
-          value={undefined /* on ne stocke pas type_student_id V1 — placeholder */}
-          onChange={() => {}}
+          options={studentTypeOptions}
+          value={value.typeStudentId}
+          onChange={(typeId) => onChange({ ...value, typeStudentId: typeId })}
         />
       </FormField>
+
+      {value.classroomId && value.typeStudentId && !feesLoading && (
+        <div className="mt-1">
+          {(effectiveFees ?? []).length === 0 ? (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+              <p className="font-medium mb-1">Aucun frais configuré pour cette combinaison classe × type d&apos;élève.</p>
+              <p>
+                Contactez le manager pour configurer les frais dans{' '}
+                <code className="rounded bg-amber-100 px-1 text-xs">/pedagogy/fees</code>.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-line bg-slate-50 p-4 text-sm">
+              <p className="mb-3 font-medium text-ink">Frais à prévoir :</p>
+              <ul className="space-y-1">
+                {(effectiveFees ?? []).map((f, i) => (
+                  <li key={`${f.label}-${i}`} className="flex justify-between text-ink-2">
+                    <span>{f.label}</span>
+                    <span className="font-mono">{f.amount.toLocaleString('fr-FR')} XAF</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 border-t border-line pt-2 flex justify-between font-semibold text-ink">
+                <span>Total obligatoire</span>
+                <span className="font-mono">{totalMandatory.toLocaleString('fr-FR')} XAF</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

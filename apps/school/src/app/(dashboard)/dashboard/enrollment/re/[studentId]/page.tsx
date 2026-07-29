@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
-import { PageHeader, Wizard, Card, FormField, Select, Checkbox, Input, SegmentedControl, RadioCards, StatusPill } from '@edukea/ui';
-import { useSchoolContext, useReenrollStudent, useSchoolClassrooms, useClassroomFees, supabase } from '@edukea/shared';
+import { PageHeader, Wizard, Card, FormField, Select, Checkbox, Input, SegmentedControl, RadioCards, Skeleton } from '@edukea/ui';
+import { useSchoolContext, useReenrollStudent, useSchoolClassrooms, useClassroomEffectiveFees, useClassroomEffectiveInstallments, supabase } from '@edukea/shared';
+import { FeesLinesTable } from '../../new/_steps/FeesLinesTable';
+import { InstallmentsSchedule } from '../../new/_steps/InstallmentsSchedule';
+import { PaymentAllocationPreview } from '../../new/_steps/PaymentAllocationPreview';
 
 function fmt(n: number): string {
   return new Intl.NumberFormat('fr-FR').format(n).replace(/[  ]/g, ' ');
@@ -17,6 +20,7 @@ interface StudentBrief {
   lastname: string | null;
   matricule: string | null;
   school_id: string;
+  student_type_id: string | null;
 }
 interface PrevSSYL {
   id: string;
@@ -45,25 +49,36 @@ export default function ReenrollPage() {
   const [prev, setPrev] = useState<PrevSSYL | null>(null);
   const [current, setCurrent] = useState(0);
   const [classroomId, setClassroomId] = useState('');
+  const [studentTypeId, setStudentTypeId] = useState<string | null>(null);
   const [decision, setDecision] = useState<'advance' | 'repeat'>('advance');
   const [firstPaymentEnabled, setFirstPaymentEnabled] = useState(true);
   const [firstPayment, setFirstPayment] = useState<{ amount: number; source: 'cash' | 'bank_transfer' | 'internal'; memo: string }>({ amount: 0, source: 'cash', memo: '' });
   const [error, setError] = useState<string | null>(null);
 
   const { data: classrooms } = useSchoolClassrooms(schoolId, schoolYearId);
-  const { data: fees } = useClassroomFees(classroomId, schoolYearId);
+  const { data: effectiveFees, isLoading: feesLoading } = useClassroomEffectiveFees(
+    classroomId || undefined,
+    studentTypeId || undefined,
+  );
+  const { data: effectiveInstallments, isLoading: instLoading } = useClassroomEffectiveInstallments(
+    classroomId || undefined,
+    studentTypeId || undefined,
+  );
   const reenroll = useReenrollStudent();
 
-  // Fetch student + previous ssyl
+  // Fetch student (with student_type_id) + previous ssyl
   useEffect(() => {
     if (!params.studentId) return;
     (async () => {
       const { data: s } = await supabase
         .from('students')
-        .select('id, firstname, lastname, matricule, school_id')
+        .select('id, firstname, lastname, matricule, school_id, student_type_id')
         .eq('id', params.studentId)
         .maybeSingle();
-      setStudent((s as StudentBrief | null) ?? null);
+      const typedStudent = (s as StudentBrief | null) ?? null;
+      setStudent(typedStudent);
+      setStudentTypeId(typedStudent?.student_type_id ?? null);
+
       const { data: p } = await supabase
         .from('student_school_year_loggings')
         .select('id, classroom_id, school_year_id')
@@ -76,13 +91,18 @@ export default function ReenrollPage() {
     })();
   }, [params.studentId]);
 
-  // Pré-remplir firstPayment.amount avec registration_fees quand fees arrive
+  // Auto-set firstPayment.amount depuis la 1re échéance quand fees/installments arrivent
   useEffect(() => {
-    if (fees?.fees && firstPayment.amount === 0) {
-      setFirstPayment((v) => ({ ...v, amount: fees.fees!.registration_fees }));
+    if (effectiveFees && effectiveFees.length > 0 && firstPayment.amount === 0) {
+      const firstInstAmt = effectiveInstallments?.[0]?.amount ?? 0;
+      setFirstPayment((v) => ({ ...v, amount: firstInstAmt }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fees?.fees?.id]);
+  }, [effectiveFees, effectiveInstallments]);
+
+  const mandatoryTotal = (effectiveFees ?? [])
+    .filter((f) => !['canteen', 'transport'].includes(f.category))
+    .reduce((s, f) => s + f.amount, 0);
 
   const qs = (() => {
     const p = new URLSearchParams();
@@ -104,8 +124,7 @@ export default function ReenrollPage() {
         school_id: schoolId,
         school_year_id: schoolYearId,
         classroom_id: classroomId,
-        school_fees_id: fees?.fees?.id,
-        billed_total: fees?.fees?.school_fees_net ?? 0,
+        billed_total: mandatoryTotal,
         previous_ssyl_id: prev?.id,
         first_payment: firstPaymentEnabled && firstPayment.amount > 0 ? firstPayment : undefined,
       });
@@ -177,42 +196,99 @@ export default function ReenrollPage() {
         )}
 
         {current === 2 && (
-          <div className="flex flex-col gap-4">
-            {fees?.fees && (
-              <div className="rounded-md border border-line bg-line-soft/50 p-3 text-body-sm text-ink-3">
-                Barème sélectionné · Net à payer <span className="font-display font-semibold tabular-nums text-ink">{fmt(fees.fees.school_fees_net)} FCFA</span>
+          <div className="flex flex-col gap-5">
+            {/* Loading */}
+            {(feesLoading || instLoading) && <Skeleton className="h-48 w-full" />}
+
+            {/* Warning: pas de classroomId ou studentTypeId */}
+            {!feesLoading && !instLoading && classroomId && !studentTypeId && (
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+                <p className="font-medium">Type d'élève non défini pour cet élève.</p>
+                <p className="mt-1">Le type d'élève est nécessaire pour calculer les frais. Contactez un administrateur pour mettre à jour le profil.</p>
               </div>
             )}
-            <Checkbox
-              checked={firstPaymentEnabled}
-              onChange={(e) => setFirstPaymentEnabled(e.target.checked)}
-              label="Enregistrer un premier versement (recommandé)"
-            />
-            {firstPaymentEnabled && (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <FormField label="Montant" required>
-                  <Input
-                    type="text" inputMode="numeric"
-                    value={firstPayment.amount ? fmt(firstPayment.amount) : ''}
-                    onChange={(e) => setFirstPayment({ ...firstPayment, amount: Number(e.target.value.replace(/[\s ]/g, '')) || 0 })}
-                    suffix={<span className="text-body-xs">FCFA</span>}
-                  />
-                </FormField>
-                <FormField label="Mode" required>
-                  <SegmentedControl
-                    options={[
-                      { value: 'cash', label: 'Espèces' },
-                      { value: 'bank_transfer', label: 'Virement' },
-                      { value: 'internal', label: 'Autre' },
-                    ]}
-                    value={firstPayment.source}
-                    onChange={(v) => setFirstPayment({ ...firstPayment, source: v as 'cash' | 'bank_transfer' | 'internal' })}
-                  />
-                </FormField>
-                <FormField label="Note" className="sm:col-span-2">
-                  <Input value={firstPayment.memo} onChange={(e) => setFirstPayment({ ...firstPayment, memo: e.target.value })} />
-                </FormField>
+
+            {/* Warning: frais non configurés */}
+            {classroomId && studentTypeId && !feesLoading && !instLoading && (effectiveFees?.length ?? 0) === 0 && (
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+                <p className="font-medium">Aucun frais configuré pour cette classe × type d'élève.</p>
+                <p className="mt-1">Contactez le manager pour configurer les frais dans <code>/pedagogy/fees</code>.</p>
               </div>
+            )}
+
+            {/* Tableau frais */}
+            {!feesLoading && !instLoading && (effectiveFees?.length ?? 0) > 0 && (
+              <>
+                <Card>
+                  <div className="mb-2 font-display text-heading-sm font-semibold text-ink">
+                    Frais scolarité
+                  </div>
+                  <FeesLinesTable fees={effectiveFees!} />
+                </Card>
+
+                {/* Calendrier échéances */}
+                {(effectiveInstallments?.length ?? 0) > 0 && (
+                  <Card>
+                    <div className="mb-2 font-display text-heading-sm font-semibold text-ink">
+                      Calendrier de paiement
+                    </div>
+                    <InstallmentsSchedule installments={effectiveInstallments!} />
+                  </Card>
+                )}
+
+                {/* Premier versement */}
+                <Card>
+                  <Checkbox
+                    checked={firstPaymentEnabled}
+                    onChange={(e) => setFirstPaymentEnabled(e.target.checked)}
+                    label="Enregistrer un premier versement (recommandé)"
+                  />
+                  {firstPaymentEnabled && (
+                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <FormField label="Montant" required>
+                        <Input
+                          type="text" inputMode="numeric"
+                          value={firstPayment.amount ? fmt(firstPayment.amount) : ''}
+                          onChange={(e) => setFirstPayment({ ...firstPayment, amount: Number(e.target.value.replace(/[\s ]/g, '')) || 0 })}
+                          suffix={<span className="text-body-xs">FCFA</span>}
+                        />
+                      </FormField>
+                      <FormField label="Mode" required>
+                        <SegmentedControl
+                          options={[
+                            { value: 'cash', label: 'Espèces' },
+                            { value: 'bank_transfer', label: 'Virement' },
+                            { value: 'internal', label: 'Autre' },
+                          ]}
+                          value={firstPayment.source}
+                          onChange={(v) => setFirstPayment({ ...firstPayment, source: v as 'cash' | 'bank_transfer' | 'internal' })}
+                        />
+                      </FormField>
+                      <FormField label="Note (ex : Reçu 001/2026)" className="sm:col-span-2">
+                        <Input value={firstPayment.memo} onChange={(e) => setFirstPayment({ ...firstPayment, memo: e.target.value })} />
+                      </FormField>
+                    </div>
+                  )}
+                  {firstPaymentEnabled && firstPayment.amount > 0 && (effectiveInstallments?.length ?? 0) > 0 && (
+                    <div className="mt-4">
+                      <PaymentAllocationPreview
+                        installments={effectiveInstallments!}
+                        paymentAmount={firstPayment.amount}
+                      />
+                    </div>
+                  )}
+                </Card>
+
+                {/* Récapitulatif total */}
+                <div className="rounded-md border-2 border-primary/20 bg-primary/[0.03] p-4">
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-body-sm font-semibold text-ink">Net à payer</div>
+                    <div className="font-display text-heading-lg font-semibold tabular-nums text-primary">
+                      {fmt(mandatoryTotal)} <span className="text-body-sm">FCFA</span>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         )}

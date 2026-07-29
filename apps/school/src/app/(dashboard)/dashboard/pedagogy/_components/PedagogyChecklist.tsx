@@ -13,7 +13,7 @@ export function PedagogyChecklist({ schoolId }: Props) {
 
   if (isLoading || !steps) {
     return (
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 9 }).map((_, i) => (
           <Skeleton key={i} className="h-16 w-full rounded-xl" />
         ))}
@@ -47,7 +47,7 @@ export function PedagogyChecklist({ schoolId }: Props) {
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {orderedSteps.map((step) => (
           <PedagogyStepCard key={step.key} step={step} />
         ))}

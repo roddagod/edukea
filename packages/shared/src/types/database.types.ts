@@ -442,6 +442,8 @@ export type Database = {
           classroom_id: string
           created_at: string
           due_date: string
+          due_month: number
+          due_year_offset: number
           id: string
           label: string
           order: number
@@ -454,6 +456,8 @@ export type Database = {
           classroom_id: string
           created_at?: string
           due_date: string
+          due_month: number
+          due_year_offset?: number
           id?: string
           label: string
           order: number
@@ -466,6 +470,8 @@ export type Database = {
           classroom_id?: string
           created_at?: string
           due_date?: string
+          due_month?: number
+          due_year_offset?: number
           id?: string
           label?: string
           order?: number
@@ -514,6 +520,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "student_types"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classroom_fee_installments_student_type_id_fkey"
+            columns: ["student_type_id"]
+            isOneToOne: false
+            referencedRelation: "v_fees_overview_matrix"
+            referencedColumns: ["student_type_id"]
           },
         ]
       }
@@ -593,6 +606,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "student_types"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classroom_fee_lines_student_type_id_fkey"
+            columns: ["student_type_id"]
+            isOneToOne: false
+            referencedRelation: "v_fees_overview_matrix"
+            referencedColumns: ["student_type_id"]
           },
         ]
       }
@@ -1007,6 +1027,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "levels"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classrooms_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "v_fees_overview_matrix"
+            referencedColumns: ["level_id"]
           },
           {
             foreignKeyName: "classrooms_principal_teacher_id_fkey"
@@ -1922,7 +1949,8 @@ export type Database = {
           amount_percentage: number | null
           category: string
           created_at: string
-          due_date_offset_days: number
+          due_month: number
+          due_year_offset: number
           id: string
           label: string
           level_id: string
@@ -1934,7 +1962,8 @@ export type Database = {
           amount_percentage?: number | null
           category: string
           created_at?: string
-          due_date_offset_days?: number
+          due_month: number
+          due_year_offset?: number
           id?: string
           label: string
           level_id: string
@@ -1946,7 +1975,8 @@ export type Database = {
           amount_percentage?: number | null
           category?: string
           created_at?: string
-          due_date_offset_days?: number
+          due_month?: number
+          due_year_offset?: number
           id?: string
           label?: string
           level_id?: string
@@ -1962,11 +1992,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "level_fee_installments_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "v_fees_overview_matrix"
+            referencedColumns: ["level_id"]
+          },
+          {
             foreignKeyName: "level_fee_installments_student_type_id_fkey"
             columns: ["student_type_id"]
             isOneToOne: false
             referencedRelation: "student_types"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "level_fee_installments_student_type_id_fkey"
+            columns: ["student_type_id"]
+            isOneToOne: false
+            referencedRelation: "v_fees_overview_matrix"
+            referencedColumns: ["student_type_id"]
           },
         ]
       }
@@ -2013,11 +2057,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "level_fee_lines_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "v_fees_overview_matrix"
+            referencedColumns: ["level_id"]
+          },
+          {
             foreignKeyName: "level_fee_lines_student_type_id_fkey"
             columns: ["student_type_id"]
             isOneToOne: false
             referencedRelation: "student_types"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "level_fee_lines_student_type_id_fkey"
+            columns: ["student_type_id"]
+            isOneToOne: false
+            referencedRelation: "v_fees_overview_matrix"
+            referencedColumns: ["student_type_id"]
           },
         ]
       }
@@ -3255,6 +3313,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "students_student_type_id_fkey"
+            columns: ["student_type_id"]
+            isOneToOne: false
+            referencedRelation: "v_fees_overview_matrix"
+            referencedColumns: ["student_type_id"]
+          },
+          {
             foreignKeyName: "students_tutor_id_fkey"
             columns: ["tutor_id"]
             isOneToOne: false
@@ -3914,6 +3979,23 @@ export type Database = {
           },
         ]
       }
+      v_fees_overview_matrix: {
+        Row: {
+          installments_count: number | null
+          level_id: string | null
+          level_name: string | null
+          level_order: number | null
+          lines_count: number | null
+          school_id: string | null
+          student_type_code: string | null
+          student_type_id: string | null
+          student_type_label: string | null
+          student_type_order: number | null
+          total_mandatory: number | null
+          total_with_options: number | null
+        }
+        Relationships: []
+      }
       v_ledger_account_balance: {
         Row: {
           account_id: string | null
@@ -4420,6 +4502,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "classrooms_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "v_fees_overview_matrix"
+            referencedColumns: ["level_id"]
+          },
+          {
             foreignKeyName: "levels_cycle_id_fkey"
             columns: ["cycle_id"]
             isOneToOne: false
@@ -4535,6 +4624,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "levels"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classrooms_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "v_fees_overview_matrix"
+            referencedColumns: ["level_id"]
           },
           {
             foreignKeyName: "student_school_year_loggings_school_id_fkey"
@@ -4866,6 +4962,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "classrooms_level_id_fkey"
+            columns: ["from_level_id"]
+            isOneToOne: false
+            referencedRelation: "v_fees_overview_matrix"
+            referencedColumns: ["level_id"]
+          },
+          {
             foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
             columns: ["from_classroom_id"]
             isOneToOne: false
@@ -4979,6 +5082,14 @@ export type Database = {
             Args: { p_classroom_id: string; p_periode_id: string }
             Returns: undefined
           }
+      copy_fees_between_student_types: {
+        Args: {
+          p_level_id: string
+          p_source_type_id: string
+          p_target_type_id: string
+        }
+        Returns: number
+      }
       enroll_new_student: { Args: { payload: Json }; Returns: Json }
       finalize_year_advancement: {
         Args: {
@@ -4988,12 +5099,20 @@ export type Database = {
         }
         Returns: Json
       }
+      generate_default_periodes: {
+        Args: { p_school_year_id: string }
+        Returns: number
+      }
       get_parent_family_ids: { Args: never; Returns: string[] }
       get_parent_school_id: { Args: never; Returns: string }
       get_parent_student_ids: { Args: never; Returns: string[] }
       get_school_staff_school_id: { Args: never; Returns: string }
       get_user_school_context: {
         Args: { p_requested_school_id?: string; p_requested_year_id?: string }
+        Returns: Json
+      }
+      hydrate_fees_from_school_template: {
+        Args: { p_school_id: string }
         Returns: Json
       }
       is_admin: { Args: never; Returns: boolean }
