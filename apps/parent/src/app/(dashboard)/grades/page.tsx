@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { GraduationCap, BookOpen, Award } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,12 +10,16 @@ import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/layout/empty-state';
 import { LoadingPage } from '@/components/layout/loading-state';
 import { useSelectedChild } from '@/components/layout/child-selector';
-import { useGrades, usePeriodes, useBulletin, useAuth } from '@edukea/shared';
+import { useGrades, usePeriodes, useBulletin, useChildren } from '@edukea/shared';
 
 export default function GradesPage() {
   const { selectedChild, isLoading: childLoading } = useSelectedChild();
-  const { profile } = useAuth();
-  const { data: periodes = [] } = usePeriodes(profile?.school_id);
+  const { data: children = [] } = useChildren();
+  const currentSchoolYear = useMemo(
+    () => selectedChild ? children.find((c) => c.id === selectedChild.id)?.current_logging?.school_year_id : undefined,
+    [selectedChild, children],
+  );
+  const { data: periodes = [] } = usePeriodes(currentSchoolYear);
   const [selectedPeriode, setSelectedPeriode] = useState<string>('');
 
   const activePeriode = selectedPeriode || periodes[0]?.id || '';

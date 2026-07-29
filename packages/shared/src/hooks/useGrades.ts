@@ -34,21 +34,3 @@ export function useGrades(studentId: string | undefined, periodeId?: string) {
     enabled: !!studentId,
   });
 }
-
-export function usePeriodes(schoolId: string | undefined | null) {
-  return useQuery<Tables<'periodes'>[]>({
-    queryKey: ['periodes', schoolId],
-    queryFn: async () => {
-      if (!schoolId) return [];
-      const { data, error } = await supabase
-        .from('periodes')
-        .select('*')
-        .eq('school_id', schoolId)
-        .eq('is_published', true)
-        .order('order');
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!schoolId,
-  });
-}
