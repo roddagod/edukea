@@ -69,7 +69,8 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
       order: nextOrder,
       label: `Tranche ${nextOrder}`,
       category: 'tuition',
-      due_date_offset_days: 0,
+      due_month: 9,
+      due_year_offset: 0,
       amount: 0,
       amount_percentage: null,
     });
@@ -192,8 +193,9 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
                 <th className="w-12 p-2 text-left">#</th>
                 <th className="p-2 text-left">Libellé</th>
                 <th className="hidden w-40 p-2 text-left sm:table-cell">Catégorie</th>
-                <th className="hidden w-20 p-2 text-right sm:table-cell">+Jrs</th>
-                <th className="w-32 p-2 text-right">Montant (XAF)</th>
+                <th className="w-24 p-2 text-left">Mois</th>
+                <th className="w-32 p-2 text-left">Année</th>
+                <th className="w-28 p-2 text-right">Montant (XAF)</th>
                 <th className="hidden w-16 p-2 text-right sm:table-cell">%</th>
                 <th className="w-12 p-2"></th>
               </tr>
@@ -286,6 +288,8 @@ function FeeLineRow({
   );
 }
 
+const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+
 function InstallmentRow({
   inst,
   onSave,
@@ -320,16 +324,28 @@ function InstallmentRow({
           ))}
         </select>
       </td>
-      <td className="hidden p-2 sm:table-cell">
-        <Input
-          type="number"
-          defaultValue={inst.due_date_offset_days}
-          className="text-right"
-          onBlur={(e) => {
-            const v = Number(e.target.value);
-            if (v !== inst.due_date_offset_days) onSave({ due_date_offset_days: v });
-          }}
-        />
+      <td className="p-2">
+        <select
+          defaultValue={inst.due_month}
+          onChange={(e) => onSave({ due_month: Number(e.target.value) })}
+          className="w-full rounded-md border border-slate-200 px-2 py-2 text-sm text-slate-700 hover:border-slate-400 focus:border-orange-500 focus:outline-none"
+        >
+          {MONTHS.map((m, idx) => (
+            <option key={idx + 1} value={idx + 1}>
+              {m}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td className="p-2">
+        <select
+          defaultValue={inst.due_year_offset}
+          onChange={(e) => onSave({ due_year_offset: Number(e.target.value) })}
+          className="w-full rounded-md border border-slate-200 px-2 py-2 text-sm text-slate-700 hover:border-slate-400 focus:border-orange-500 focus:outline-none"
+        >
+          <option value={0}>Année N</option>
+          <option value={1}>Année N+1</option>
+        </select>
       </td>
       <td className="p-2">
         <Input

@@ -442,6 +442,8 @@ export type Database = {
           classroom_id: string
           created_at: string
           due_date: string
+          due_month: number
+          due_year_offset: number
           id: string
           label: string
           order: number
@@ -454,6 +456,8 @@ export type Database = {
           classroom_id: string
           created_at?: string
           due_date: string
+          due_month: number
+          due_year_offset?: number
           id?: string
           label: string
           order: number
@@ -466,6 +470,8 @@ export type Database = {
           classroom_id?: string
           created_at?: string
           due_date?: string
+          due_month?: number
+          due_year_offset?: number
           id?: string
           label?: string
           order?: number
@@ -1943,7 +1949,8 @@ export type Database = {
           amount_percentage: number | null
           category: string
           created_at: string
-          due_date_offset_days: number
+          due_month: number
+          due_year_offset: number
           id: string
           label: string
           level_id: string
@@ -1955,7 +1962,8 @@ export type Database = {
           amount_percentage?: number | null
           category: string
           created_at?: string
-          due_date_offset_days?: number
+          due_month: number
+          due_year_offset?: number
           id?: string
           label: string
           level_id: string
@@ -1967,7 +1975,8 @@ export type Database = {
           amount_percentage?: number | null
           category?: string
           created_at?: string
-          due_date_offset_days?: number
+          due_month?: number
+          due_year_offset?: number
           id?: string
           label?: string
           level_id?: string

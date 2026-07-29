@@ -8,7 +8,8 @@ export interface LevelFeeInstallment {
   order: number;
   label: string;
   category: string;
-  due_date_offset_days: number;
+  due_month: number;        // 1-12
+  due_year_offset: number;  // 0 = même année civile que sy.date_start, 1 = année suivante
   amount: number | null;
   amount_percentage: number | null;
 }
