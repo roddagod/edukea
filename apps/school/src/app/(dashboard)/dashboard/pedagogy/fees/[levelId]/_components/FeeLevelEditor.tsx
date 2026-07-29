@@ -90,7 +90,7 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Type selector */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm text-slate-600">Type d&apos;élève :</span>
@@ -125,11 +125,11 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
         </div>
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <thead className="sticky top-0 z-10 bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
                 <th className="w-12 p-2 text-left">#</th>
                 <th className="p-2 text-left">Libellé</th>
-                <th className="w-40 p-2 text-left">Catégorie</th>
+                <th className="hidden w-40 p-2 text-left sm:table-cell">Catégorie</th>
                 <th className="w-36 p-2 text-right">Montant (XAF)</th>
                 <th className="w-16 p-2 text-center">Opt.</th>
                 <th className="w-12 p-2"></th>
@@ -187,14 +187,14 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
         </div>
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <thead className="sticky top-0 z-10 bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
                 <th className="w-12 p-2 text-left">#</th>
                 <th className="p-2 text-left">Libellé</th>
-                <th className="w-40 p-2 text-left">Catégorie</th>
-                <th className="w-20 p-2 text-right">+Jrs</th>
+                <th className="hidden w-40 p-2 text-left sm:table-cell">Catégorie</th>
+                <th className="hidden w-20 p-2 text-right sm:table-cell">+Jrs</th>
                 <th className="w-32 p-2 text-right">Montant (XAF)</th>
-                <th className="w-16 p-2 text-right">%</th>
+                <th className="hidden w-16 p-2 text-right sm:table-cell">%</th>
                 <th className="w-12 p-2"></th>
               </tr>
             </thead>
@@ -245,7 +245,7 @@ function FeeLineRow({
           }}
         />
       </td>
-      <td className="p-2">
+      <td className="hidden p-2 sm:table-cell">
         <select
           defaultValue={line.category}
           onChange={(e) => onSave({ category: e.target.value })}
@@ -307,7 +307,7 @@ function InstallmentRow({
           }}
         />
       </td>
-      <td className="p-2">
+      <td className="hidden p-2 sm:table-cell">
         <select
           defaultValue={inst.category}
           onChange={(e) => onSave({ category: e.target.value })}
@@ -320,7 +320,7 @@ function InstallmentRow({
           ))}
         </select>
       </td>
-      <td className="p-2">
+      <td className="hidden p-2 sm:table-cell">
         <Input
           type="number"
           defaultValue={inst.due_date_offset_days}
@@ -342,7 +342,7 @@ function InstallmentRow({
           }}
         />
       </td>
-      <td className="p-2">
+      <td className="hidden p-2 sm:table-cell">
         <Input
           type="number"
           defaultValue={inst.amount_percentage ?? ''}

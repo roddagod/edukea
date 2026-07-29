@@ -39,11 +39,11 @@ export default async function PedagogyPage({ searchParams }: PageProps) {
   const schoolId = ctx.current_school.id;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="mx-auto max-w-7xl p-4 md:p-6 lg:p-8">
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-slate-900">Rentree pedagogique</h1>
-          <p className="text-sm text-slate-600">Point de depart pour parametrer votre annee scolaire</p>
+          <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">Rentrée pédagogique</h1>
+          <p className="text-sm text-slate-600">Point de départ pour paramétrer votre année scolaire</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {ctx.is_superadmin && (

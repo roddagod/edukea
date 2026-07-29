@@ -33,17 +33,23 @@ export function FeesOverviewMatrix({ schoolId }: Props) {
   const cell = (levelId: string, typeId: string): FeesMatrixRow | undefined =>
     matrix.find((r) => r.level_id === levelId && r.student_type_id === typeId);
 
+  const typeCount = (types ?? []).length;
+
   return (
-    <div className="overflow-x-auto rounded-xl border bg-white">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b bg-slate-50">
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Niveau</th>
-            {(types ?? []).map((t) => (
-              <th key={t.id} className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">{t.label}</th>
-            ))}
-          </tr>
-        </thead>
+    <div className="space-y-2">
+      {typeCount > 3 && (
+        <p className="text-right text-xs text-slate-400 sm:hidden">Faites défiler horizontalement →</p>
+      )}
+      <div className="overflow-x-auto rounded-xl border bg-white">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="sticky top-0 z-10 border-b bg-slate-50">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Niveau</th>
+              {(types ?? []).map((t) => (
+                <th key={t.id} className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">{t.label}</th>
+              ))}
+            </tr>
+          </thead>
         <tbody>
           {levels.map((l, idx) => (
             <tr key={l.id} className={`border-b last:border-none hover:bg-slate-50 ${idx % 2 === 1 ? 'bg-slate-50/40' : ''}`}>
@@ -79,7 +85,8 @@ export function FeesOverviewMatrix({ schoolId }: Props) {
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }

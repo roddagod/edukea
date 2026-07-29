@@ -62,7 +62,7 @@ export function StructureLayout({ schoolId }: Props) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[360px_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[360px_1fr]">
         <div className="rounded-xl border bg-white p-3">
           {hasStructure
             ? <StructureTree structure={structure} selected={selected} onSelect={setSelected} />

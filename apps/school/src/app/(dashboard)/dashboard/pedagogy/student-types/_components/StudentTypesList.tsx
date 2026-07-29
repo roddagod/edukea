@@ -28,11 +28,11 @@ export function StudentTypesList({ schoolId }: Props) {
       <div className="overflow-x-auto rounded-xl border border-slate-200">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50">
+            <tr className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50">
               <th className="w-10 px-4 py-3 text-left font-medium text-slate-600">Défaut</th>
               <th className="px-4 py-3 text-left font-medium text-slate-600">Libellé</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Code</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Ordre</th>
+              <th className="hidden px-4 py-3 text-left font-medium text-slate-600 md:table-cell">Code</th>
+              <th className="hidden px-4 py-3 text-left font-medium text-slate-600 md:table-cell">Ordre</th>
               <th className="px-4 py-3 text-right font-medium text-slate-600">Actions</th>
             </tr>
           </thead>
@@ -46,10 +46,10 @@ export function StudentTypesList({ schoolId }: Props) {
                   {t.is_default && <Star className="h-4 w-4 fill-orange-400 text-orange-400" />}
                 </td>
                 <td className="px-4 py-3 font-medium text-slate-900">{t.label}</td>
-                <td className="px-4 py-3">
+                <td className="hidden px-4 py-3 md:table-cell">
                   <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">{t.code}</code>
                 </td>
-                <td className="px-4 py-3 text-slate-500">{t.order}</td>
+                <td className="hidden px-4 py-3 text-slate-500 md:table-cell">{t.order}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
                     <Button variant="ghost" size="sm" onClick={() => setEditing(t)}>

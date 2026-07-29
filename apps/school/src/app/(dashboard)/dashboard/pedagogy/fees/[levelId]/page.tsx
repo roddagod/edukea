@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
+import { ArrowLeft } from 'lucide-react';
 import { FeeLevelEditor } from './_components/FeeLevelEditor';
 
 export const metadata = { title: 'Édition frais niveau — Rentrée' };
@@ -36,15 +37,17 @@ export default async function FeeLevelPage({ params, searchParams }: PageProps) 
   const levelName = (level as { name: string }).name;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-6">
-      <a href="/dashboard/pedagogy/fees" className="text-xs text-slate-500 hover:text-orange-600">
-        ← Retour à la matrice frais
-      </a>
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-slate-900">Frais du niveau {levelName}</h1>
-        <p className="text-sm text-slate-600">
-          Configurez les lignes de frais et le calendrier d&apos;échéances pour chaque type d&apos;élève.
-        </p>
+    <div className="mx-auto max-w-7xl p-4 md:p-6 lg:p-8">
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1">
+          <a href="/dashboard/pedagogy/fees" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-orange-600">
+            <ArrowLeft className="h-3 w-3" /> Retour à la matrice frais
+          </a>
+          <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">Frais du niveau {levelName}</h1>
+          <p className="text-sm text-slate-600">
+            Configurez les lignes de frais et le calendrier d&apos;échéances pour chaque type d&apos;élève.
+          </p>
+        </div>
       </div>
       <FeeLevelEditor
         schoolId={ctx.current_school.id}

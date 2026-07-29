@@ -40,11 +40,11 @@ export function SchoolYearList({ schoolId }: Props) {
       <div className="overflow-x-auto rounded-xl border border-slate-200">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50">
+            <tr className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50">
               <th className="px-4 py-3 text-left font-medium text-slate-600">Nom</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Type</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Début</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Fin</th>
+              <th className="hidden px-4 py-3 text-left font-medium text-slate-600 md:table-cell">Type</th>
+              <th className="hidden px-4 py-3 text-left font-medium text-slate-600 sm:table-cell">Début</th>
+              <th className="hidden px-4 py-3 text-left font-medium text-slate-600 sm:table-cell">Fin</th>
               <th className="px-4 py-3 text-left font-medium text-slate-600">Statut</th>
               <th className="px-4 py-3 text-right font-medium text-slate-600">Actions</th>
             </tr>
@@ -55,10 +55,10 @@ export function SchoolYearList({ schoolId }: Props) {
                 key={y.id}
                 className={`border-b border-slate-100 last:border-0 hover:bg-slate-50 ${i % 2 === 1 ? 'bg-slate-50/40' : 'bg-white'}`}
               >
-                <td className="px-4 py-3 font-medium text-slate-900">{y.name}</td>
-                <td className="px-4 py-3 text-slate-500">{y.periode_type ?? '—'}</td>
-                <td className="px-4 py-3 text-slate-500">{y.date_start ?? '—'}</td>
-                <td className="px-4 py-3 text-slate-500">{y.date_end ?? '—'}</td>
+                <td className="max-w-[160px] truncate px-4 py-3 font-medium text-slate-900">{y.name}</td>
+                <td className="hidden px-4 py-3 text-slate-500 md:table-cell">{y.periode_type ?? '—'}</td>
+                <td className="hidden px-4 py-3 text-slate-500 sm:table-cell">{y.date_start ?? '—'}</td>
+                <td className="hidden px-4 py-3 text-slate-500 sm:table-cell">{y.date_end ?? '—'}</td>
                 <td className="px-4 py-3">
                   {isActive(y) ? <Badge>Active</Badge> : <span className="text-slate-400">—</span>}
                 </td>

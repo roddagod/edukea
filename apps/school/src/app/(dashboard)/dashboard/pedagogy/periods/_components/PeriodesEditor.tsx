@@ -68,12 +68,12 @@ export function PeriodesEditor({ schoolId }: Props) {
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
+              <tr className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50">
                 <th className="px-4 py-3 text-left font-medium text-slate-600">#</th>
                 <th className="px-4 py-3 text-left font-medium text-slate-600">Nom</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Date début</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Date fin</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Publié</th>
+                <th className="hidden px-4 py-3 text-left font-medium text-slate-600 sm:table-cell">Date début</th>
+                <th className="hidden px-4 py-3 text-left font-medium text-slate-600 sm:table-cell">Date fin</th>
+                <th className="hidden px-4 py-3 text-left font-medium text-slate-600 md:table-cell">Publié</th>
                 <th className="px-4 py-3 text-right font-medium text-slate-600">Actions</th>
               </tr>
             </thead>
@@ -86,12 +86,12 @@ export function PeriodesEditor({ schoolId }: Props) {
                   <td className="px-4 py-2 text-slate-400">#{p.order}</td>
                   <td className="px-4 py-2">
                     <input
-                      className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full min-w-[120px] rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       defaultValue={p.name}
                       onBlur={(e) => handleUpsert(p, { name: e.target.value })}
                     />
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="hidden px-4 py-2 sm:table-cell">
                     <input
                       type="date"
                       className="rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -99,7 +99,7 @@ export function PeriodesEditor({ schoolId }: Props) {
                       onBlur={(e) => handleUpsert(p, { start_date: e.target.value })}
                     />
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="hidden px-4 py-2 sm:table-cell">
                     <input
                       type="date"
                       className="rounded-md border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -107,7 +107,7 @@ export function PeriodesEditor({ schoolId }: Props) {
                       onBlur={(e) => handleUpsert(p, { end_date: e.target.value })}
                     />
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="hidden px-4 py-2 md:table-cell">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${p.is_published ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
                       {p.is_published ? 'Oui' : 'Non'}
                     </span>
