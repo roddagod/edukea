@@ -2,7 +2,7 @@
 
 import { useFeesOverviewMatrix, useStudentTypes, useHydrateFeesFromTemplate, type FeesMatrixRow } from '@edukea/shared';
 import { Button, Skeleton } from '@edukea/ui';
-import { CheckCircle2, AlertTriangle, Sparkles } from 'lucide-react';
+import { CheckCircle2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 interface Props { schoolId: string; }
@@ -41,15 +41,13 @@ export function FeesOverviewMatrix({ schoolId }: Props) {
   return (
     <div className="space-y-2">
       {emptyCount > 0 && (
-        <div className="rounded-xl border-2 border-dashed border-orange-200 bg-orange-50 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <Sparkles className="h-5 w-5 flex-shrink-0 text-orange-600" />
-          <div className="flex-1">
-            <p className="font-medium text-orange-900">{emptyCount} combinaison(s) à configurer</p>
-            <p className="mt-0.5 text-sm text-orange-700">
-              Créez rapidement les frais par défaut pour toutes les combinaisons vides depuis le template école.
-            </p>
-          </div>
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-2.5">
+          <Sparkles className="h-4 w-4 flex-shrink-0 text-orange-600" />
+          <p className="flex-1 text-sm text-orange-900">
+            <strong>{emptyCount}</strong> combinaison{emptyCount > 1 ? 's' : ''} à configurer.
+          </p>
           <Button
+            size="sm"
             onClick={async () => {
               if (!confirm(`Créer les frais par défaut pour ${emptyCount} combinaison(s) ?`)) return;
               try {
@@ -71,48 +69,45 @@ export function FeesOverviewMatrix({ schoolId }: Props) {
       <div className="overflow-x-auto rounded-xl border bg-white">
         <table className="w-full text-sm">
           <thead>
-            <tr className="sticky top-0 z-10 border-b bg-slate-50">
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Niveau</th>
+            <tr className="sticky top-0 z-10 border-b-2 border-slate-200 bg-slate-50">
+              <th className="px-4 py-2.5 text-left text-xs font-medium uppercase text-slate-500">Niveau</th>
               {(types ?? []).map((t) => (
-                <th key={t.id} className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">{t.label}</th>
+                <th key={t.id} className="px-4 py-2.5 text-left text-xs font-medium uppercase text-slate-500">{t.label}</th>
               ))}
             </tr>
           </thead>
-        <tbody>
-          {levels.map((l, idx) => (
-            <tr key={l.id} className={`border-b last:border-none hover:bg-slate-50 ${idx % 2 === 1 ? 'bg-slate-50/40' : ''}`}>
-              <td className="px-4 py-3">
-                <Link href={`/dashboard/pedagogy/fees/${l.id}`} className="font-medium text-slate-900 hover:text-orange-600">
-                  {l.name}
-                </Link>
-              </td>
-              {(types ?? []).map((t) => {
-                const c = cell(l.id, t.id);
-                const empty = !c || c.lines_count === 0;
-                return (
-                  <td key={t.id} className="px-4 py-3">
-                    <Link
-                      href={`/dashboard/pedagogy/fees/${l.id}?type=${t.id}`}
-                      className="inline-flex items-center gap-2 rounded px-2 py-1 hover:bg-orange-50"
-                    >
-                      {empty ? (
-                        <>
-                          <AlertTriangle className="h-4 w-4 text-amber-500" />
-                          <span className="text-sm text-slate-500">Non configuré</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          <span className="text-sm font-medium text-slate-900">{XAF.format(c.total_mandatory)} XAF</span>
-                        </>
-                      )}
-                    </Link>
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
+          <tbody>
+            {levels.map((l, idx) => (
+              <tr key={l.id} className={`border-b last:border-none hover:bg-orange-50/50 ${idx % 2 === 1 ? 'bg-slate-50/40' : ''}`}>
+                <td className="px-4 py-2.5">
+                  <Link href={`/dashboard/pedagogy/fees/${l.id}`} className="font-semibold text-slate-900 hover:text-orange-600">
+                    {l.name}
+                  </Link>
+                </td>
+                {(types ?? []).map((t) => {
+                  const c = cell(l.id, t.id);
+                  const empty = !c || c.lines_count === 0;
+                  return (
+                    <td key={t.id} className="px-4 py-2.5">
+                      <Link
+                        href={`/dashboard/pedagogy/fees/${l.id}?type=${t.id}`}
+                        className="inline-flex items-center gap-1.5 rounded px-2 py-1 hover:bg-orange-50"
+                      >
+                        {empty ? (
+                          <span className="text-sm italic text-slate-400">—</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-sm">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                            <span className="font-medium text-slate-900">{XAF.format(c.total_mandatory)} XAF</span>
+                          </span>
+                        )}
+                      </Link>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
     </div>
