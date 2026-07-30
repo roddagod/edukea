@@ -56,3 +56,5 @@ export * from './hooks/useStudentWithCurrentEnrollment';
 export * from './hooks/useStudentsList';
 export * from './hooks/useStudentMutations';
 export * from './hooks/useStudentReenrollStatus';
+export * from './hooks/useCurrentUserRole';
+export * from './hooks/useSchoolKpis';
