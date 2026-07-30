@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
-import { ChevronLeft, Plus, Coins } from 'lucide-react';
+import { ChevronLeft, Plus, Coins, Download } from 'lucide-react';
 import {
   PageHeader,
   Card,
@@ -168,6 +168,18 @@ export default function StudentDetailPage() {
                     {h.memo && <> · {h.memo}</>}
                   </div>
                 </div>
+                {h.tx_id && (
+                  <a
+                    href={`/api/receipts/${h.tx_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 inline-flex items-center gap-1 text-primary hover:underline text-xs"
+                    title="Télécharger le reçu PDF"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Reçu
+                  </a>
+                )}
               </div>
             ))}
           </Card>

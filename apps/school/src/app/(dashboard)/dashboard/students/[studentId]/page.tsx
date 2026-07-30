@@ -9,7 +9,7 @@ import {
   useStudentPaymentHistory,
 } from '@edukea/shared';
 import { PageHeader, Card, Skeleton, Button, Badge } from '@edukea/ui';
-import { ArrowLeft, Plus, Pencil } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Download } from 'lucide-react';
 import { RecordPaymentDialog } from '@/components/RecordPaymentDialog';
 import type { StudentPaymentHistoryRow } from '@edukea/shared';
 
@@ -303,6 +303,7 @@ export default function StudentPage() {
                     <th className="px-3 py-2 text-right">Montant</th>
                     <th className="px-3 py-2 text-left">Méthode</th>
                     <th className="px-3 py-2 text-left">Mémo</th>
+                    <th className="px-3 py-2 text-right">Reçu</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -325,6 +326,19 @@ export default function StudentPage() {
                       </td>
                       <td className="px-3 py-2.5 text-body-xs text-ink-3">
                         {row.memo ?? '—'}
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        {row.tx_id && (
+                          <a
+                            href={`/api/receipts/${row.tx_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-primary hover:underline text-xs"
+                          >
+                            <Download className="h-3 w-3" />
+                            PDF
+                          </a>
+                        )}
                       </td>
                     </tr>
                   ))}
