@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
-import { ChevronLeft, Coins } from 'lucide-react';
+import { ChevronLeft, Coins, Plus } from 'lucide-react';
 import { PageHeader, Card, Skeleton, Button, StatusPill } from '@edukea/ui';
 import { useStudentDetail, useSchoolContext } from '@edukea/shared';
+import { RecordPaymentDialog } from '@/components/RecordPaymentDialog';
 
 function fmt(n: number): string {
   return new Intl.NumberFormat('fr-FR').format(n).replace(/[  ]/g, ' ');
@@ -13,6 +15,7 @@ function fmt(n: number): string {
 export default function EnrollmentDetailPage() {
   const params = useParams<{ ssylId: string }>();
   const searchParams = useSearchParams();
+  const [showPayment, setShowPayment] = useState(false);
   const { data: ctx } = useSchoolContext({
     requestedSchoolId: searchParams.get('school'),
     requestedYearId: searchParams.get('year'),
@@ -38,11 +41,16 @@ export default function EnrollmentDetailPage() {
           title={isLoading ? <Skeleton className="h-6 w-64" /> : student?.student_name ?? '—'}
           sub={student ? `${student.classroom_name ?? '—'} · Matr. ${student.matricule ?? '—'}` : undefined}
           actions={student && (
-            <Link href={`/dashboard/recovery/${student.ssyl_id}${qs}`}>
-              <Button variant="primary">
-                <Coins className="h-4 w-4" /> Gérer les versements
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" onClick={() => setShowPayment(true)}>
+                <Plus className="h-4 w-4" /> Nouveau paiement
               </Button>
-            </Link>
+              <Link href={`/dashboard/recovery/${student.ssyl_id}${qs}`}>
+                <Button variant="primary">
+                  <Coins className="h-4 w-4" /> Gérer les versements
+                </Button>
+              </Link>
+            </div>
           )}
         />
       </div>
@@ -68,6 +76,15 @@ export default function EnrollmentDetailPage() {
           Pour l'instant, utilisez le bouton « Gérer les versements » pour poster des paiements.
         </p>
       </Card>
+
+      {student && (
+        <RecordPaymentDialog
+          ssylId={student.ssyl_id}
+          studentName={student.student_name ?? undefined}
+          isOpen={showPayment}
+          onClose={() => setShowPayment(false)}
+        />
+      )}
     </>
   );
 }

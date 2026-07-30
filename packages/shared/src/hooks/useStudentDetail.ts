@@ -137,8 +137,11 @@ export function useRecordPayment() {
     onSuccess: (_txId, args) => {
       qc.invalidateQueries({ queryKey: ['student-detail', args.ssylId] });
       qc.invalidateQueries({ queryKey: ['student-payment-history', args.ssylId] });
+      qc.invalidateQueries({ queryKey: ['ssyl-installment-status', args.ssylId] });
       qc.invalidateQueries({ queryKey: ['recovery-students'] });
       qc.invalidateQueries({ queryKey: ['ledger'] });
+      qc.invalidateQueries({ queryKey: ['ledger-tx'] });
+      qc.invalidateQueries({ queryKey: ['ssyl-detail', args.ssylId] });
     },
   });
 }
