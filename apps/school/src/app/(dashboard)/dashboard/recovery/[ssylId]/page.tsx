@@ -14,16 +14,14 @@ import {
   toneFromSeed,
   StatusPill,
   ProgressRing,
-  Modal,
-  Input,
-  Button,
 } from '@edukea/ui';
 import {
   useSchoolContext,
   useStudentDetail,
   useStudentPaymentHistory,
-  useRecordPayment,
 } from '@edukea/shared';
+import { Button } from '@edukea/ui';
+import { RecordPaymentDialog } from '@/components/RecordPaymentDialog';
 
 function fmtNumber(n: number): string {
   return new Intl.NumberFormat('fr-FR').format(n).replace(/[  ]/g, ' ');
@@ -33,12 +31,6 @@ function fmtDate(iso: string): string {
   const d = new Date(iso);
   return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }).format(d);
 }
-
-const SOURCES: Array<{ value: 'cash' | 'bank_transfer' | 'internal'; label: string }> = [
-  { value: 'cash', label: 'Espèces' },
-  { value: 'bank_transfer', label: 'Virement bancaire' },
-  { value: 'internal', label: 'Autre' },
-];
 
 export default function StudentDetailPage() {
   const params = useParams<{ ssylId: string }>();
@@ -50,13 +42,8 @@ export default function StudentDetailPage() {
 
   const { data: student, isLoading: studentLoading } = useStudentDetail(params.ssylId);
   const { data: history, isLoading: historyLoading } = useStudentPaymentHistory(params.ssylId, 50);
-  const record = useRecordPayment();
 
   const [open, setOpen] = useState(false);
-  const [amountInput, setAmountInput] = useState('');
-  const [source, setSource] = useState<'cash' | 'bank_transfer' | 'internal'>('cash');
-  const [memo, setMemo] = useState('');
-  const [error, setError] = useState<string | null>(null);
 
   const qs = useMemo(() => {
     const p = new URLSearchParams();
@@ -74,34 +61,6 @@ export default function StudentDetailPage() {
   const backHref = student?.classroom_id
     ? `/dashboard/recovery/class/${student.classroom_id}${qs}`
     : `/dashboard/recovery${qs}`;
-
-  const handleSubmit = async () => {
-    setError(null);
-    const raw = amountInput.replace(/[\s,]/g, '').trim();
-    const amount = Number(raw);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setError('Montant invalide.');
-      return;
-    }
-    if (student && amount > student.remaining && student.remaining > 0) {
-      setError(`Le montant dépasse le restant dû (${fmtNumber(student.remaining)} FCFA).`);
-      return;
-    }
-    try {
-      await record.mutateAsync({
-        ssylId: params.ssylId,
-        amount,
-        source,
-        memo: memo || undefined,
-      });
-      setOpen(false);
-      setAmountInput('');
-      setMemo('');
-      setSource('cash');
-    } catch (e) {
-      setError((e as Error).message ?? 'Erreur lors de l\'enregistrement.');
-    }
-  };
 
   return (
     <>
@@ -215,63 +174,15 @@ export default function StudentDetailPage() {
         )}
       </div>
 
-      {/* Modal Nouveau versement */}
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Nouveau versement"
-        description={student ? `Restant dû : ${fmtNumber(student.remaining)} FCFA` : undefined}
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setOpen(false)} disabled={record.isPending}>
-              Annuler
-            </Button>
-            <Button variant="primary" onClick={handleSubmit} disabled={record.isPending}>
-              {record.isPending ? 'Enregistrement…' : 'Enregistrer'}
-            </Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-4">
-          <Input
-            label="Montant"
-            type="text"
-            inputMode="numeric"
-            placeholder="Ex : 50 000"
-            value={amountInput}
-            onChange={(e) => setAmountInput(e.target.value)}
-            suffix={<span className="text-body-xs">FCFA</span>}
-            autoFocus
-          />
-          <div className="flex flex-col gap-1.5">
-            <label className="text-body-xs font-semibold text-ink-2">Mode de paiement</label>
-            <div className="grid grid-cols-3 gap-2">
-              {SOURCES.map((s) => (
-                <button
-                  key={s.value}
-                  type="button"
-                  onClick={() => setSource(s.value)}
-                  className={`rounded-md border px-3 py-2 text-body-sm font-semibold transition-colors ${
-                    source === s.value
-                      ? 'border-primary bg-primary/5 text-primary'
-                      : 'border-line bg-white text-ink-2 hover:border-ink-4'
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <Input
-            label="Mémo (optionnel)"
-            type="text"
-            placeholder="Ex : reçu 2026/03"
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-          />
-          {error && <div className="text-caption text-destructive">{error}</div>}
-        </div>
-      </Modal>
+      {student && (
+        <RecordPaymentDialog
+          ssylId={params.ssylId}
+          studentName={student.student_firstname && student.student_lastname ? `${student.student_firstname} ${student.student_lastname}` : undefined}
+          remaining={student.remaining}
+          isOpen={open}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }

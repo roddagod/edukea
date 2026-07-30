@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useRecordPayment, useSsylInstallmentStatus } from '@edukea/shared';
-import { Button, Input, Skeleton } from '@edukea/ui';
-import { X, Check } from 'lucide-react';
+import { Modal, Button, Input } from '@edukea/ui';
 
 interface Props {
   ssylId: string;
   studentName?: string;
+  remaining?: number;
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (txId: string) => void;
@@ -15,18 +15,24 @@ interface Props {
 
 const XAF = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
-export function RecordPaymentDialog({ ssylId, studentName, isOpen, onClose, onSuccess }: Props) {
+const SOURCES: { value: 'cash' | 'bank_transfer' | 'internal'; label: string }[] = [
+  { value: 'cash', label: 'Espèces' },
+  { value: 'bank_transfer', label: 'Virement' },
+  { value: 'internal', label: 'Interne' },
+];
+
+export function RecordPaymentDialog({ ssylId, studentName, remaining, isOpen, onClose, onSuccess }: Props) {
   const record = useRecordPayment();
-  const { data: installments, isLoading } = useSsylInstallmentStatus(ssylId);
-  const [amount, setAmount] = useState<number>(0);
+  const { data: installments } = useSsylInstallmentStatus(ssylId);
+  const [amountInput, setAmountInput] = useState('');
   const [source, setSource] = useState<'cash' | 'bank_transfer' | 'internal'>('cash');
   const [memo, setMemo] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  const amount = Number(amountInput.replace(/\s/g, '')) || 0;
 
   const unpaidInstallments = (installments ?? []).filter((i) => i.status !== 'paid');
-  const totalRemaining = unpaidInstallments.reduce((s, i) => s + (i.amount_due - i.amount_paid), 0);
+  const totalRemaining = remaining ?? unpaidInstallments.reduce((s, i) => s + (i.amount_due - i.amount_paid), 0);
 
   // Preview ventilation
   const sorted = [...unpaidInstallments].sort((a, b) => a.due_date.localeCompare(b.due_date));
@@ -43,143 +49,103 @@ export function RecordPaymentDialog({ ssylId, studentName, isOpen, onClose, onSu
 
   const handleSubmit = async () => {
     setError(null);
-    if (amount <= 0) {
-      setError('Le montant doit être > 0');
-      return;
-    }
+    if (amount <= 0) { setError('Le montant doit être > 0'); return; }
     try {
       const txId = await record.mutateAsync({
-        ssylId,
-        amount,
-        source,
-        memo: memo || undefined,
+        ssylId, amount, source, memo: memo || undefined,
       });
       onSuccess?.(txId);
+      // Reset
+      setAmountInput(''); setMemo(''); setSource('cash');
       onClose();
-      setAmount(0);
-      setMemo('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur');
     }
   };
 
+  const description = studentName
+    ? `${studentName}${totalRemaining > 0 ? ` — Restant dû : ${XAF.format(totalRemaining)} FCFA` : ''}`
+    : (totalRemaining > 0 ? `Restant dû : ${XAF.format(totalRemaining)} FCFA` : undefined);
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white p-6 space-y-4"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">Enregistrer un paiement</h2>
-            {studentName && <p className="text-sm text-slate-600">{studentName}</p>}
-          </div>
-          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-slate-100">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {isLoading ? (
-          <Skeleton className="h-32 w-full" />
-        ) : (
-          <>
-            {totalRemaining > 0 ? (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
-                <p className="font-medium">
-                  Reste à payer : {XAF.format(totalRemaining)} XAF
-                </p>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {unpaidInstallments.length} échéance(s) ouverte(s)
-                </p>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-                Toutes les échéances sont soldées. Un paiement sera enregistré comme avance.
-              </div>
-            )}
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="text-sm font-medium text-slate-700">Montant (XAF)</label>
-                <Input
-                  type="number"
-                  value={amount || ''}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700">Méthode</label>
-                <select
-                  value={source}
-                  onChange={(e) =>
-                    setSource(e.target.value as 'cash' | 'bank_transfer' | 'internal')
-                  }
-                  className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm"
-                >
-                  <option value="cash">Espèces</option>
-                  <option value="bank_transfer">Virement banc.</option>
-                  <option value="internal">Interne</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700">Mémo (optionnel)</label>
-              <Input
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-                placeholder="ex: Paiement 2e tranche"
-              />
-            </div>
-
-            {amount > 0 && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm space-y-1">
-                <p className="font-semibold text-blue-900">Ventilation prévue :</p>
-                {allocations.map((a, i) => (
-                  <div key={i} className="flex justify-between text-blue-900">
-                    <span>{a.label}</span>
-                    <span className="font-mono">
-                      {XAF.format(a.alloc)}
-                      {a.remaining > 0 && (
-                        <span className="text-blue-600 ml-1">
-                          (reste {XAF.format(a.remaining)})
-                        </span>
-                      )}
-                      {a.remaining === 0 && (
-                        <span className="text-green-700 ml-1">
-                          <Check className="inline h-3 w-3" />
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                ))}
-                {surplus > 0 && (
-                  <div className="flex justify-between text-orange-700 border-t border-blue-200 pt-1 mt-1">
-                    <span>Avance (trop-perçu)</span>
-                    <span className="font-mono">{XAF.format(surplus)}</span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {error && <p className="text-sm text-red-600">{error}</p>}
-          </>
-        )}
-
-        <div className="flex justify-end gap-2 pt-2 border-t">
-          <Button variant="secondary" onClick={onClose}>
-            Annuler
-          </Button>
-          <Button onClick={handleSubmit} disabled={amount <= 0 || record.isPending}>
-            <Check className="mr-2 h-4 w-4" />
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title="Nouveau versement"
+      description={description}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={record.isPending}>Annuler</Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={record.isPending || amount <= 0}>
             {record.isPending ? 'Enregistrement…' : 'Enregistrer'}
           </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <Input
+          label="Montant"
+          type="text"
+          inputMode="numeric"
+          placeholder="Ex : 50 000"
+          value={amountInput}
+          onChange={(e) => setAmountInput(e.target.value)}
+          suffix={<span className="text-body-xs">FCFA</span>}
+          autoFocus
+        />
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-body-xs font-semibold text-ink-2">Mode de paiement</label>
+          <div className="grid grid-cols-3 gap-2">
+            {SOURCES.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => setSource(s.value)}
+                className={`rounded-md border px-3 py-2 text-body-sm font-semibold transition-colors ${
+                  source === s.value
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-line bg-white text-ink-2 hover:border-ink-4'
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        <Input
+          label="Mémo (optionnel)"
+          type="text"
+          placeholder="Ex : reçu 2026/03"
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+        />
+
+        {amount > 0 && allocations.length > 0 && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm space-y-1">
+            <p className="font-semibold text-blue-900">Ventilation prévue :</p>
+            {allocations.map((a, i) => (
+              <div key={i} className="flex justify-between text-blue-900">
+                <span>{a.label}</span>
+                <span className="font-mono">
+                  {XAF.format(a.alloc)}
+                  {a.remaining > 0 && <span className="text-blue-600 ml-1">(reste {XAF.format(a.remaining)})</span>}
+                  {a.remaining === 0 && <span className="text-green-700 ml-1">✓</span>}
+                </span>
+              </div>
+            ))}
+            {surplus > 0 && (
+              <div className="flex justify-between text-orange-700 border-t border-blue-200 pt-1 mt-1">
+                <span>Avance (trop-perçu)</span>
+                <span className="font-mono">{XAF.format(surplus)}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {error && <div className="text-caption text-destructive">{error}</div>}
       </div>
-    </div>
+    </Modal>
   );
 }
