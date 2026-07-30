@@ -102,8 +102,15 @@ export default function RecoveryClassPage() {
               <div className="hidden font-display text-body-sm tabular-nums text-ink-3 md:block md:text-right">
                 {fmtNumber(r.billed_initial)}
               </div>
-              <div className="ml-auto font-display text-body-md font-semibold tabular-nums text-ink md:ml-0 md:text-right">
-                {fmtNumber(r.remaining)}
+              <div className="ml-auto md:ml-0 md:text-right">
+                <div className="font-display text-body-md font-semibold tabular-nums text-ink">
+                  {fmtNumber(r.remaining)}
+                </div>
+                {r.overdue_amount > 0 && (
+                  <div className="mt-0.5 inline-flex rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 tabular-nums">
+                    {fmtNumber(r.overdue_amount)} en retard
+                  </div>
+                )}
               </div>
               <div className="hidden md:block">
                 <StatusPill status={r.status} />
