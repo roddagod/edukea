@@ -45,6 +45,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               'min-w-0 flex-1 bg-transparent text-body-sm text-ink placeholder:text-ink-4 focus:outline-none',
               className,
             )}
+            suppressHydrationWarning
             {...rest}
           />
           {suffix && <span className="shrink-0 text-body-sm text-ink-3">{suffix}</span>}
