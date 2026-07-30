@@ -55,3 +55,4 @@ export * from './hooks/useSsylInstallmentStatus';
 export * from './hooks/useStudentWithCurrentEnrollment';
 export * from './hooks/useStudentsList';
 export * from './hooks/useStudentMutations';
+export * from './hooks/useStudentReenrollStatus';

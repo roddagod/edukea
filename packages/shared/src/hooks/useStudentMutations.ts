@@ -57,3 +57,37 @@ export function useUpdateSsyl() {
     },
   });
 }
+
+export function useArchiveStudent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error } = await supabase
+        .from('students')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['students-list'] });
+      qc.invalidateQueries({ queryKey: ['student-with-enrollment'] });
+    },
+  });
+}
+
+export function useRestoreStudent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error } = await supabase
+        .from('students')
+        .update({ deleted_at: null })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['students-list'] });
+      qc.invalidateQueries({ queryKey: ['student-with-enrollment'] });
+    },
+  });
+}

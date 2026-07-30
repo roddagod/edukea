@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import {
   useStudentWithCurrentEnrollment,
   useSsylInstallmentStatus,
   useStudentPaymentHistory,
+  useArchiveStudent,
 } from '@edukea/shared';
 import { supabase } from '@edukea/shared';
 import { PageHeader, Card, Skeleton, Button, Badge } from '@edukea/ui';
@@ -20,6 +21,7 @@ import {
   Wallet,
   Clock,
   GraduationCap,
+  Trash2,
 } from 'lucide-react';
 import { RecordPaymentDialog } from '@/components/RecordPaymentDialog';
 import { EditStudentDialog } from './_components/EditStudentDialog';
@@ -452,10 +454,12 @@ function GradesTab() {
 
 export default function StudentPage() {
   const { studentId } = useParams<{ studentId: string }>();
+  const router = useRouter();
   const [showPayment, setShowPayment] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
+  const archive = useArchiveStudent();
   const { data, isLoading } = useStudentWithCurrentEnrollment(studentId);
 
   if (isLoading) {
@@ -534,6 +538,18 @@ export default function StudentPage() {
             )}
             <Button variant="secondary" onClick={() => setEditOpen(true)}>
               <Pencil className="h-4 w-4" /> Editer
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                const name = `${student.firstname ?? ''} ${student.lastname ?? ''}`.trim();
+                if (!confirm(`Archiver ${name} ? Il ne sera plus visible dans la liste des élèves (récupérable via SQL).`)) return;
+                await archive.mutateAsync({ id: studentId });
+                router.push('/dashboard/students');
+              }}
+              className="text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Archiver
             </Button>
           </div>
         }

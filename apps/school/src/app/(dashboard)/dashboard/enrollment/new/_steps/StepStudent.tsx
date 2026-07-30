@@ -7,7 +7,7 @@ import {
   FormField, Input, Checkbox, DatePicker, RadioCards, SearchInput,
   Card, Avatar, toneFromSeed,
 } from '@edukea/ui';
-import { useStudentSearch, useStudentTypes } from '@edukea/shared';
+import { useStudentSearch, useStudentTypes, useStudentReenrollStatus, reenrollStatusColor } from '@edukea/shared';
 import type { EnrollmentFormState } from '../_types';
 
 export function StepStudent({
@@ -29,6 +29,9 @@ export function StepStudent({
   const { data: results } = useStudentSearch(schoolId, query);
   const { data: studentTypes } = useStudentTypes(schoolId);
 
+  const studentIds = (results ?? []).map((s) => s.id);
+  const { data: statusMap } = useStudentReenrollStatus(studentIds);
+
   // Auto-sélectionner le type par défaut (is_default=true, sinon le premier)
   useEffect(() => {
     if (typeStudentId || !studentTypes?.length) return;
@@ -45,24 +48,40 @@ export function StepStudent({
         <SearchInput value={query} onChange={setQuery} placeholder="Nom, prénom, matricule…" />
         {results && results.length > 0 && (
           <div className="mt-3 flex flex-col gap-2">
-            {results.map((s) => (
-              <Link
-                key={s.id}
-                href={`/dashboard/enrollment/re/${s.id}${qsSuffix}`}
-                className="flex items-center gap-3 rounded-md border border-line bg-white p-3 hover:border-primary hover:bg-primary/[0.04]"
-              >
-                <Avatar
-                  initials={`${(s.lastname ?? '?')[0] ?? ''}${(s.firstname ?? '?')[0] ?? ''}`.toUpperCase()}
-                  tone={toneFromSeed(s.id)}
-                  size="sm"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold text-ink">{s.lastname} {s.firstname}</div>
-                  {s.matricule && <div className="text-caption text-ink-3">Matr. {s.matricule}</div>}
-                </div>
-                <div className="text-body-xs font-semibold text-primary">Réinscrire →</div>
-              </Link>
-            ))}
+            {results.map((s) => {
+              const rs = statusMap?.get(s.id);
+              const sc = rs ? reenrollStatusColor(rs.status) : null;
+              return (
+                <Link
+                  key={s.id}
+                  href={`/dashboard/enrollment/re/${s.id}${qsSuffix}`}
+                  className="flex items-center gap-3 rounded-md border border-line bg-white p-3 hover:border-primary hover:bg-primary/[0.04]"
+                >
+                  <Avatar
+                    initials={`${(s.lastname ?? '?')[0] ?? ''}${(s.firstname ?? '?')[0] ?? ''}`.toUpperCase()}
+                    tone={toneFromSeed(s.id)}
+                    size="sm"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-semibold text-ink">{s.lastname} {s.firstname}</div>
+                    <div className="flex items-center gap-2">
+                      {s.matricule && <span className="text-caption text-ink-3">Matr. {s.matricule}</span>}
+                      {rs?.last_school_year_name && (
+                        <span className="text-caption text-ink-3">{rs.last_school_year_name}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {sc && (
+                      <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${sc.className}`}>
+                        {sc.label}
+                      </span>
+                    )}
+                    <div className="text-body-xs font-semibold text-primary">Réinscrire →</div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
         {results && query.length >= 2 && results.length === 0 && (
