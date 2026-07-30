@@ -148,11 +148,11 @@ export default function StudentPage() {
             </div>
             <div>
               <dt className="text-body-xs text-ink-3">Né(e) le</dt>
-              <dd className="mt-0.5 font-medium text-ink">{fmtDate(student.birthdate)}</dd>
+              <dd className="mt-0.5 font-medium text-ink">{fmtDate(student.date_of_birth)}</dd>
             </div>
             <div>
               <dt className="text-body-xs text-ink-3">Lieu de naissance</dt>
-              <dd className="mt-0.5 font-medium text-ink">{student.birthplace ?? '—'}</dd>
+              <dd className="mt-0.5 font-medium text-ink">{student.place_of_birth ?? '—'}</dd>
             </div>
             <div>
               <dt className="text-body-xs text-ink-3">Nationalité</dt>
@@ -161,7 +161,7 @@ export default function StudentPage() {
             <div className="col-span-2">
               <dt className="text-body-xs text-ink-3">N° extrait de naissance</dt>
               <dd className="mt-0.5 font-mono text-xs text-ink">
-                {student.numero_extrait ?? '—'}
+                {student.birth_certificate_number ?? '—'}
               </dd>
             </div>
           </dl>

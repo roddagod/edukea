@@ -8,11 +8,11 @@ export interface StudentWithEnrollment {
     firstname: string | null;
     lastname: string | null;
     sex: string | null;
-    birthdate: string | null;
-    birthplace: string | null;
+    date_of_birth: string | null;
+    place_of_birth: string | null;
     nationality: string | null;
-    numero_extrait: string | null;
-    photo_url: string | null;
+    birth_certificate_number: string | null;
+    email: string | null;
     student_type_id: string | null;
     student_type_label: string | null;
     school_id: string;
@@ -44,8 +44,8 @@ export function useStudentWithCurrentEnrollment(studentId: string | undefined) {
       const { data: studentRaw, error: sErr } = await supabase
         .from('students')
         .select(`
-          id, matricule, firstname, lastname, sex, birthdate, birthplace,
-          nationality, numero_extrait, photo_url, student_type_id, school_id,
+          id, matricule, firstname, lastname, sex, date_of_birth, place_of_birth,
+          nationality, birth_certificate_number, email, student_type_id, school_id,
           student_type:student_types(label)
         `)
         .eq('id', studentId)
@@ -60,11 +60,11 @@ export function useStudentWithCurrentEnrollment(studentId: string | undefined) {
         firstname: s.firstname,
         lastname: s.lastname,
         sex: s.sex,
-        birthdate: s.birthdate,
-        birthplace: s.birthplace,
+        date_of_birth: s.date_of_birth,
+        place_of_birth: s.place_of_birth,
         nationality: s.nationality,
-        numero_extrait: s.numero_extrait,
-        photo_url: s.photo_url,
+        birth_certificate_number: s.birth_certificate_number,
+        email: s.email,
         student_type_id: s.student_type_id,
         student_type_label: (s.student_type as { label?: string } | null)?.label ?? null,
         school_id: s.school_id,
