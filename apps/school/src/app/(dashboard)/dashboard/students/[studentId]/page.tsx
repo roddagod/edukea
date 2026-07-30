@@ -22,6 +22,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { RecordPaymentDialog } from '@/components/RecordPaymentDialog';
+import { EditStudentDialog } from './_components/EditStudentDialog';
 import type { StudentPaymentHistoryRow } from '@edukea/shared';
 
 // ─── Formatters ─────────────────────────────────────────────────────────────
@@ -452,6 +453,7 @@ function GradesTab() {
 export default function StudentPage() {
   const { studentId } = useParams<{ studentId: string }>();
   const [showPayment, setShowPayment] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
   const { data, isLoading } = useStudentWithCurrentEnrollment(studentId);
@@ -530,8 +532,8 @@ export default function StudentPage() {
                 <Plus className="h-4 w-4" /> Nouveau versement
               </button>
             )}
-            <Button variant="secondary" disabled title="Bientôt disponible">
-              <Pencil className="h-4 w-4" /> Éditer
+            <Button variant="secondary" onClick={() => setEditOpen(true)}>
+              <Pencil className="h-4 w-4" /> Editer
             </Button>
           </div>
         }
@@ -583,6 +585,26 @@ export default function StudentPage() {
           onClose={() => setShowPayment(false)}
         />
       )}
+
+      {/* Edit student dialog */}
+      <EditStudentDialog
+        student={data.student}
+        currentSsyl={
+          data.currentSsyl
+            ? {
+                id: data.currentSsyl.id,
+                classroom_id: data.currentSsyl.classroom_id,
+                is_redoublant: data.currentSsyl.is_redoublant,
+                lv2_subject_id: data.currentSsyl.lv2_subject_id,
+                mat_secondaire_subject_id:
+                  data.currentSsyl.mat_secondaire_subject_id,
+                eps_exemption: data.currentSsyl.eps_exemption,
+              }
+            : null
+        }
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+      />
     </div>
   );
 }

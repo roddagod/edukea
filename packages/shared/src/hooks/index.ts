@@ -43,3 +43,4 @@ export * from './useHydrateFeesFromTemplate';
 export * from './useSsylInstallmentStatus';
 export * from './useStudentWithCurrentEnrollment';
 export * from './useStudentsList';
+export * from './useStudentMutations';

@@ -54,3 +54,4 @@ export * from './hooks/useHydrateFeesFromTemplate';
 export * from './hooks/useSsylInstallmentStatus';
 export * from './hooks/useStudentWithCurrentEnrollment';
 export * from './hooks/useStudentsList';
+export * from './hooks/useStudentMutations';
