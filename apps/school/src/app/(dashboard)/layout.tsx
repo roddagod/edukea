@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Users,
   UserPlus,
+  UserCog,
   Coins,
   CreditCard,
   Megaphone,
@@ -66,6 +67,12 @@ const sections = [
     label: 'Communication',
     items: [
       { href: '/dashboard/announcements', label: 'Annonces', icon: Megaphone, badge: null as React.ReactNode | null },
+    ],
+  },
+  {
+    label: 'Administration',
+    items: [
+      { href: '/dashboard/users', label: 'Utilisateurs', icon: UserCog, badge: null as React.ReactNode | null },
     ],
   },
 ];

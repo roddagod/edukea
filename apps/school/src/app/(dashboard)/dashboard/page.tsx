@@ -1,234 +1,264 @@
 'use client';
 
-import { Coins, Smartphone, Landmark } from 'lucide-react';
-import {
-  PageHeader,
-  RefreshButton,
-  HeroKPI,
-  KPIStat,
-  Sparkline,
-  ProgressRing,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardSub,
-  TxTable,
-  HeroKPISkeleton,
-  KPIStatSkeleton,
-  ProgressRingSkeleton,
-  TxTableSkeleton,
-  type TxRowData,
-} from '@edukea/ui';
-import { useSearchParams } from 'next/navigation';
 import {
   useSchoolContext,
-  useSchoolTreasuryByYear,
-  useSchoolRecovery,
+  useCurrentUserRole,
+  useSchoolKpis,
+  useRecentEnrollments,
   useRecentPayments,
+  type RecentEnrollmentRow,
+  type RecentPaymentRow,
 } from '@edukea/shared';
+import {
+  Card,
+  Skeleton,
+} from '@edukea/ui';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Users, UserPlus, Wallet, AlertTriangle } from 'lucide-react';
 
-// Sparkline placeholder — a remplacer par une agregat quotidien (sprint 3)
-const PLACEHOLDER_SPARK = [12, 20, 15, 32, 28, 45, 38, 55, 50, 62, 58, 70, 75, 68, 82];
+const XAF = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
+const DATETIME = new Intl.DateTimeFormat('fr-FR', {
+  day: '2-digit',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+});
 
-function formatTime(): string {
-  const d = new Date();
-  return `${d.getHours().toString().padStart(2, '0')}h${d.getMinutes().toString().padStart(2, '0')}`;
-}
+// ---------------------------------------------------------------------------
+// Page root
+// ---------------------------------------------------------------------------
 
-function fmtNumber(n: number): string {
-  return new Intl.NumberFormat('fr-FR').format(n).replace(/[  ]/g, ' ');
-}
-
-export default function CockpitPage() {
+export default function DashboardPage() {
   const searchParams = useSearchParams();
-  const { data: ctx, refetch: refetchCtx, isLoading: ctxLoading } = useSchoolContext({
+  const { data: ctx } = useSchoolContext({
     requestedSchoolId: searchParams.get('school'),
     requestedYearId: searchParams.get('year'),
   });
+  const { data: userRole, isLoading: roleLoading } = useCurrentUserRole();
+
   const schoolId = ctx?.current_school?.id;
   const schoolYearId = ctx?.current_year?.id;
 
-  const { data: treasury, refetch: refetchTreasury, isLoading: treasuryLoading } = useSchoolTreasuryByYear(schoolId, schoolYearId);
-  const { data: recovery, refetch: refetchRecovery, isLoading: recoveryLoading } = useSchoolRecovery(schoolId, schoolYearId);
-  const { data: recentPayments, refetch: refetchRecent, isLoading: recentLoading } = useRecentPayments(schoolId, 8, schoolYearId);
+  if (roleLoading || !userRole) {
+    return (
+      <div className="p-6">
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
-  const handleRefresh = async () => {
-    await Promise.all([refetchCtx(), refetchTreasury(), refetchRecovery(), refetchRecent()]);
-  };
+  const role = userRole.role;
 
-  const showTreasurySkeleton = ctxLoading || treasuryLoading;
-  const showRecoverySkeleton = ctxLoading || recoveryLoading;
-  const showRecentSkeleton = ctxLoading || recentLoading;
+  return (
+    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">Cockpit</h1>
+        <p className="text-sm text-slate-600">
+          {ctx?.current_school?.name ?? '—'} · Année {ctx?.current_year?.name ?? '—'}
+          <span className="ml-2 rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+            {role}
+          </span>
+        </p>
+      </div>
 
-  const cash = Number(treasury?.cash_collected ?? 0);
-  const momo = Number(treasury?.momo_pending_collected ?? 0) + Number(treasury?.momo_settled_collected ?? 0);
-  const bank = Number(treasury?.bank_collected ?? 0);
-  const total = Number(treasury?.total_collected ?? 0);
+      {/* Contenu selon rôle */}
+      {['superadmin', 'manager', 'director', 'censor'].includes(role) && (
+        <StaffDashboard schoolId={schoolId} schoolYearId={schoolYearId} role={role} />
+      )}
+      {role === 'teacher' && <TeacherDashboardPlaceholder />}
+      {role === 'unknown' && <UnknownRoleView />}
+    </div>
+  );
+}
 
-  const rows: TxRowData[] = (recentPayments ?? []).map((p) => ({
-    id: p.id,
-    studentName: p.student_name,
-    studentSub: [p.matricule ? `Matr. ${p.matricule}` : null, p.source ? p.source : null]
-      .filter(Boolean)
-      .join(' · '),
-    className: p.class_name || '—',
-    status: p.status,
-    amount: p.amount,
-  }));
+// ---------------------------------------------------------------------------
+// Staff dashboard (superadmin / manager / director / censor)
+// ---------------------------------------------------------------------------
+
+function StaffDashboard({
+  schoolId,
+  schoolYearId,
+  role,
+}: {
+  schoolId: string | undefined;
+  schoolYearId: string | undefined;
+  role: string;
+}) {
+  const { data: kpis, isLoading: kpisLoading } = useSchoolKpis(schoolId, schoolYearId);
+  const { data: recentEnroll } = useRecentEnrollments(schoolId, schoolYearId, 5);
+  const { data: recentPay } = useRecentPayments(schoolId, 5, schoolYearId);
+
+  if (kpisLoading || !kpis) {
+    return <Skeleton className="h-96 w-full" />;
+  }
+
+  const rate =
+    kpis.billed_total > 0
+      ? Math.round((kpis.collected_total / kpis.billed_total) * 100)
+      : 0;
+
+  // Censor voit uniquement les KPI financiers (même chose en V1, différencier plus tard)
+  void role;
 
   return (
     <>
-      <PageHeader
-        title="Cockpit tresorerie"
-        sub={
-          ctx?.current_school?.name
-            ? `${ctx.current_school.name} · ${ctx.current_year?.name ?? ''} · mise a jour a ${formatTime()}`
-            : `Mise a jour a ${formatTime()}`
-        }
-        actions={<RefreshButton onClick={handleRefresh} />}
-      />
-
-      {showTreasurySkeleton ? (
-        <HeroKPISkeleton />
-      ) : (
-        <HeroKPI
-          amount={total}
-          label="Encaisse cette annee"
-          metrics={[
-            <span key="collected">
-              <span className="font-display font-semibold text-white">{treasury?.tx_count ?? 0}</span> versements poses
-            </span>,
-            recovery ? (
-              <span key="pct">
-                <span className="font-display font-bold text-[#86EFAC]">△</span>{' '}
-                <span className="font-display font-semibold text-white">
-                  {Number(recovery.recovery_pct).toString().replace('.', ',')}%
-                </span>{' '}
-                recouvre
-              </span>
-            ) : null,
-            recovery ? (
-              <span key="remaining">
-                <span className="font-display font-semibold text-white">{fmtNumber(Number(recovery.remaining_total))} FCFA</span> restant a recouvrer
-              </span>
-            ) : null,
-          ]}
-          spark={<Sparkline values={PLACEHOLDER_SPARK} />}
+      {/* KPI cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          icon={Users}
+          label="Élèves inscrits"
+          value={kpis.total_students.toString()}
+          color="text-blue-600"
         />
-      )}
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {showTreasurySkeleton ? (
-          <>
-            <KPIStatSkeleton />
-            <KPIStatSkeleton />
-            <KPIStatSkeleton />
-          </>
-        ) : (
-          <>
-            <KPIStat
-              label="Caisse"
-              amount={cash}
-              icon={
-                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#ECFDF5] text-[#059669]">
-                  <Coins className="h-4 w-4" />
-                </div>
-              }
-              footLeft="Especes encaissees"
-            />
-            <KPIStat
-              label="Mobile Money"
-              amount={momo}
-              icon={
-                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-accent-soft text-[#B45309]">
-                  <Smartphone className="h-4 w-4" />
-                </div>
-              }
-              footLeft={
-                treasury && Number(treasury.momo_pending_collected) > 0 ? (
-                  <>
-                    <span className="font-semibold text-[#B45309]">
-                      {fmtNumber(Number(treasury.momo_pending_collected))} FCFA
-                    </span>{' '}
-                    en attente d'apurement
-                  </>
-                ) : (
-                  'Apure'
-                )
-              }
-            />
-            <KPIStat
-              label="Banque"
-              amount={bank}
-              icon={
-                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#EEF2FA] text-primary">
-                  <Landmark className="h-4 w-4" />
-                </div>
-              }
-              footLeft="Virements bancaires"
-            />
-          </>
-        )}
+        <KpiCard
+          icon={UserPlus}
+          label="Nouvelles inscriptions (mois)"
+          value={kpis.new_enrollments.toString()}
+          color="text-green-600"
+        />
+        <KpiCard
+          icon={Wallet}
+          label="Encaissé"
+          value={`${XAF.format(kpis.collected_total)} XAF`}
+          sub={`${rate}% du dû`}
+          color="text-orange-600"
+        />
+        <KpiCard
+          icon={AlertTriangle}
+          label="En retard"
+          value={`${XAF.format(kpis.overdue_total)} XAF`}
+          color="text-red-600"
+        />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_1fr]">
-        {showRecoverySkeleton ? (
-          <ProgressRingSkeleton />
-        ) : (
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle>Recouvrement annuel</CardTitle>
-                <CardSub>{ctx?.current_year?.name ? `Annee scolaire ${ctx.current_year.name}` : '—'}</CardSub>
-              </div>
-            </CardHeader>
-            <div className="flex justify-center">
-              <ProgressRing
-                value={Number(recovery?.recovery_pct ?? 0)}
-                centerLabel={recovery ? `${Number(recovery.recovery_pct).toString().replace('.', ',')}%` : '—'}
-                centerSub="recouvre"
-                size={180}
-              />
-            </div>
-            <div className="mt-2.5 flex justify-around border-t border-dashed border-line pt-2.5">
-              {[
-                { color: '#22C55E', val: recovery?.solde_count ?? 0, label: 'soldes' },
-                { color: '#F69F13', val: recovery?.debute_count ?? 0, label: 'partiel' },
-                { color: '#EF4444', val: recovery?.impaye_count ?? 0, label: 'impayes' },
-              ].map((leg) => (
-                <div key={leg.label} className="text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <span className="h-2 w-2 rounded-full" style={{ background: leg.color }} />
-                    <span className="font-display text-heading-sm font-semibold">{fmtNumber(leg.val)}</span>
+      {/* Listes récentes */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Inscriptions récentes */}
+        <Card className="space-y-3 p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-slate-900">Inscriptions récentes</h2>
+            <Link
+              href="/dashboard/enrollment"
+              className="text-xs text-orange-600 hover:underline"
+            >
+              Voir tout →
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {(recentEnroll ?? []).length === 0 ? (
+              <p className="text-sm text-slate-500">Aucune inscription récente.</p>
+            ) : (
+              (recentEnroll ?? []).map((e: RecentEnrollmentRow) => (
+                <div
+                  key={e.ssyl_id}
+                  className="flex items-center justify-between rounded-md border border-slate-100 px-3 py-2 text-sm"
+                >
+                  <div>
+                    <p className="font-medium">{e.student_name ?? '—'}</p>
+                    <p className="text-xs text-slate-500">{e.classroom_name ?? '—'}</p>
                   </div>
-                  <div className="mt-0.5 text-caption font-medium text-ink-3">{leg.label}</div>
+                  <span className="text-xs text-slate-400">
+                    {e.created_at ? DATETIME.format(new Date(e.created_at)) : '—'}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </Card>
-        )}
+              ))
+            )}
+          </div>
+        </Card>
 
-        {showRecentSkeleton ? (
-          <TxTableSkeleton rows={5} />
-        ) : (
-          <Card className="p-0">
-            <div className="flex items-center justify-between px-5 pt-4">
-              <div>
-                <CardTitle>Derniers versements</CardTitle>
-                <CardSub>{rows.length} operations</CardSub>
-              </div>
-              <RefreshButton size="sm" label="Voir tout →" />
-            </div>
-            <div className="mt-3.5">
-              {rows.length === 0 ? (
-                <div className="px-5 pb-5 text-body-sm text-ink-3">Aucun versement recent.</div>
-              ) : (
-                <TxTable rows={rows} />
-              )}
-            </div>
-          </Card>
-        )}
+        {/* Paiements récents */}
+        <Card className="space-y-3 p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-slate-900">Paiements récents</h2>
+            <Link
+              href="/dashboard/recovery"
+              className="text-xs text-orange-600 hover:underline"
+            >
+              Voir tout →
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {(recentPay ?? []).length === 0 ? (
+              <p className="text-sm text-slate-500">Aucun paiement récent.</p>
+            ) : (
+              (recentPay ?? []).map((p: RecentPaymentRow) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between rounded-md border border-slate-100 px-3 py-2 text-sm"
+                >
+                  <div>
+                    <p className="font-medium">{p.student_name ?? '—'}</p>
+                    <p className="text-xs text-slate-500">{p.source ?? '—'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono font-semibold">{XAF.format(p.amount ?? 0)} XAF</p>
+                    <p className="text-xs text-slate-400">
+                      {p.occurred_at ? DATETIME.format(new Date(p.occurred_at)) : '—'}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
       </div>
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function KpiCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  color,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  sub?: string;
+  color: string;
+}) {
+  return (
+    <Card className="space-y-2 p-5">
+      <div className="flex items-center gap-2 text-xs uppercase text-slate-500">
+        <Icon className={`h-4 w-4 ${color}`} />
+        {label}
+      </div>
+      <p className={`text-2xl font-bold ${color}`}>{value}</p>
+      {sub && <p className="text-xs text-slate-500">{sub}</p>}
+    </Card>
+  );
+}
+
+function TeacherDashboardPlaceholder() {
+  return (
+    <Card className="p-6 text-center">
+      <p className="text-sm text-slate-600">
+        Espace enseignant en cours de développement (S3D.3 + S3D.4).
+      </p>
+      <p className="mt-2 text-xs text-slate-500">
+        Vous pourrez bientôt consulter vos classes, saisir des notes et gérer vos bulletins.
+      </p>
+    </Card>
+  );
+}
+
+function UnknownRoleView() {
+  return (
+    <Card className="p-6 text-center">
+      <p className="text-sm text-slate-600">
+        Votre profil n&apos;est pas encore associé à un rôle dans cette école.
+      </p>
+      <p className="mt-2 text-xs text-slate-500">
+        Contactez l&apos;administrateur de votre établissement.
+      </p>
+    </Card>
   );
 }

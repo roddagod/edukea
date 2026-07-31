@@ -326,9 +326,16 @@ export default function RecoveryHubPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <div className="truncate font-semibold text-ink">{r.student_name}</div>
-                      <div className="shrink-0 font-display text-body-md font-semibold tabular-nums text-ink">
-                        {fmtNumber(r.remaining)}
-                        <span className="ml-0.5 text-caption font-medium text-ink-3">FCFA</span>
+                      <div className="shrink-0 text-right">
+                        <div className="font-display text-body-md font-semibold tabular-nums text-ink">
+                          {fmtNumber(r.remaining)}
+                          <span className="ml-0.5 text-caption font-medium text-ink-3">FCFA</span>
+                        </div>
+                        {r.overdue_amount > 0 && (
+                          <div className="mt-0.5 inline-flex rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 tabular-nums">
+                            {fmtNumber(r.overdue_amount)} en retard
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="mt-0.5 flex items-center justify-between gap-2">

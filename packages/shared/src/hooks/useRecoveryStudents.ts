@@ -17,6 +17,7 @@ export interface RecoveryStudentRow {
   billed_initial: number;
   collected: number;
   remaining: number;
+  overdue_amount: number;
   status: RecoveryStatus;
 }
 
@@ -99,6 +100,7 @@ export function useRecoveryStudents(params: UseRecoveryStudentsParams) {
           billed_initial: Number(r.billed_initial),
           collected: Number(r.collected),
           remaining: Number(r.remaining),
+          overdue_amount: Number(r.overdue_amount),
         })),
         total: count ?? 0,
         page,

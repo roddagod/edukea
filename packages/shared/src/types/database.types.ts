@@ -181,20 +181,6 @@ export type Database = {
             referencedColumns: ["classroom_id"]
           },
           {
-            foreignKeyName: "attendance_records_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "attendance_records_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
-            referencedColumns: ["classroom_id"]
-          },
-          {
             foreignKeyName: "attendance_records_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -206,6 +192,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_recent_ledger_payments"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_recovery_students"
             referencedColumns: ["student_id"]
           },
         ]
@@ -385,20 +378,6 @@ export type Database = {
             referencedColumns: ["classroom_id"]
           },
           {
-            foreignKeyName: "bulletins_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "bulletins_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
-            referencedColumns: ["classroom_id"]
-          },
-          {
             foreignKeyName: "bulletins_periode_id_fkey"
             columns: ["periode_id"]
             isOneToOne: false
@@ -431,6 +410,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_recent_ledger_payments"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "bulletins_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_recovery_students"
             referencedColumns: ["student_id"]
           },
         ]
@@ -491,20 +477,6 @@ export type Database = {
             columns: ["classroom_id"]
             isOneToOne: false
             referencedRelation: "v_period_closure_overview"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "classroom_fee_installments_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "classroom_fee_installments_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
             referencedColumns: ["classroom_id"]
           },
           {
@@ -580,20 +552,6 @@ export type Database = {
             referencedColumns: ["classroom_id"]
           },
           {
-            foreignKeyName: "classroom_fee_lines_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "classroom_fee_lines_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
-            referencedColumns: ["classroom_id"]
-          },
-          {
             foreignKeyName: "classroom_fee_lines_overrides_level_line_id_fkey"
             columns: ["overrides_level_line_id"]
             isOneToOne: false
@@ -663,20 +621,6 @@ export type Database = {
             columns: ["classroom_id"]
             isOneToOne: false
             referencedRelation: "v_period_closure_overview"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "classroom_periode_status_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "classroom_periode_status_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
             referencedColumns: ["classroom_id"]
           },
           {
@@ -770,20 +714,6 @@ export type Database = {
             columns: ["classroom_id"]
             isOneToOne: false
             referencedRelation: "v_period_closure_overview"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "classroom_school_fees_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "classroom_school_fees_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
             referencedColumns: ["classroom_id"]
           },
           {
@@ -915,20 +845,6 @@ export type Database = {
             columns: ["classroom_id"]
             isOneToOne: false
             referencedRelation: "v_period_closure_overview"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "classroom_subjects_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "classroom_subjects_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
             referencedColumns: ["classroom_id"]
           },
           {
@@ -1167,6 +1083,13 @@ export type Database = {
             referencedRelation: "v_recent_ledger_payments"
             referencedColumns: ["student_id"]
           },
+          {
+            foreignKeyName: "conversations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_recovery_students"
+            referencedColumns: ["student_id"]
+          },
         ]
       }
       cycles: {
@@ -1320,20 +1243,6 @@ export type Database = {
             referencedColumns: ["classroom_id"]
           },
           {
-            foreignKeyName: "enrollment_transitions_from_classroom_id_fkey"
-            columns: ["from_classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "enrollment_transitions_from_classroom_id_fkey"
-            columns: ["from_classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
-            referencedColumns: ["classroom_id"]
-          },
-          {
             foreignKeyName: "enrollment_transitions_from_ssyl_id_fkey"
             columns: ["from_ssyl_id"]
             isOneToOne: false
@@ -1404,6 +1313,13 @@ export type Database = {
             referencedColumns: ["student_id"]
           },
           {
+            foreignKeyName: "enrollment_transitions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_recovery_students"
+            referencedColumns: ["student_id"]
+          },
+          {
             foreignKeyName: "enrollment_transitions_to_classroom_id_fkey"
             columns: ["to_classroom_id"]
             isOneToOne: false
@@ -1415,20 +1331,6 @@ export type Database = {
             columns: ["to_classroom_id"]
             isOneToOne: false
             referencedRelation: "v_period_closure_overview"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "enrollment_transitions_to_classroom_id_fkey"
-            columns: ["to_classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "enrollment_transitions_to_classroom_id_fkey"
-            columns: ["to_classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
             referencedColumns: ["classroom_id"]
           },
           {
@@ -1794,13 +1696,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_ledger_account_balance"
             referencedColumns: ["account_id"]
-          },
-          {
-            foreignKeyName: "ledger_entries_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
-            referencedColumns: ["receivable_account_id"]
           },
           {
             foreignKeyName: "ledger_entries_school_id_fkey"
@@ -2230,6 +2125,13 @@ export type Database = {
             referencedRelation: "v_recent_ledger_payments"
             referencedColumns: ["student_id"]
           },
+          {
+            foreignKeyName: "notes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_recovery_students"
+            referencedColumns: ["student_id"]
+          },
         ]
       }
       notes_audit: {
@@ -2492,6 +2394,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_recent_ledger_payments"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "parent_profiles_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_recovery_students"
             referencedColumns: ["student_id"]
           },
           {
@@ -3076,20 +2985,6 @@ export type Database = {
             referencedColumns: ["classroom_id"]
           },
           {
-            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
-            referencedColumns: ["classroom_id"]
-          },
-          {
             foreignKeyName: "student_school_year_loggings_lv2_subject_id_fkey"
             columns: ["lv2_subject_id"]
             isOneToOne: false
@@ -3150,6 +3045,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_recent_ledger_payments"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_school_year_loggings_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_recovery_students"
             referencedColumns: ["student_id"]
           },
           {
@@ -3636,20 +3538,6 @@ export type Database = {
             referencedColumns: ["classroom_id"]
           },
           {
-            foreignKeyName: "timetable_slots_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "timetable_slots_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
-            referencedColumns: ["classroom_id"]
-          },
-          {
             foreignKeyName: "timetable_slots_classroom_subject_id_fkey"
             columns: ["classroom_subject_id"]
             isOneToOne: false
@@ -3799,20 +3687,6 @@ export type Database = {
             referencedColumns: ["classroom_id"]
           },
           {
-            foreignKeyName: "bulletins_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "bulletins_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
-            referencedColumns: ["classroom_id"]
-          },
-          {
             foreignKeyName: "bulletins_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -3824,6 +3698,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_recent_ledger_payments"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "bulletins_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_recovery_students"
             referencedColumns: ["student_id"]
           },
           {
@@ -3875,20 +3756,6 @@ export type Database = {
             columns: ["classroom_id"]
             isOneToOne: false
             referencedRelation: "v_period_closure_overview"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "bulletins_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "bulletins_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
             referencedColumns: ["classroom_id"]
           },
           {
@@ -4105,20 +3972,6 @@ export type Database = {
             referencedColumns: ["classroom_id"]
           },
           {
-            foreignKeyName: "classroom_subjects_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "classroom_subjects_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
-            referencedColumns: ["classroom_id"]
-          },
-          {
             foreignKeyName: "classroom_subjects_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
@@ -4177,20 +4030,6 @@ export type Database = {
             columns: ["classroom_id"]
             isOneToOne: false
             referencedRelation: "v_period_closure_overview"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
             referencedColumns: ["classroom_id"]
           },
           {
@@ -4333,20 +4172,6 @@ export type Database = {
             referencedColumns: ["classroom_id"]
           },
           {
-            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
-            columns: ["classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
-            referencedColumns: ["classroom_id"]
-          },
-          {
             foreignKeyName: "student_school_year_loggings_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -4358,6 +4183,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_recent_ledger_payments"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_school_year_loggings_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_recovery_students"
             referencedColumns: ["student_id"]
           },
         ]
@@ -4417,6 +4249,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_recent_ledger_payments"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_school_year_loggings_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_recovery_students"
             referencedColumns: ["student_id"]
           },
         ]
@@ -4521,6 +4360,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_recovery_cycle_summary"
             referencedColumns: ["cycle_id"]
+          },
+          {
+            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "v_period_closure_overview"
+            referencedColumns: ["classroom_id"]
           },
           {
             foreignKeyName: "student_school_year_loggings_school_id_fkey"
@@ -4668,25 +4521,33 @@ export type Database = {
           classroom_id: string | null
           classroom_name: string | null
           collected: number | null
-          created_at: string | null
           cycle_name: string | null
           level_name: string | null
           matricule: string | null
-          receivable_account_id: string | null
-          registration_date: string | null
+          overdue_amount: number | null
           remaining: number | null
           school_id: string | null
           school_year_id: string | null
           ssyl_id: string | null
           status: string | null
-          student_firstname: string | null
           student_id: string | null
-          student_lastname: string | null
           student_name: string | null
-          student_sex: string | null
-          updated_at: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "v_period_closure_overview"
+            referencedColumns: ["classroom_id"]
+          },
           {
             foreignKeyName: "student_school_year_loggings_school_id_fkey"
             columns: ["school_id"]
@@ -4714,20 +4575,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_pedagogy_setup_status"
             referencedColumns: ["school_year_id"]
-          },
-          {
-            foreignKeyName: "student_school_year_loggings_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "student_school_year_loggings_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "v_recent_ledger_payments"
-            referencedColumns: ["student_id"]
           },
         ]
       }
@@ -4983,20 +4830,6 @@ export type Database = {
             referencedColumns: ["classroom_id"]
           },
           {
-            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
-            columns: ["from_classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_class_summary"
-            referencedColumns: ["classroom_id"]
-          },
-          {
-            foreignKeyName: "student_school_year_loggings_classroom_id_fkey"
-            columns: ["from_classroom_id"]
-            isOneToOne: false
-            referencedRelation: "v_recovery_students"
-            referencedColumns: ["classroom_id"]
-          },
-          {
             foreignKeyName: "student_school_year_loggings_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
@@ -5036,6 +4869,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "v_recent_ledger_payments"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_school_year_loggings_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_recovery_students"
             referencedColumns: ["student_id"]
           },
         ]
