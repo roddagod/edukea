@@ -1,5 +1,8 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { UserPlus, ArrowRightLeft, TrendingUp } from 'lucide-react';
@@ -44,6 +47,14 @@ function formatEnrollmentDate(iso: string): string {
 }
 
 export default function EnrollmentHubPage() {
+  return (
+    <Suspense fallback={<div className="p-6"><Skeleton className="h-64 w-full" /></div>}>
+      <EnrollmentHubInner />
+    </Suspense>
+  );
+}
+
+function EnrollmentHubInner() {
   const searchParams = useSearchParams();
   const { data: ctx } = useSchoolContext({
     requestedSchoolId: searchParams.get('school'),
