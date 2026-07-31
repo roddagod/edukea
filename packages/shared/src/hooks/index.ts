@@ -47,3 +47,4 @@ export * from './useStudentMutations';
 export * from './useStudentReenrollStatus';
 export * from './useCurrentUserRole';
 export * from './useSchoolKpis';
+export * from './useSchoolStaff';
