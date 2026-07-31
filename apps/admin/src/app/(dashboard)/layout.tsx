@@ -11,7 +11,6 @@ import {
   Settings,
   Shield,
   LogOut,
-  BookOpen,
   Menu,
   X,
 } from 'lucide-react';
@@ -24,27 +23,21 @@ const navSections = [
   {
     label: null,
     items: [
-      { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+      { href: '/dashboard', label: 'Cockpit', icon: LayoutDashboard },
     ],
   },
   {
     label: 'Gestion',
     items: [
-      { href: '/dashboard/schools', label: 'Etablissements', icon: Building2 },
-      { href: '/dashboard/users', label: 'Utilisateurs', icon: Users },
+      { href: '/dashboard/schools', label: 'Ecoles', icon: Building2 },
+      { href: '/dashboard/users', label: 'Utilisateurs plateforme', icon: Users },
       { href: '/dashboard/subscriptions', label: 'Abonnements', icon: CreditCard },
-    ],
-  },
-  {
-    label: 'Vie scolaire',
-    items: [
-      { href: '/dashboard/vie-scolaire', label: 'Vie scolaire', icon: BookOpen },
     ],
   },
   {
     label: null,
     items: [
-      { href: '/dashboard/settings', label: 'Configuration', icon: Settings },
+      { href: '/dashboard/settings', label: 'Parametres', icon: Settings },
     ],
   },
 ];

@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   Building2,
+  ExternalLink,
   Mail,
   Phone,
   MapPin,
@@ -95,6 +96,15 @@ export default function SchoolDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <a
+            href={`${process.env.NEXT_PUBLIC_SCHOOL_APP_URL || 'http://localhost:4002'}/dashboard?school=${schoolId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Ouvrir la console ecole
+          </a>
           {isEditing ? (
             <>
               <Button variant="outline" onClick={() => setIsEditing(false)}>
