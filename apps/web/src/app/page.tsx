@@ -690,10 +690,10 @@ export default function LandingPage() {
                 quotidien de votre staff.
               </p>
               <a
-                href="https://school.edukea.ci"
+                href="https://edukea-school.vercel.app"
                 className="inline-flex items-center gap-1 text-sm font-semibold text-[#E97423] transition-colors hover:text-[#c9621d]"
               >
-                school.edukea.ci <ArrowRight className="h-3 w-3" />
+                edukea-school.vercel.app <ArrowRight className="h-3 w-3" />
               </a>
             </Card>
             <Card className="space-y-4 p-6">
@@ -730,10 +730,10 @@ export default function LandingPage() {
                 facturation et les KPIs.
               </p>
               <a
-                href="https://admin.edukea.ci"
+                href="https://edukea-admin.vercel.app"
                 className="inline-flex items-center gap-1 text-sm font-semibold text-[#1D3A6B] transition-colors hover:text-[#152B52]"
               >
-                admin.edukea.ci <ArrowRight className="h-3 w-3" />
+                edukea-admin.vercel.app <ArrowRight className="h-3 w-3" />
               </a>
             </Card>
           </div>
@@ -860,9 +860,9 @@ export default function LandingPage() {
               <p className="text-sm font-semibold text-slate-900">Portails</p>
               <ul className="mt-3 space-y-2">
                 {[
-                  { label: 'Portail Ecole', href: 'https://school.edukea.ci' },
+                  { label: 'Portail Ecole', href: 'https://edukea-school.vercel.app' },
                   { label: 'Espace Parent', href: 'https://parent.edukea.ci' },
-                  { label: 'Console Fondateur', href: 'https://admin.edukea.ci' },
+                  { label: 'Console Fondateur', href: 'https://edukea-admin.vercel.app' },
                 ].map((l) => (
                   <li key={l.label}>
                     <a href={l.href} className="text-sm text-slate-500 hover:text-[#E97423] transition-colors">

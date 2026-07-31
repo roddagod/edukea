@@ -20,9 +20,9 @@ export function AppShell({ topbar, sidebar, bottomNav, children, className }: Ap
   return (
     <div className={cn('flex min-h-screen flex-col bg-[#F7F8FB]', className)}>
       {topbar}
-      <div className="flex flex-1">
+      <div className="flex flex-1 items-stretch">
         {/* Sidebar visible uniquement en lg+ */}
-        <div className="hidden lg:block">{sidebar}</div>
+        <div className="hidden lg:flex lg:items-stretch">{sidebar}</div>
         {/* Main : pb16 mobile pour laisser place au bottom nav 64px */}
         <main className="flex flex-1 flex-col gap-4 overflow-auto p-4 pb-24 sm:p-5 sm:pb-24 lg:p-7 lg:pb-7">
           {children}

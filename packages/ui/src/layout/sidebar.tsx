@@ -11,7 +11,7 @@ export interface SidebarProps {
 export function Sidebar({ workspace, user, className, children }: SidebarProps) {
   return (
     <aside
-      className={cn('relative flex flex-col border-r border-primary-deep bg-primary', className)}
+      className={cn('relative flex h-full min-h-full flex-col self-stretch border-r border-primary-deep bg-primary', className)}
       style={{ width: 232 }}
     >
       <div
