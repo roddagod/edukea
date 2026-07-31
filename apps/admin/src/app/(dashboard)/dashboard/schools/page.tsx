@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, MoreHorizontal, Eye, Pencil, Trash2, Plus } from 'lucide-react';
+import { Building2, ExternalLink, MoreHorizontal, Eye, Pencil, Trash2, Plus } from 'lucide-react';
 import { useSchools, useDeleteSchool } from '@/hooks/useSchools';
 import { DataTable, type Column } from '@/components/data-table';
 import { Badge } from '@/components/ui/badge';
@@ -107,6 +107,20 @@ export default function SchoolsPage() {
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/schools/${school.id}?edit=true`); }}>
               <Pencil className="mr-2 h-4 w-4" />
               Modifier
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(
+                  `${process.env.NEXT_PUBLIC_SCHOOL_APP_URL || 'http://localhost:4002'}/dashboard?school=${school.id}`,
+                  '_blank',
+                  'noopener,noreferrer'
+                );
+              }}
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Ouvrir console ecole
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

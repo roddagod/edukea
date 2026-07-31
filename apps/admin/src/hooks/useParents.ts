@@ -92,7 +92,6 @@ export function useInviteParent() {
       if (error) throw error;
       if (result?.error) throw new Error(result.error);
 
-      // Update phone if provided
       if (data.phone && result?.profile_id) {
         await (supabase.from('parent_profiles') as any)
           .update({ phone: data.phone })
