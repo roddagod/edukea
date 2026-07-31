@@ -118,11 +118,11 @@ export function Wizard({
           Précédent
         </Button>
         {last ? (
-          <Button variant="primary" size="lg" onClick={onSubmit} disabled={!isCurrentStepValid || isSubmitting}>
+          <Button variant="accent" size="lg" onClick={onSubmit} disabled={!isCurrentStepValid || isSubmitting}>
             {isSubmitting ? 'Enregistrement…' : submitLabel}
           </Button>
         ) : (
-          <Button variant="primary" onClick={onNext} disabled={!isCurrentStepValid}>
+          <Button variant="accent" onClick={onNext} disabled={!isCurrentStepValid}>
             Suivant
           </Button>
         )}
