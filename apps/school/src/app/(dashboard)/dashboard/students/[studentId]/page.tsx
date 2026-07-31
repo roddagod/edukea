@@ -9,6 +9,9 @@ import {
   useSsylInstallmentStatus,
   useStudentPaymentHistory,
   useArchiveStudent,
+  useSchoolCurrency,
+  formatMoney,
+  type Currency,
 } from '@edukea/shared';
 import { supabase } from '@edukea/shared';
 import { PageHeader, Card, Skeleton, Button, Badge } from '@edukea/ui';
@@ -28,8 +31,6 @@ import { EditStudentDialog } from './_components/EditStudentDialog';
 import type { StudentPaymentHistoryRow } from '@edukea/shared';
 
 // ─── Formatters ─────────────────────────────────────────────────────────────
-
-const XAF = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return '—';
@@ -235,9 +236,11 @@ function OverviewTab({ data }: { data: NonNullable<ReturnType<typeof useStudentW
 function FeesTab({
   currentSsylId,
   onNewPayment,
+  currency,
 }: {
   currentSsylId: string | null | undefined;
   onNewPayment: () => void;
+  currency: Currency;
 }) {
   const { data: installments } = useSsylInstallmentStatus(currentSsylId ?? undefined);
   const { data: history } = useStudentPaymentHistory(currentSsylId ?? undefined, 20);
@@ -295,13 +298,13 @@ function FeesTab({
                       <td className="px-3 py-2.5 font-medium text-ink">{inst.label}</td>
                       <td className="px-3 py-2.5 text-ink-3">{fmtDate(inst.due_date)}</td>
                       <td className="px-3 py-2.5 text-right font-mono text-ink">
-                        {XAF.format(inst.amount_due)}
+                        {formatMoney(inst.amount_due, currency)}
                       </td>
                       <td className="px-3 py-2.5 text-right font-mono text-green-700">
-                        {XAF.format(inst.amount_paid)}
+                        {formatMoney(inst.amount_paid, currency)}
                       </td>
                       <td className="px-3 py-2.5 text-right font-mono font-semibold text-ink">
-                        {XAF.format(remaining)}
+                        {formatMoney(remaining, currency)}
                       </td>
                       <td className="px-3 py-2.5">
                         <span
@@ -343,7 +346,7 @@ function FeesTab({
                   <tr key={row.tx_id} className="hover:bg-slate-50/50">
                     <td className="px-5 py-2.5 text-ink-3">{fmtDatetime(row.occurred_at)}</td>
                     <td className="px-3 py-2.5 text-right font-mono font-semibold text-ink">
-                      {XAF.format(row.amount)} FCFA
+                      {formatMoney(row.amount, currency)}
                     </td>
                     <td className="px-3 py-2.5 text-ink">
                       {row.source === 'cash'
@@ -459,6 +462,7 @@ export default function StudentPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
+  const currency = useSchoolCurrency();
   const archive = useArchiveStudent();
   const { data, isLoading } = useStudentWithCurrentEnrollment(studentId);
 
@@ -586,6 +590,7 @@ export default function StudentPage() {
           <FeesTab
             currentSsylId={currentSsyl?.id}
             onNewPayment={() => setShowPayment(true)}
+            currency={currency}
           />
         )}
         {activeTab === 'history' && <SchoolHistoryTab studentId={studentId} />}

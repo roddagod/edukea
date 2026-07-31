@@ -1,12 +1,11 @@
 'use client';
 
-import type { EffectiveFee } from '@edukea/shared';
+import { formatMoney } from '@edukea/shared';
+import type { EffectiveFee, Currency } from '@edukea/shared';
 
-interface Props { fees: EffectiveFee[]; }
+interface Props { fees: EffectiveFee[]; currency: Currency; }
 
-const XAF = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
-
-export function FeesLinesTable({ fees }: Props) {
+export function FeesLinesTable({ fees, currency }: Props) {
   const mandatoryTotal = fees
     .filter((f) => !['canteen', 'transport'].includes(f.category))
     .reduce((s, f) => s + f.amount, 0);
@@ -27,17 +26,17 @@ export function FeesLinesTable({ fees }: Props) {
             <tr key={`${f.label}-${i}`} className="border-t">
               <td className="p-2">{f.label}</td>
               <td className="p-2 text-xs text-slate-500">{f.category}</td>
-              <td className="p-2 text-right font-mono">{XAF.format(f.amount)} XAF</td>
+              <td className="p-2 text-right font-mono">{formatMoney(f.amount, currency)}</td>
             </tr>
           ))}
           <tr className="border-t bg-slate-50 font-semibold">
             <td colSpan={2} className="p-2 text-right">Total obligatoire</td>
-            <td className="p-2 text-right font-mono">{XAF.format(mandatoryTotal)} XAF</td>
+            <td className="p-2 text-right font-mono">{formatMoney(mandatoryTotal, currency)}</td>
           </tr>
           {totalAll !== mandatoryTotal && (
             <tr className="bg-slate-50 text-slate-600">
               <td colSpan={2} className="p-2 text-right">Total avec options</td>
-              <td className="p-2 text-right font-mono">{XAF.format(totalAll)} XAF</td>
+              <td className="p-2 text-right font-mono">{formatMoney(totalAll, currency)}</td>
             </tr>
           )}
         </tbody>

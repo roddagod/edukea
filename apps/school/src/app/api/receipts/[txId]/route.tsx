@@ -43,7 +43,7 @@ export async function GET(
       student:students(id, matricule, firstname, lastname),
       classroom:classrooms(name),
       school_year:school_years(name),
-      school:schools(id, name, display_name, logo_url, address, phone, email, accent_color, director_signature_url)
+      school:schools(id, name, display_name, logo_url, address, phone, email, accent_color, director_signature_url, currency)
     `)
     .eq('id', ssylId)
     .maybeSingle();
@@ -103,7 +103,8 @@ export async function GET(
     allocations,
   };
 
-  const stream = await renderToStream(<PaymentReceiptDocument data={data} />);
+  const schoolCurrency = (ssyl.school.currency as 'XOF' | 'XAF') ?? 'XOF';
+  const stream = await renderToStream(<PaymentReceiptDocument data={data} currency={schoolCurrency} />);
 
   // Convert Node.js Readable to web ReadableStream
   const webStream = new ReadableStream({

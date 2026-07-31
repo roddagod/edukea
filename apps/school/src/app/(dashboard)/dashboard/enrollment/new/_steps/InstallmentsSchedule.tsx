@@ -1,13 +1,13 @@
 'use client';
 
-import type { EffectiveInstallment } from '@edukea/shared';
+import { formatMoney } from '@edukea/shared';
+import type { EffectiveInstallment, Currency } from '@edukea/shared';
 
-interface Props { installments: EffectiveInstallment[]; }
+interface Props { installments: EffectiveInstallment[]; currency: Currency; }
 
-const XAF = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 const DATE = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 
-export function InstallmentsSchedule({ installments }: Props) {
+export function InstallmentsSchedule({ installments, currency }: Props) {
   const total = installments.reduce((s, i) => s + i.amount, 0);
   return (
     <div className="overflow-x-auto rounded-xl border">
@@ -26,12 +26,12 @@ export function InstallmentsSchedule({ installments }: Props) {
               <td className="p-2">{i.order}</td>
               <td className="p-2">{i.label}</td>
               <td className="p-2 text-slate-600">{i.due_date ? DATE.format(new Date(i.due_date)) : '—'}</td>
-              <td className="p-2 text-right font-mono">{XAF.format(i.amount)} XAF</td>
+              <td className="p-2 text-right font-mono">{formatMoney(i.amount, currency)}</td>
             </tr>
           ))}
           <tr className="border-t bg-slate-50 font-semibold">
             <td colSpan={3} className="p-2 text-right">Total échéances</td>
-            <td className="p-2 text-right font-mono">{XAF.format(total)} XAF</td>
+            <td className="p-2 text-right font-mono">{formatMoney(total, currency)}</td>
           </tr>
         </tbody>
       </table>

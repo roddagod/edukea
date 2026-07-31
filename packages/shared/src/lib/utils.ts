@@ -1,6 +1,6 @@
 import { PAYMENT_STATUS } from './constants';
 
-export function formatCurrency(amount: number, currency = 'XAF'): string {
+export function formatCurrency(amount: number, currency = 'XOF'): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency,

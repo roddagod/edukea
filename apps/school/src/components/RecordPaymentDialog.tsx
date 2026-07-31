@@ -1,19 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { useRecordPayment, useSsylInstallmentStatus } from '@edukea/shared';
+import { useRecordPayment, useSsylInstallmentStatus, useSchoolCurrency, formatMoney } from '@edukea/shared';
+import type { Currency } from '@edukea/shared';
 import { Modal, Button, Input } from '@edukea/ui';
 
 interface Props {
   ssylId: string;
   studentName?: string;
   remaining?: number;
+  currency?: Currency;
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (txId: string) => void;
 }
-
-const XAF = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
 const SOURCES: { value: 'cash' | 'bank_transfer' | 'internal'; label: string }[] = [
   { value: 'cash', label: 'Espèces' },
@@ -21,7 +21,9 @@ const SOURCES: { value: 'cash' | 'bank_transfer' | 'internal'; label: string }[]
   { value: 'internal', label: 'Interne' },
 ];
 
-export function RecordPaymentDialog({ ssylId, studentName, remaining, isOpen, onClose, onSuccess }: Props) {
+export function RecordPaymentDialog({ ssylId, studentName, remaining, currency: currencyProp, isOpen, onClose, onSuccess }: Props) {
+  const fallbackCurrency = useSchoolCurrency();
+  const currency = currencyProp ?? fallbackCurrency;
   const record = useRecordPayment();
   const { data: installments } = useSsylInstallmentStatus(ssylId);
   const [amountInput, setAmountInput] = useState('');
@@ -64,8 +66,8 @@ export function RecordPaymentDialog({ ssylId, studentName, remaining, isOpen, on
   };
 
   const description = studentName
-    ? `${studentName}${totalRemaining > 0 ? ` — Restant dû : ${XAF.format(totalRemaining)} FCFA` : ''}`
-    : (totalRemaining > 0 ? `Restant dû : ${XAF.format(totalRemaining)} FCFA` : undefined);
+    ? `${studentName}${totalRemaining > 0 ? ` — Restant dû : ${formatMoney(totalRemaining, currency)}` : ''}`
+    : (totalRemaining > 0 ? `Restant dû : ${formatMoney(totalRemaining, currency)}` : undefined);
 
   return (
     <Modal
@@ -129,8 +131,8 @@ export function RecordPaymentDialog({ ssylId, studentName, remaining, isOpen, on
               <div key={i} className="flex justify-between text-blue-900">
                 <span>{a.label}</span>
                 <span className="font-mono">
-                  {XAF.format(a.alloc)}
-                  {a.remaining > 0 && <span className="text-blue-600 ml-1">(reste {XAF.format(a.remaining)})</span>}
+                  {formatMoney(a.alloc, currency)}
+                  {a.remaining > 0 && <span className="text-blue-600 ml-1">(reste {formatMoney(a.remaining, currency)})</span>}
                   {a.remaining === 0 && <span className="text-green-700 ml-1">✓</span>}
                 </span>
               </div>
@@ -138,7 +140,7 @@ export function RecordPaymentDialog({ ssylId, studentName, remaining, isOpen, on
             {surplus > 0 && (
               <div className="flex justify-between text-orange-700 border-t border-blue-200 pt-1 mt-1">
                 <span>Avance (trop-perçu)</span>
-                <span className="font-mono">{XAF.format(surplus)}</span>
+                <span className="font-mono">{formatMoney(surplus, currency)}</span>
               </div>
             )}
           </div>

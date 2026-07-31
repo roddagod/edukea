@@ -20,6 +20,7 @@ export * from './useRecoveryClasses';
 export * from './useRecoveryLevels';
 export * from './useRecoveryStudents';
 export * from './useSchoolContext';
+export * from './useSchoolCurrency';
 export * from './useStudentDetail';
 export * from './useStudentSearch';
 export * from './useYearAdvancementPreview';

@@ -5,6 +5,7 @@ import {
   FormField, Input, Checkbox, SegmentedControl, Select, Textarea, Card, Skeleton,
 } from '@edukea/ui';
 import { useClassroomEffectiveFees, useClassroomEffectiveInstallments } from '@edukea/shared';
+import type { Currency } from '@edukea/shared';
 import { FeesLinesTable } from './FeesLinesTable';
 import { InstallmentsSchedule } from './InstallmentsSchedule';
 import { PaymentAllocationPreview } from './PaymentAllocationPreview';
@@ -17,10 +18,12 @@ function fmt(n: number): string {
 export function StepFeesPayment({
   value,
   onChange,
+  currency,
 }: {
   schoolYearId: string | undefined;
   value: EnrollmentFormState;
   onChange: (v: EnrollmentFormState) => void;
+  currency: Currency;
 }) {
   const { data: fees, isLoading: fL } = useClassroomEffectiveFees(
     value.classroomId || undefined,
@@ -84,7 +87,7 @@ export function StepFeesPayment({
         <div className="mb-2 font-display text-heading-sm font-semibold text-ink">
           Frais scolarité
         </div>
-        <FeesLinesTable fees={fees} />
+        <FeesLinesTable fees={fees} currency={currency} />
       </Card>
 
       {/* Calendrier des échéances */}
@@ -93,7 +96,7 @@ export function StepFeesPayment({
           <div className="mb-2 font-display text-heading-sm font-semibold text-ink">
             Calendrier de paiement
           </div>
-          <InstallmentsSchedule installments={installments ?? []} />
+          <InstallmentsSchedule installments={installments ?? []} currency={currency} />
         </Card>
       )}
 
@@ -203,6 +206,7 @@ export function StepFeesPayment({
             <PaymentAllocationPreview
               installments={installments ?? []}
               paymentAmount={value.firstPayment.amount}
+              currency={currency}
             />
           </div>
         )}

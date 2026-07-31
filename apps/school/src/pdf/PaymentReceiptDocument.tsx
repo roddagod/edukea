@@ -1,4 +1,5 @@
- import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import type { Currency } from '@edukea/shared';
 
 export interface PaymentReceiptData {
   receiptNumber: string;
@@ -31,8 +32,12 @@ export interface PaymentReceiptData {
   }>;
 }
 
-const XAF = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
+const NUM = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 const DATE = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+function fmtMoney(amount: number, currency: Currency): string {
+  return `${NUM.format(amount)} ${currency}`;
+}
 
 const SOURCE_LABEL: Record<string, string> = {
   cash: 'Espèces',
@@ -178,7 +183,7 @@ function makeStyles(accent: string) {
   });
 }
 
-export function PaymentReceiptDocument({ data }: { data: PaymentReceiptData }) {
+export function PaymentReceiptDocument({ data, currency }: { data: PaymentReceiptData; currency: Currency }) {
   const accent = data.school.accentColor || '#E97423';
   const styles = makeStyles(accent);
 
@@ -246,7 +251,7 @@ export function PaymentReceiptDocument({ data }: { data: PaymentReceiptData }) {
           )}
           <View style={styles.total}>
             <Text style={styles.totalLabel}>MONTANT RECU</Text>
-            <Text style={styles.totalValue}>{XAF.format(data.payment.totalAmount)} XAF</Text>
+            <Text style={styles.totalValue}>{fmtMoney(data.payment.totalAmount, currency)}</Text>
           </View>
         </View>
 
@@ -258,7 +263,7 @@ export function PaymentReceiptDocument({ data }: { data: PaymentReceiptData }) {
               {data.allocations.map((a, i) => (
                 <View key={i} style={styles.allocationRow}>
                   <Text>{a.installmentLabel || 'Avance / trop-percu'}</Text>
-                  <Text style={styles.allocationAmount}>{XAF.format(a.amount)} XAF</Text>
+                  <Text style={styles.allocationAmount}>{fmtMoney(a.amount, currency)}</Text>
                 </View>
               ))}
             </View>

@@ -1,15 +1,14 @@
 'use client';
 
-import { useFeesOverviewMatrix, useStudentTypes, useHydrateFeesFromTemplate, type FeesMatrixRow } from '@edukea/shared';
+import { useFeesOverviewMatrix, useStudentTypes, useHydrateFeesFromTemplate, useSchoolCurrency, formatMoney, type FeesMatrixRow } from '@edukea/shared';
 import { Button, Skeleton } from '@edukea/ui';
 import { CheckCircle2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 interface Props { schoolId: string; }
 
-const XAF = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
-
 export function FeesOverviewMatrix({ schoolId }: Props) {
+  const currency = useSchoolCurrency();
   const { data: matrix, isLoading: mL } = useFeesOverviewMatrix(schoolId);
   const { data: types, isLoading: tL } = useStudentTypes(schoolId);
   const hydrate = useHydrateFeesFromTemplate();
@@ -98,7 +97,7 @@ export function FeesOverviewMatrix({ schoolId }: Props) {
                         ) : (
                           <span className="inline-flex items-center gap-1.5 text-sm">
                             <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                            <span className="font-medium text-slate-900">{XAF.format(c.total_mandatory)} XAF</span>
+                            <span className="font-medium text-slate-900">{formatMoney(c.total_mandatory, currency)}</span>
                           </span>
                         )}
                       </Link>

@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import type { Currency, CountryCode } from '../lib/countries';
 
 export interface SchoolContextInfo {
   is_superadmin: boolean;
   schools: Array<{ id: string; name: string }>;
   years: Array<{ id: string; name: string; date_start: string | null; date_end?: string | null }>;
-  current_school: { id: string; name: string } | null;
+  current_school: { id: string; name: string; currency: Currency; country_code: CountryCode } | null;
   current_year: { id: string; name: string } | null;
 }
 
@@ -34,7 +35,30 @@ export function useSchoolContext(params: UseSchoolContextParams = {}) {
         p_requested_year_id: requestedYearId,
       });
       if (error) throw error;
-      return (data as SchoolContextInfo | null) ?? null;
+      const ctx = (data as SchoolContextInfo | null) ?? null;
+      if (!ctx?.current_school?.id) return ctx;
+
+      // Enrich current_school with currency + country_code (not returned by RPC)
+      const { data: schoolRow } = await supabase
+        .from('schools')
+        .select('currency, country_code')
+        .eq('id', ctx.current_school.id)
+        .single();
+
+      if (schoolRow) {
+        ctx.current_school = {
+          ...ctx.current_school,
+          currency: (schoolRow.currency as Currency) ?? 'XOF',
+          country_code: (schoolRow.country_code as CountryCode) ?? 'CI',
+        };
+      } else {
+        ctx.current_school = {
+          ...ctx.current_school,
+          currency: 'XOF',
+          country_code: 'CI',
+        };
+      }
+      return ctx;
     },
   });
 }

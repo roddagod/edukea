@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react';
 import { FormField, Select, RadioCards } from '@edukea/ui';
-import { useRecoveryClasses, useSchoolClassrooms, useStudentTypes, useClassroomEffectiveFees } from '@edukea/shared';
+import { useRecoveryClasses, useSchoolClassrooms, useStudentTypes, useClassroomEffectiveFees, formatMoney } from '@edukea/shared';
+import type { Currency } from '@edukea/shared';
 import type { EnrollmentFormState } from '../_types';
 
 export function StepClassroom({
@@ -10,11 +11,13 @@ export function StepClassroom({
   schoolYearId,
   value,
   onChange,
+  currency,
 }: {
   schoolId: string | undefined;
   schoolYearId: string | undefined;
   value: EnrollmentFormState;
   onChange: (v: EnrollmentFormState) => void;
+  currency: Currency;
 }) {
   const { data: allClassrooms } = useSchoolClassrooms(schoolId, schoolYearId);
   const { data: classesSummary } = useRecoveryClasses(schoolId, schoolYearId);
@@ -87,13 +90,13 @@ export function StepClassroom({
                 {(effectiveFees ?? []).map((f, i) => (
                   <li key={`${f.label}-${i}`} className="flex justify-between text-ink-2">
                     <span>{f.label}</span>
-                    <span className="font-mono">{f.amount.toLocaleString('fr-FR')} XAF</span>
+                    <span className="font-mono">{formatMoney(f.amount, currency)}</span>
                   </li>
                 ))}
               </ul>
               <div className="mt-3 border-t border-line pt-2 flex justify-between font-semibold text-ink">
                 <span>Total obligatoire</span>
-                <span className="font-mono">{totalMandatory.toLocaleString('fr-FR')} XAF</span>
+                <span className="font-mono">{formatMoney(totalMandatory, currency)}</span>
               </div>
             </div>
           )}

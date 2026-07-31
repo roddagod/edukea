@@ -19,6 +19,7 @@ export * from './hooks/useLedger';
 export * from './hooks/useCurrentSchool';
 export * from './hooks/useRecentPayments';
 export * from './hooks/useSchoolContext';
+export * from './hooks/useSchoolCurrency';
 export * from './hooks/useRecoveryStudents';
 export * from './hooks/useRecoveryClasses';
 export * from './hooks/useRecoveryLevels';

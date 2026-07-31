@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { PageHeader, Wizard, Card, FormField, Select, Checkbox, Input, SegmentedControl, RadioCards, Skeleton } from '@edukea/ui';
-import { useSchoolContext, useReenrollStudent, useSchoolClassrooms, useClassroomEffectiveFees, useClassroomEffectiveInstallments, supabase } from '@edukea/shared';
+import { useSchoolContext, useSchoolCurrency, useReenrollStudent, useSchoolClassrooms, useClassroomEffectiveFees, useClassroomEffectiveInstallments, supabase } from '@edukea/shared';
 import { FeesLinesTable } from '../../new/_steps/FeesLinesTable';
 import { InstallmentsSchedule } from '../../new/_steps/InstallmentsSchedule';
 import { PaymentAllocationPreview } from '../../new/_steps/PaymentAllocationPreview';
@@ -41,6 +41,10 @@ export default function ReenrollPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: ctx } = useSchoolContext({
+    requestedSchoolId: searchParams.get('school'),
+    requestedYearId: searchParams.get('year'),
+  });
+  const currency = useSchoolCurrency({
     requestedSchoolId: searchParams.get('school'),
     requestedYearId: searchParams.get('year'),
   });
@@ -225,7 +229,7 @@ export default function ReenrollPage() {
                   <div className="mb-2 font-display text-heading-sm font-semibold text-ink">
                     Frais scolarité
                   </div>
-                  <FeesLinesTable fees={effectiveFees!} />
+                  <FeesLinesTable fees={effectiveFees!} currency={currency} />
                 </Card>
 
                 {/* Calendrier échéances */}
@@ -234,7 +238,7 @@ export default function ReenrollPage() {
                     <div className="mb-2 font-display text-heading-sm font-semibold text-ink">
                       Calendrier de paiement
                     </div>
-                    <InstallmentsSchedule installments={effectiveInstallments!} />
+                    <InstallmentsSchedule installments={effectiveInstallments!} currency={currency} />
                   </Card>
                 )}
 
@@ -276,6 +280,7 @@ export default function ReenrollPage() {
                       <PaymentAllocationPreview
                         installments={effectiveInstallments!}
                         paymentAmount={firstPayment.amount}
+                        currency={currency}
                       />
                     </div>
                   )}

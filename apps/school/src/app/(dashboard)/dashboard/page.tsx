@@ -4,12 +4,15 @@ export const dynamic = 'force-dynamic';
 
 import {
   useSchoolContext,
+  useSchoolCurrency,
   useCurrentUserRole,
   useSchoolKpis,
   useRecentEnrollments,
   useRecentPayments,
+  formatMoney,
   type RecentEnrollmentRow,
   type RecentPaymentRow,
+  type Currency,
 } from '@edukea/shared';
 import {
   Card,
@@ -19,7 +22,6 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Users, UserPlus, Wallet, AlertTriangle } from 'lucide-react';
 
-const XAF = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 const DATETIME = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
   month: 'short',
@@ -34,6 +36,10 @@ const DATETIME = new Intl.DateTimeFormat('fr-FR', {
 export default function DashboardPage() {
   const searchParams = useSearchParams();
   const { data: ctx } = useSchoolContext({
+    requestedSchoolId: searchParams.get('school'),
+    requestedYearId: searchParams.get('year'),
+  });
+  const currency = useSchoolCurrency({
     requestedSchoolId: searchParams.get('school'),
     requestedYearId: searchParams.get('year'),
   });
@@ -67,7 +73,7 @@ export default function DashboardPage() {
 
       {/* Contenu selon rôle */}
       {['superadmin', 'manager', 'director', 'censor'].includes(role) && (
-        <StaffDashboard schoolId={schoolId} schoolYearId={schoolYearId} role={role} />
+        <StaffDashboard schoolId={schoolId} schoolYearId={schoolYearId} role={role} currency={currency} />
       )}
       {role === 'teacher' && <TeacherDashboardPlaceholder />}
       {role === 'unknown' && <UnknownRoleView />}
@@ -83,10 +89,12 @@ function StaffDashboard({
   schoolId,
   schoolYearId,
   role,
+  currency,
 }: {
   schoolId: string | undefined;
   schoolYearId: string | undefined;
   role: string;
+  currency: Currency;
 }) {
   const { data: kpis, isLoading: kpisLoading } = useSchoolKpis(schoolId, schoolYearId);
   const { data: recentEnroll } = useRecentEnrollments(schoolId, schoolYearId, 5);
@@ -123,14 +131,14 @@ function StaffDashboard({
         <KpiCard
           icon={Wallet}
           label="Encaissé"
-          value={`${XAF.format(kpis.collected_total)} XAF`}
+          value={formatMoney(kpis.collected_total, currency)}
           sub={`${rate}% du dû`}
           color="text-orange-600"
         />
         <KpiCard
           icon={AlertTriangle}
           label="En retard"
-          value={`${XAF.format(kpis.overdue_total)} XAF`}
+          value={formatMoney(kpis.overdue_total, currency)}
           color="text-red-600"
         />
       </div>
@@ -195,7 +203,7 @@ function StaffDashboard({
                     <p className="text-xs text-slate-500">{p.source ?? '—'}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-mono font-semibold">{XAF.format(p.amount ?? 0)} XAF</p>
+                    <p className="font-mono font-semibold">{formatMoney(p.amount ?? 0, currency)}</p>
                     <p className="text-xs text-slate-400">
                       {p.occurred_at ? DATETIME.format(new Date(p.occurred_at)) : '—'}
                     </p>

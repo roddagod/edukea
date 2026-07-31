@@ -10,6 +10,8 @@ import {
   useUpsertLevelFeeInstallment,
   useDeleteLevelFeeInstallment,
   useCopyFeesFromType,
+  useSchoolCurrency,
+  formatMoney,
   type LevelFeeLine,
   type LevelFeeInstallment,
 } from '@edukea/shared';
@@ -21,11 +23,10 @@ interface Props {
   levelId: string;
   initialTypeId?: string;
 }
-
-const XAF = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 const CATEGORIES = ['inscription', 'tuition', 'insurance', 'canteen', 'transport', 'other'] as const;
 
 export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
+  const currency = useSchoolCurrency();
   const { data: types } = useStudentTypes(schoolId);
   const [typeId, setTypeId] = useState<string | undefined>(initialTypeId);
 
@@ -131,7 +132,7 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
                 <th className="w-12 p-2 text-left">#</th>
                 <th className="p-2 text-left">Libellé</th>
                 <th className="hidden w-40 p-2 text-left sm:table-cell">Catégorie</th>
-                <th className="w-36 p-2 text-right">Montant (XAF)</th>
+                <th className="w-36 p-2 text-right">Montant ({currency})</th>
                 <th className="w-16 p-2 text-center">Opt.</th>
                 <th className="w-12 p-2"></th>
               </tr>
@@ -158,7 +159,7 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
                     <td colSpan={3} className="p-2 text-right text-xs text-slate-600">
                       Total obligatoire
                     </td>
-                    <td className="p-2 text-right font-mono">{XAF.format(totalMandatory)}</td>
+                    <td className="p-2 text-right font-mono">{formatMoney(totalMandatory, currency)}</td>
                     <td colSpan={2}></td>
                   </tr>
                   {totalWithOptions !== totalMandatory && (
@@ -166,7 +167,7 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
                       <td colSpan={3} className="p-2 text-right text-xs">
                         Total avec options
                       </td>
-                      <td className="p-2 text-right font-mono">{XAF.format(totalWithOptions)}</td>
+                      <td className="p-2 text-right font-mono">{formatMoney(totalWithOptions, currency)}</td>
                       <td colSpan={2}></td>
                     </tr>
                   )}
@@ -195,7 +196,7 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
                 <th className="hidden w-40 p-2 text-left sm:table-cell">Catégorie</th>
                 <th className="w-24 p-2 text-left">Mois</th>
                 <th className="w-32 p-2 text-left">Année</th>
-                <th className="w-28 p-2 text-right">Montant (XAF)</th>
+                <th className="w-28 p-2 text-right">Montant ({currency})</th>
                 <th className="hidden w-16 p-2 text-right sm:table-cell">%</th>
                 <th className="w-12 p-2"></th>
               </tr>
