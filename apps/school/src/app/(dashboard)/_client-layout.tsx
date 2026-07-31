@@ -10,13 +10,8 @@ import {
   UserPlus,
   UserCog,
   Coins,
-  CreditCard,
-  Megaphone,
-  Settings,
   Building2,
-  BarChart3,
   RefreshCw,
-  MoreHorizontal,
   ChevronDown,
   GraduationCap,
 } from 'lucide-react';
@@ -27,65 +22,60 @@ import {
   SidebarWorkspace,
   SidebarSection,
   SidebarItem,
-  SidebarDivider,
   SidebarUser,
   BottomNav,
   BottomNavItem,
   Avatar,
   Badge,
 } from '@edukea/ui';
-import { useSchoolContext } from '@edukea/shared';
+import { useSchoolContext, useSidebarBadges } from '@edukea/shared';
 
-const sections = [
-  {
-    label: 'Pilotage',
-    items: [
-      { href: '/dashboard', label: 'Cockpit', icon: LayoutDashboard, badge: null as React.ReactNode | null },
-      { href: '/dashboard/reports', label: 'Rapports', icon: BarChart3, badge: null as React.ReactNode | null },
-    ],
-  },
-  {
-    label: 'Scolarite',
-    items: [
-      { href: '/dashboard/students', label: 'Eleves', icon: Users, badge: <Badge>1573</Badge> as React.ReactNode | null },
-      { href: '/dashboard/enrollment', label: 'Inscription', icon: UserPlus, badge: null as React.ReactNode | null },
-      { href: '/dashboard/enrollment/passage', label: "Passage d'annee", icon: RefreshCw, badge: null as React.ReactNode | null },
-    ],
-  },
-  {
-    label: 'Pedagogie',
-    items: [
-      { href: '/dashboard/pedagogy', label: 'Rentree', icon: GraduationCap, badge: null as React.ReactNode | null },
-    ],
-  },
-  {
-    label: 'Finance',
-    items: [
-      { href: '/dashboard/recovery', label: 'Recouvrement', icon: Coins, badge: <Badge tone="danger">12</Badge> as React.ReactNode | null },
-      { href: '/dashboard/payments', label: 'Versements', icon: CreditCard, badge: null as React.ReactNode | null },
-    ],
-  },
-  {
-    label: 'Communication',
-    items: [
-      { href: '/dashboard/announcements', label: 'Annonces', icon: Megaphone, badge: null as React.ReactNode | null },
-    ],
-  },
-  {
-    label: 'Administration',
-    items: [
-      { href: '/dashboard/users', label: 'Utilisateurs', icon: UserCog, badge: null as React.ReactNode | null },
-    ],
-  },
-];
+function buildSections(studentsBadge: React.ReactNode | null, recoveryBadge: React.ReactNode | null) {
+  return [
+    {
+      label: 'Pilotage',
+      items: [
+        { href: '/dashboard', label: 'Cockpit', icon: LayoutDashboard, badge: null as React.ReactNode | null },
+      ],
+    },
+    {
+      label: 'Scolarite',
+      items: [
+        { href: '/dashboard/students', label: 'Eleves', icon: Users, badge: studentsBadge },
+        { href: '/dashboard/enrollment', label: 'Inscription', icon: UserPlus, badge: null as React.ReactNode | null },
+        { href: '/dashboard/enrollment/passage', label: "Passage d'annee", icon: RefreshCw, badge: null as React.ReactNode | null },
+      ],
+    },
+    {
+      label: 'Pedagogie',
+      items: [
+        { href: '/dashboard/pedagogy', label: 'Rentree', icon: GraduationCap, badge: null as React.ReactNode | null },
+      ],
+    },
+    {
+      label: 'Finance',
+      items: [
+        { href: '/dashboard/recovery', label: 'Cockpit tresorerie', icon: Coins, badge: recoveryBadge },
+      ],
+    },
+    {
+      label: 'Administration',
+      items: [
+        { href: '/dashboard/users', label: 'Utilisateurs', icon: UserCog, badge: null as React.ReactNode | null },
+      ],
+    },
+  ];
+}
 
-const bottomNavItems = [
-  { href: '/dashboard', label: 'Cockpit', icon: LayoutDashboard, badge: null as React.ReactNode | null },
-  { href: '/dashboard/students', label: 'Eleves', icon: Users, badge: null as React.ReactNode | null },
-  { href: '/dashboard/recovery', label: 'Recouvrer', icon: Coins, badge: <Badge tone="danger">12</Badge> as React.ReactNode | null },
-  { href: '/dashboard/announcements', label: 'Annonces', icon: Megaphone, badge: null as React.ReactNode | null },
-  { href: '/dashboard/more', label: 'Plus', icon: MoreHorizontal, badge: null as React.ReactNode | null },
-];
+function buildBottomNav(studentsBadge: React.ReactNode | null, recoveryBadge: React.ReactNode | null) {
+  return [
+    { href: '/dashboard', label: 'Cockpit', icon: LayoutDashboard, badge: null as React.ReactNode | null },
+    { href: '/dashboard/students', label: 'Eleves', icon: Users, badge: studentsBadge },
+    { href: '/dashboard/enrollment', label: 'Inscription', icon: UserPlus, badge: null as React.ReactNode | null },
+    { href: '/dashboard/recovery', label: 'Tresorerie', icon: Coins, badge: recoveryBadge },
+    { href: '/dashboard/pedagogy', label: 'Rentree', icon: GraduationCap, badge: null as React.ReactNode | null },
+  ];
+}
 
 interface SelectPillProps {
   value: string;
@@ -130,6 +120,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const requestedSchoolId = searchParams.get('school');
   const requestedYearId = searchParams.get('year');
   const { data: ctx } = useSchoolContext({ requestedSchoolId, requestedYearId });
+  const { data: badges } = useSidebarBadges(ctx?.current_school?.id, ctx?.current_year?.id);
+
+  const studentsBadge = badges && badges.students_enrolled_year > 0
+    ? <Badge>{badges.students_enrolled_year}</Badge>
+    : null;
+  const recoveryBadge = badges && badges.recovery_students_count > 0
+    ? <Badge tone="danger">{badges.recovery_students_count}</Badge>
+    : null;
+  const sections = buildSections(studentsBadge, recoveryBadge);
+  const bottomNavItems = buildBottomNav(studentsBadge, recoveryBadge);
 
   const setParam = useCallback(
     (key: 'school' | 'year', value: string) => {
@@ -201,10 +201,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       ))}
       <div className="flex-1" />
-      <SidebarDivider />
-      <SidebarItem href="/dashboard/settings" active={isActive('/dashboard/settings')} icon={<Settings />}>
-        Parametrage
-      </SidebarItem>
     </Sidebar>
   );
 

@@ -48,3 +48,4 @@ export * from './useStudentReenrollStatus';
 export * from './useCurrentUserRole';
 export * from './useSchoolKpis';
 export * from './useSchoolStaff';
+export * from './useSidebarBadges';

@@ -59,3 +59,4 @@ export * from './hooks/useStudentReenrollStatus';
 export * from './hooks/useCurrentUserRole';
 export * from './hooks/useSchoolKpis';
 export * from './hooks/useSchoolStaff';
+export * from './hooks/useSidebarBadges';
