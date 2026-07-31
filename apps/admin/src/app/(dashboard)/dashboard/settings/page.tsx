@@ -4,11 +4,7 @@ import { useState, useEffect } from 'react';
 import { Save, Shield } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { createClient } from '@/lib/supabase-browser';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button, Input, Card, CardHeader, CardTitle, Badge, PageHeader } from '@edukea/ui';
 
 export default function SettingsPage() {
   const { session, profile } = useAdminAuth();
@@ -27,8 +23,7 @@ export default function SettingsPage() {
     setIsSaving(true);
     try {
       const supabase = createClient();
-      await (supabase
-        .from('admin_profiles') as any)
+      await (supabase.from('admin_profiles') as any)
         .update({ display_name: displayName, updated_at: new Date().toISOString() })
         .eq('id', profile.id);
       setSaved(true);
@@ -40,61 +35,58 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Configuration</h1>
-        <p className="text-muted-foreground">Parametres du compte administrateur</p>
-      </div>
+      <PageHeader
+        title="Configuration"
+        sub="Parametres du compte administrateur"
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Profil administrateur</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input value={session?.user.email ?? ''} disabled />
+          <div className="space-y-4">
+            <Input label="Email" value={session?.user.email ?? ''} disabled />
+            <Input
+              label="Nom d'affichage"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Votre nom"
+            />
+            <div>
+              <p className="mb-1.5 text-body-xs font-semibold text-ink-2">Role</p>
+              <Badge tone="neutral">
+                <Shield className="mr-1.5 h-3 w-3" />
+                {profile?.role === 'superadmin' ? 'Super Administrateur' : 'Administrateur'}
+              </Badge>
             </div>
-            <div className="space-y-2">
-              <Label>Nom d&apos;affichage</Label>
-              <Input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Votre nom"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <div>
-                <Badge variant="outline">
-                  <Shield className="mr-1.5 h-3 w-3" />
-                  {profile?.role === 'superadmin' ? 'Super Administrateur' : 'Administrateur'}
-                </Badge>
-              </div>
-            </div>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button
+              variant="primary"
+              onClick={handleSave}
+              disabled={isSaving}
+            >
               <Save className="mr-2 h-4 w-4" />
               {isSaving ? 'Enregistrement...' : saved ? 'Enregistre !' : 'Enregistrer'}
             </Button>
-          </CardContent>
+          </div>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Informations systeme</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <div className="space-y-3">
             <div>
-              <p className="text-xs text-muted-foreground">ID utilisateur</p>
-              <p className="text-sm font-mono">{session?.user.id ?? '-'}</p>
+              <p className="text-xs text-ink-3">ID utilisateur</p>
+              <p className="font-mono text-sm text-ink">{session?.user.id ?? '-'}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">ID profil</p>
-              <p className="text-sm font-mono">{profile?.id ?? '-'}</p>
+              <p className="text-xs text-ink-3">ID profil</p>
+              <p className="font-mono text-sm text-ink">{profile?.id ?? '-'}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Date de creation</p>
-              <p className="text-sm">
+              <p className="text-xs text-ink-3">Date de creation</p>
+              <p className="text-sm text-ink">
                 {profile?.created_at
                   ? new Date(profile.created_at).toLocaleDateString('fr-FR', {
                       year: 'numeric',
@@ -104,7 +96,7 @@ export default function SettingsPage() {
                   : '-'}
               </p>
             </div>
-          </CardContent>
+          </div>
         </Card>
       </div>
     </div>

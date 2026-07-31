@@ -1,17 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Button, Input, Modal } from '@edukea/ui';
 import { createSchoolAtomic } from '../_actions';
 import { Copy, Check } from 'lucide-react';
 
@@ -21,7 +11,7 @@ interface Props {
   onSuccess: () => void;
 }
 
-const STEPS = ['École', 'Année scolaire', 'Manager (optionnel)'] as const;
+const STEPS = ['Ecole', 'Annee scolaire', 'Manager (optionnel)'] as const;
 
 export function CreateSchoolWizard({ open, onClose, onSuccess }: Props) {
   const [step, setStep] = useState(0);
@@ -130,237 +120,227 @@ export function CreateSchoolWizard({ open, onClose, onSuccess }: Props) {
 
   const copyCredentials = () => {
     if (!result) return;
-    const text = `École créée avec succès.\nEmail : ${result.managerEmail}\nMot de passe : ${result.managerPassword}`;
+    const text = `Ecole creee avec succes.\nEmail : ${result.managerEmail}\nMot de passe : ${result.managerPassword}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) closeAndReset(); }}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{result ? 'École créée' : 'Nouvelle école'}</DialogTitle>
-          {!result && (
-            <DialogDescription>
-              Étape {step + 1}/3 — {STEPS[step]}
-            </DialogDescription>
-          )}
-        </DialogHeader>
+  const footer = result ? (
+    <Button variant="primary" onClick={() => { onSuccess(); closeAndReset(); }}>
+      Fermer
+    </Button>
+  ) : (
+    <>
+      {step > 0 && (
+        <Button variant="secondary" onClick={() => setStep(step - 1)}>
+          Precedent
+        </Button>
+      )}
+      {step < 2 && (
+        <Button variant="primary" onClick={() => setStep(step + 1)} disabled={!canNext()}>
+          Suivant
+        </Button>
+      )}
+      {step === 2 && (
+        <Button
+          variant="primary"
+          onClick={handleSubmit}
+          disabled={!canNext() || submitting}
+        >
+          {submitting ? 'Creation...' : 'Creer'}
+        </Button>
+      )}
+    </>
+  );
 
-        {result ? (
-          <div className="space-y-4">
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-              <p className="font-semibold text-green-900">École et année scolaire créées</p>
-              {result.managerEmail && (
+  return (
+    <Modal
+      open={open}
+      onClose={closeAndReset}
+      size="lg"
+      title={result ? "Ecole creee" : "Nouvelle ecole"}
+      description={
+        !result
+          ? `Etape ${step + 1}/3 — ${STEPS[step]}`
+          : undefined
+      }
+      footer={footer}
+    >
+      {result ? (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-success/30 bg-success/5 p-4">
+            <p className="font-semibold text-success">Ecole et annee scolaire creees</p>
+            {result.managerEmail && (
+              <>
+                <p className="mt-2 text-sm text-success/80">
+                  Manager cree. Transmettez ces credentials au manager en main propre :
+                </p>
+                <div className="mt-3 rounded bg-white p-3 font-mono text-sm border border-line">
+                  <p>Email : {result.managerEmail}</p>
+                  <p>Mot de passe : {result.managerPassword}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={copyCredentials}
+                  className="mt-2 inline-flex items-center gap-2 rounded border border-success/30 bg-white px-3 py-1.5 text-sm hover:bg-success/5 transition-colors"
+                >
+                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  {copied ? 'Copie' : 'Copier'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {step === 0 && (
+            <div className="grid gap-3">
+              <Input
+                label="Nom ecole *"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="ex: College Sainte-Marie"
+              />
+              <Input
+                label="Nom affiche sur bulletins"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="ex: College Sainte-Marie de Cocody"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Email ecole"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <Input
+                  label="Telephone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+225..."
+                />
+              </div>
+              <Input
+                label="Adresse physique"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="ex: Cocody Rue ..."
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Adresse postale (BP)"
+                  value={postalAddress}
+                  onChange={(e) => setPostalAddress(e.target.value)}
+                  placeholder="BP 1234 Abidjan"
+                />
+                <Input
+                  label="N° agrement"
+                  value={accreditation}
+                  onChange={(e) => setAccreditation(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="grid gap-3">
+              <Input
+                label="Nom de l'annee *"
+                value={yearName}
+                onChange={(e) => setYearName(e.target.value)}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Date debut *"
+                  type="date"
+                  value={dateStart}
+                  onChange={(e) => setDateStart(e.target.value)}
+                />
+                <Input
+                  label="Date fin *"
+                  type="date"
+                  value={dateEnd}
+                  onChange={(e) => setDateEnd(e.target.value)}
+                />
+              </div>
+              <div>
+                <p className="mb-1 text-body-xs font-semibold text-ink-2">Type de periode *</p>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 text-sm text-ink-2">
+                    <input
+                      type="radio"
+                      checked={periodeType === 'trimestre'}
+                      onChange={() => setPeriodeType('trimestre')}
+                    />
+                    Trimestres (T1/T2/T3)
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-ink-2">
+                    <input
+                      type="radio"
+                      checked={periodeType === 'semestre'}
+                      onChange={() => setPeriodeType('semestre')}
+                    />
+                    Semestres (S1/S2)
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="grid gap-3">
+              <label className="flex items-center gap-2 text-sm text-ink-2">
+                <input
+                  type="checkbox"
+                  checked={createManager}
+                  onChange={(e) => setCreateManager(e.target.checked)}
+                />
+                Creer le compte du 1er manager maintenant
+              </label>
+              {createManager && (
                 <>
-                  <p className="mt-2 text-sm text-green-800">
-                    Manager créé. Transmettez ces credentials au manager en main propre :
-                  </p>
-                  <div className="mt-3 rounded bg-white p-3 font-mono text-sm">
-                    <p>Email : {result.managerEmail}</p>
-                    <p>Mot de passe : {result.managerPassword}</p>
+                  <Input
+                    label="Nom d'affichage *"
+                    value={managerName}
+                    onChange={(e) => setManagerName(e.target.value)}
+                    placeholder="ex: Jean KOFFI"
+                  />
+                  <Input
+                    label="Email de connexion *"
+                    type="email"
+                    value={managerEmail}
+                    onChange={(e) => setManagerEmail(e.target.value)}
+                    placeholder="jean.koffi@ecole.ci"
+                  />
+                  <div>
+                    <p className="mb-1.5 text-body-xs font-semibold text-ink-2">
+                      Mot de passe temporaire *
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        value={managerPassword}
+                        onChange={(e) => setManagerPassword(e.target.value)}
+                        placeholder="8 caracteres min"
+                      />
+                      <Button type="button" variant="secondary" onClick={generatePassword}>
+                        Generer
+                      </Button>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={copyCredentials}
-                    className="mt-2 inline-flex items-center gap-2 rounded border border-green-300 bg-white px-3 py-1.5 text-sm hover:bg-green-100"
-                  >
-                    {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                    {copied ? 'Copié' : 'Copier'}
-                  </button>
                 </>
               )}
             </div>
-            <DialogFooter>
-              <Button onClick={() => { onSuccess(); closeAndReset(); }}>Fermer</Button>
-            </DialogFooter>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {step === 0 && (
-              <div className="grid gap-3">
-                <div>
-                  <Label>Nom école *</Label>
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="ex: Collège Sainte-Marie"
-                  />
-                </div>
-                <div>
-                  <Label>Nom affiché sur bulletins</Label>
-                  <Input
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="ex: Collège Sainte-Marie de Cocody"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Email école</Label>
-                    <Input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Téléphone</Label>
-                    <Input
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+225…"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label>Adresse physique</Label>
-                  <Input
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="ex: Cocody Rue …"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Adresse postale (BP)</Label>
-                    <Input
-                      value={postalAddress}
-                      onChange={(e) => setPostalAddress(e.target.value)}
-                      placeholder="BP 1234 Abidjan"
-                    />
-                  </div>
-                  <div>
-                    <Label>N° agrément</Label>
-                    <Input
-                      value={accreditation}
-                      onChange={(e) => setAccreditation(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+          )}
 
-            {step === 1 && (
-              <div className="grid gap-3">
-                <div>
-                  <Label>Nom de l&apos;année *</Label>
-                  <Input value={yearName} onChange={(e) => setYearName(e.target.value)} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Date début *</Label>
-                    <Input
-                      type="date"
-                      value={dateStart}
-                      onChange={(e) => setDateStart(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Date fin *</Label>
-                    <Input
-                      type="date"
-                      value={dateEnd}
-                      onChange={(e) => setDateEnd(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label>Type de période *</Label>
-                  <div className="mt-1 flex gap-4">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        checked={periodeType === 'trimestre'}
-                        onChange={() => setPeriodeType('trimestre')}
-                      />
-                      Trimestres (T1/T2/T3)
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        checked={periodeType === 'semestre'}
-                        onChange={() => setPeriodeType('semestre')}
-                      />
-                      Semestres (S1/S2)
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="grid gap-3">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={createManager}
-                    onChange={(e) => setCreateManager(e.target.checked)}
-                  />
-                  <span className="text-sm">Créer le compte du 1er manager maintenant</span>
-                </label>
-                {createManager && (
-                  <>
-                    <div>
-                      <Label>Nom d&apos;affichage *</Label>
-                      <Input
-                        value={managerName}
-                        onChange={(e) => setManagerName(e.target.value)}
-                        placeholder="ex: Jean KOFFI"
-                      />
-                    </div>
-                    <div>
-                      <Label>Email de connexion *</Label>
-                      <Input
-                        type="email"
-                        value={managerEmail}
-                        onChange={(e) => setManagerEmail(e.target.value)}
-                        placeholder="jean.koffi@ecole.ci"
-                      />
-                    </div>
-                    <div>
-                      <Label>Mot de passe temporaire *</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          value={managerPassword}
-                          onChange={(e) => setManagerPassword(e.target.value)}
-                          placeholder="8 caractères min"
-                        />
-                        <Button type="button" variant="outline" onClick={generatePassword}>
-                          Générer
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {error && (
-              <div className="rounded bg-red-50 p-2 text-sm text-red-700">{error}</div>
-            )}
-
-            <DialogFooter>
-              {step > 0 && (
-                <Button variant="outline" onClick={() => setStep(step - 1)}>
-                  Précédent
-                </Button>
-              )}
-              {step < 2 && (
-                <Button onClick={() => setStep(step + 1)} disabled={!canNext()}>
-                  Suivant
-                </Button>
-              )}
-              {step === 2 && (
-                <Button onClick={handleSubmit} disabled={!canNext() || submitting}>
-                  {submitting ? 'Création…' : 'Créer'}
-                </Button>
-              )}
-            </DialogFooter>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          {error && (
+            <div className="rounded bg-destructive/5 p-2 text-sm text-destructive border border-destructive/20">
+              {error}
+            </div>
+          )}
+        </div>
+      )}
+    </Modal>
   );
 }

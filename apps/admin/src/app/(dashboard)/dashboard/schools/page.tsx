@@ -2,11 +2,18 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, ExternalLink, MoreHorizontal, Eye, Pencil, Trash2, Plus } from 'lucide-react';
+import {
+  Building2,
+  ExternalLink,
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  Trash2,
+  Plus,
+} from 'lucide-react';
 import { useSchools, useDeleteSchool } from '@/hooks/useSchools';
 import { DataTable, type Column } from '@/components/data-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge, Button, Modal, PageHeader } from '@edukea/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,14 +21,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { CreateSchoolWizard } from './_components/CreateSchoolWizard';
 import type { Tables } from '@edukea/shared';
 
@@ -48,12 +47,12 @@ export default function SchoolsPage() {
       header: 'Nom',
       render: (school) => (
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
-            <Building2 className="h-4 w-4 text-blue-600" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-light">
+            <Building2 className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <p className="font-medium">{school.name}</p>
-            {school.slogan && <p className="text-xs text-muted-foreground">{school.slogan}</p>}
+            <p className="font-medium text-ink">{school.name}</p>
+            {school.slogan && <p className="text-xs text-ink-3">{school.slogan}</p>}
           </div>
         </div>
       ),
@@ -62,28 +61,28 @@ export default function SchoolsPage() {
       key: 'email',
       header: 'Email',
       render: (school) => (
-        <span className="text-sm text-muted-foreground">{school.email || '-'}</span>
+        <span className="text-sm text-ink-3">{school.email || '-'}</span>
       ),
     },
     {
       key: 'phone',
       header: 'Telephone',
       render: (school) => (
-        <span className="text-sm text-muted-foreground">{school.phone || '-'}</span>
+        <span className="text-sm text-ink-3">{school.phone || '-'}</span>
       ),
     },
     {
       key: 'adress',
       header: 'Adresse',
       render: (school) => (
-        <span className="text-sm text-muted-foreground">{school.adress || '-'}</span>
+        <span className="text-sm text-ink-3">{school.adress || '-'}</span>
       ),
     },
     {
       key: 'status',
       header: 'Statut',
       render: (school) => (
-        <Badge variant={school.deleted_at ? 'destructive' : 'default'}>
+        <Badge tone={school.deleted_at ? 'danger' : 'accent'}>
           {school.deleted_at ? 'Supprime' : 'Actif'}
         </Badge>
       ),
@@ -95,16 +94,29 @@ export default function SchoolsPage() {
       render: (school) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="flex h-8 w-8 items-center justify-center rounded-md text-ink-3 hover:bg-line-soft hover:text-ink"
+              onClick={(e) => e.stopPropagation()}
+            >
               <MoreHorizontal className="h-4 w-4" />
-            </Button>
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/schools/${school.id}`); }}>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/dashboard/schools/${school.id}`);
+              }}
+            >
               <Eye className="mr-2 h-4 w-4" />
               Voir
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/schools/${school.id}?edit=true`); }}>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/dashboard/schools/${school.id}?edit=true`);
+              }}
+            >
               <Pencil className="mr-2 h-4 w-4" />
               Modifier
             </DropdownMenuItem>
@@ -115,7 +127,7 @@ export default function SchoolsPage() {
                 window.open(
                   `${process.env.NEXT_PUBLIC_SCHOOL_APP_URL || 'http://localhost:4002'}/dashboard?school=${school.id}`,
                   '_blank',
-                  'noopener,noreferrer'
+                  'noopener,noreferrer',
                 );
               }}
             >
@@ -125,7 +137,10 @@ export default function SchoolsPage() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive"
-              onClick={(e) => { e.stopPropagation(); setDeleteTarget(school); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteTarget(school);
+              }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Supprimer
@@ -138,16 +153,16 @@ export default function SchoolsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Etablissements</h1>
-          <p className="text-muted-foreground">Gestion des etablissements de la plateforme</p>
-        </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nouveau
-        </Button>
-      </div>
+      <PageHeader
+        title="Etablissements"
+        sub="Gestion des etablissements de la plateforme"
+        actions={
+          <Button variant="primary" onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4" />
+            Nouveau
+          </Button>
+        }
+      />
 
       <DataTable
         columns={columns}
@@ -167,30 +182,28 @@ export default function SchoolsPage() {
         onSuccess={() => refetch()}
       />
 
-      {/* Delete Dialog */}
-      <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Supprimer l&apos;etablissement</DialogTitle>
-            <DialogDescription>
-              Etes-vous sur de vouloir supprimer &quot;{deleteTarget?.name}&quot; ?
-              Cette action est irreversible.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Supprimer l'etablissement"
+        description={`Etes-vous sur de vouloir supprimer "${deleteTarget?.name}" ? Cette action est irreversible.`}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
               Annuler
             </Button>
             <Button
-              variant="destructive"
+              variant="danger"
               onClick={handleDelete}
               disabled={deleteSchool.isPending}
             >
               {deleteSchool.isPending ? 'Suppression...' : 'Supprimer'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <span />
+      </Modal>
     </div>
   );
 }

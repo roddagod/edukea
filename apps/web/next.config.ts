@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  transpilePackages: ['@edukea/ui', '@edukea/shared'],
+};
 
 export default nextConfig;
