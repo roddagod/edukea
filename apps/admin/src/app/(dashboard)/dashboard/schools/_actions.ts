@@ -14,6 +14,8 @@ interface CreateSchoolAtomicArgs {
   address?: string;
   postalAddress?: string;
   accreditationNumber?: string;
+  countryCode: 'CI' | 'GA';
+  currency: 'XOF' | 'XAF';
   // Year
   year: {
     name: string;         // ex: "2026-2027"
@@ -82,6 +84,8 @@ export async function createSchoolAtomic(args: CreateSchoolAtomicArgs): Promise<
       address: args.address ?? null,
       postal_address: args.postalAddress ?? null,
       accreditation_number: args.accreditationNumber ?? null,
+      country_code: args.countryCode,
+      currency: args.currency,
     });
     if (schoolErr) throw new Error(`École : ${schoolErr.message}`);
 

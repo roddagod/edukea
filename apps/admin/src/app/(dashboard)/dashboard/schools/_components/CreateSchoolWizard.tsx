@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button, Input, Modal } from '@edukea/ui';
 import { createSchoolAtomic } from '../_actions';
 import { Copy, Check } from 'lucide-react';
+import { COUNTRIES, type CountryCode } from '@edukea/shared';
 
 interface Props {
   open: boolean;
@@ -17,6 +18,8 @@ export function CreateSchoolWizard({ open, onClose, onSuccess }: Props) {
   const [step, setStep] = useState(0);
 
   // Step 1 — school
+  const [countryCode, setCountryCode] = useState<CountryCode>('CI');
+  const country = COUNTRIES[countryCode];
   const [name, setName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -73,6 +76,8 @@ export function CreateSchoolWizard({ open, onClose, onSuccess }: Props) {
       address: address || undefined,
       postalAddress: postalAddress || undefined,
       accreditationNumber: accreditation || undefined,
+      countryCode,
+      currency: country.currency,
       year: { name: yearName, dateStart, dateEnd, periodeType },
       manager: createManager
         ? { email: managerEmail, password: managerPassword, displayName: managerName }
@@ -196,6 +201,28 @@ export function CreateSchoolWizard({ open, onClose, onSuccess }: Props) {
         <div className="space-y-4">
           {step === 0 && (
             <div className="grid gap-3">
+              <div>
+                <p className="mb-1 text-body-xs font-semibold text-ink-2">Pays *</p>
+                <div className="flex gap-2">
+                  {Object.values(COUNTRIES).map((c) => (
+                    <button
+                      key={c.code}
+                      type="button"
+                      onClick={() => setCountryCode(c.code)}
+                      className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                        countryCode === c.code
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-line text-ink-2 hover:border-primary/40'
+                      }`}
+                    >
+                      {c.label}
+                      <span className="ml-2 text-xs text-ink-3">
+                        {c.currency} · +{c.phonePrefix}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <Input
                 label="Nom ecole *"
                 value={name}
@@ -219,7 +246,7 @@ export function CreateSchoolWizard({ open, onClose, onSuccess }: Props) {
                   label="Telephone"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+225..."
+                  placeholder={`+${country.phonePrefix}...`}
                 />
               </div>
               <Input

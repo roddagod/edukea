@@ -2,6 +2,7 @@ export * from './lib/supabase';
 export * from './lib/constants';
 export * from './lib/utils';
 export * from './lib/brand';
+export * from './lib/countries';
 export * from './types/database.types';
 export * from './types/auth';
 export * from './types/grades';
