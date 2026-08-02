@@ -120,7 +120,7 @@ export default function SchoolDetailPage() {
                   Annuler
                 </Button>
                 <Button
-                  variant="primary"
+                  variant="accent"
                   onClick={handleSave}
                   disabled={updateSchool.isPending}
                 >

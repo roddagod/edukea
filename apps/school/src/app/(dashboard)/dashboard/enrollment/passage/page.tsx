@@ -285,7 +285,7 @@ export default function PassageHubPage() {
             : 'Le bouton de finalisation s\'active quand toutes les classes ont ete decidees.'}
         </div>
         <Button
-          variant="primary"
+          variant="accent"
           size="lg"
           onClick={() => setConfirmOpen(true)}
           disabled={!allDecided || finalize.isPending || !toYearId}
@@ -311,7 +311,7 @@ export default function PassageHubPage() {
             <Button variant="ghost" onClick={() => setConfirmOpen(false)} disabled={finalize.isPending}>
               Annuler
             </Button>
-            <Button variant="primary" onClick={handleFinalize} disabled={finalize.isPending}>
+            <Button variant="accent" onClick={handleFinalize} disabled={finalize.isPending}>
               {finalize.isPending ? 'Finalisation…' : 'Confirmer'}
             </Button>
           </>

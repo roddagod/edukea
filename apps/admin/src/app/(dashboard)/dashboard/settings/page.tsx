@@ -61,7 +61,7 @@ export default function SettingsPage() {
               </Badge>
             </div>
             <Button
-              variant="primary"
+              variant="accent"
               onClick={handleSave}
               disabled={isSaving}
             >

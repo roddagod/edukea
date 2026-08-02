@@ -80,7 +80,7 @@ export default function StudentDetailPage() {
               : undefined
           }
           actions={
-            <Button variant="primary" size="md" onClick={() => setOpen(true)} disabled={!student}>
+            <Button variant="accent" size="md" onClick={() => setOpen(true)} disabled={!student}>
               <Plus className="h-4 w-4" /> Nouveau versement
             </Button>
           }

@@ -157,7 +157,7 @@ export default function SchoolsPage() {
         title="Etablissements"
         sub="Gestion des etablissements de la plateforme"
         actions={
-          <Button variant="primary" onClick={() => setShowCreate(true)}>
+          <Button variant="accent" onClick={() => setShowCreate(true)}>
             <Plus className="h-4 w-4" />
             Nouveau
           </Button>

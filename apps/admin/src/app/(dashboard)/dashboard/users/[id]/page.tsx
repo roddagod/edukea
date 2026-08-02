@@ -85,7 +85,7 @@ export default function UserDetailPage() {
                   Annuler
                 </Button>
                 <Button
-                  variant="primary"
+                  variant="accent"
                   onClick={handleSave}
                   disabled={updateParent.isPending}
                 >

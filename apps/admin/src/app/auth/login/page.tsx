@@ -124,7 +124,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              variant="primary"
+              variant="accent"
               className="w-full"
               disabled={isLoading}
             >

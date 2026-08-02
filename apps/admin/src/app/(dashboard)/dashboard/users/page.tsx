@@ -163,7 +163,7 @@ export default function UsersPage() {
         title="Utilisateurs"
         sub="Gestion des comptes parents de la plateforme"
         actions={
-          <Button variant="primary" onClick={() => setShowInvite(true)}>
+          <Button variant="accent" onClick={() => setShowInvite(true)}>
             <UserPlus className="h-4 w-4" />
             Inviter un parent
           </Button>
@@ -190,7 +190,7 @@ export default function UsersPage() {
         description="Un compte sera cree et les identifiants seront generes."
         footer={
           inviteResult ? (
-            <Button variant="primary" onClick={closeInvite}>
+            <Button variant="accent" onClick={closeInvite}>
               Fermer
             </Button>
           ) : (
@@ -199,7 +199,7 @@ export default function UsersPage() {
                 Annuler
               </Button>
               <Button
-                variant="primary"
+                variant="accent"
                 onClick={handleInvite}
                 disabled={inviteParent.isPending || !inviteForm.email || !inviteForm.school_id}
               >

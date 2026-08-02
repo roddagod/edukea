@@ -132,7 +132,7 @@ export function CreateSchoolWizard({ open, onClose, onSuccess }: Props) {
   };
 
   const footer = result ? (
-    <Button variant="primary" onClick={() => { onSuccess(); closeAndReset(); }}>
+    <Button variant="accent" onClick={() => { onSuccess(); closeAndReset(); }}>
       Fermer
     </Button>
   ) : (
@@ -143,13 +143,13 @@ export function CreateSchoolWizard({ open, onClose, onSuccess }: Props) {
         </Button>
       )}
       {step < 2 && (
-        <Button variant="primary" onClick={() => setStep(step + 1)} disabled={!canNext()}>
+        <Button variant="accent" onClick={() => setStep(step + 1)} disabled={!canNext()}>
           Suivant
         </Button>
       )}
       {step === 2 && (
         <Button
-          variant="primary"
+          variant="accent"
           onClick={handleSubmit}
           disabled={!canNext() || submitting}
         >

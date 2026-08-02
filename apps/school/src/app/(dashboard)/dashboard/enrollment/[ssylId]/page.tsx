@@ -48,7 +48,7 @@ export default function EnrollmentDetailPage() {
                 <Plus className="h-4 w-4" /> Nouveau paiement
               </Button>
               <Link href={`/dashboard/recovery/${student.ssyl_id}${qs}`}>
-                <Button variant="primary">
+                <Button variant="accent">
                   <Coins className="h-4 w-4" /> Gérer les versements
                 </Button>
               </Link>

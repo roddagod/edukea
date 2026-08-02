@@ -398,7 +398,7 @@ export default function PassageClassroomPage() {
           {rows.length} eleves · sauvegarde uniquement pour cette classe
         </div>
         <Button
-          variant="primary"
+          variant="accent"
           size="lg"
           onClick={handleSave}
           disabled={saveTransitions.isPending || rows.length === 0}

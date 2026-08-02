@@ -78,7 +78,7 @@ export function RecordPaymentDialog({ ssylId, studentName, remaining, currency: 
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={record.isPending}>Annuler</Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={record.isPending || amount <= 0}>
+          <Button variant="accent" onClick={handleSubmit} disabled={record.isPending || amount <= 0}>
             {record.isPending ? 'Enregistrement…' : 'Enregistrer'}
           </Button>
         </>
