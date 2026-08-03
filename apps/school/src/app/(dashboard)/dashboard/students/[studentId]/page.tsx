@@ -560,6 +560,15 @@ export default function StudentPage() {
                 >
                   <Download className="h-4 w-4" /> Reçu inscription
                 </a>
+                <a
+                  href={`/api/pdf/student-payment-detail/${currentSsyl.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3.5 py-2 text-body-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
+                  title="Détail des versements (PDF)"
+                >
+                  <Download className="h-4 w-4" /> Détail versements
+                </a>
               </>
             )}
             <Button variant="secondary" onClick={() => setEditOpen(true)}>

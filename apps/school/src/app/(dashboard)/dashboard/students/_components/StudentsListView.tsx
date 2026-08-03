@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useStudentsList, useStudentTypes, useSchoolStructure } from '@edukea/shared';
 import { Input, Skeleton, Badge } from '@edukea/ui';
-import { Search, X } from 'lucide-react';
+import { Search, X, Download } from 'lucide-react';
 
 interface Props { schoolId: string; }
 
@@ -25,6 +25,7 @@ export function StudentsListView({ schoolId }: Props) {
 
   const allClassrooms = (structure?.tree ?? []).flatMap((c) => c.levels).flatMap((l) => l.classrooms);
   const hasFilters = search || classroomId || studentTypeId;
+  const selectedClassroom = classroomId ? allClassrooms.find((c) => c.id === classroomId) : null;
 
   return (
     <div className="space-y-4">
@@ -67,6 +68,47 @@ export function StudentsListView({ schoolId }: Props) {
           </button>
         )}
       </div>
+
+      {/* PDF export bar — visible only when a classroom filter is active */}
+      {selectedClassroom && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+          <span className="text-sm font-medium text-slate-700">
+            Exports PDF — {selectedClassroom.name} :
+          </span>
+          <a
+            href={`/api/pdf/class-grades-sheet/${selectedClassroom.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-[#E97423] hover:text-[#E97423]"
+          >
+            <Download className="h-3.5 w-3.5" /> Liste classe (grille)
+          </a>
+          <a
+            href={`/api/pdf/class-roll-call/${selectedClassroom.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-[#E97423] hover:text-[#E97423]"
+          >
+            <Download className="h-3.5 w-3.5" /> Liste d'appel
+          </a>
+          <a
+            href={`/api/pdf/parent-contact-list/${selectedClassroom.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-[#E97423] hover:text-[#E97423]"
+          >
+            <Download className="h-3.5 w-3.5" /> Liste parents
+          </a>
+          <a
+            href={`/api/pdf/class-entry-tickets/${selectedClassroom.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-[#E97423] hover:text-[#E97423]"
+          >
+            <Download className="h-3.5 w-3.5" /> Billets d'entrée
+          </a>
+        </div>
+      )}
 
       {isLoading ? (
         <Skeleton className="h-64 w-full" />
