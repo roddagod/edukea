@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSchoolYears, useDeleteSchoolYear, type SchoolYear } from '@edukea/shared';
+import { useSchoolYears, useDeleteSchoolYear, formatShortDate, type SchoolYear } from '@edukea/shared';
 import { Button, Badge, Skeleton } from '@edukea/ui';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { SchoolYearFormDialog } from './SchoolYearFormDialog';
@@ -57,8 +57,8 @@ export function SchoolYearList({ schoolId }: Props) {
               >
                 <td className="max-w-[160px] truncate px-4 py-3 font-medium text-slate-900">{y.name}</td>
                 <td className="hidden px-4 py-3 text-slate-500 md:table-cell">{y.periode_type ?? '—'}</td>
-                <td className="hidden px-4 py-3 text-slate-500 sm:table-cell">{y.date_start ?? '—'}</td>
-                <td className="hidden px-4 py-3 text-slate-500 sm:table-cell">{y.date_end ?? '—'}</td>
+                <td className="hidden px-4 py-3 text-slate-500 sm:table-cell">{y.date_start ? formatShortDate(y.date_start) : '—'}</td>
+                <td className="hidden px-4 py-3 text-slate-500 sm:table-cell">{y.date_end ? formatShortDate(y.date_end) : '—'}</td>
                 <td className="px-4 py-3">
                   {isActive(y) ? <Badge>Active</Badge> : <span className="text-slate-400">—</span>}
                 </td>

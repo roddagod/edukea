@@ -7,6 +7,8 @@ export interface CurrentUserRoleInfo {
   role: UserRole;
   userId: string;
   isAdmin: boolean;
+  displayName: string | null;
+  email: string | null;
 }
 
 /**
@@ -26,37 +28,88 @@ export function useCurrentUserRole() {
       } = await supabase.auth.getUser();
       if (!user) return null;
 
+      const email = user.email ?? null;
+
       // 1. Check admin_profiles (superadmin)
       const { data: admin } = await supabase
         .from('admin_profiles')
-        .select('role')
+        .select('role, display_name')
         .eq('user_id', user.id)
         .maybeSingle();
       if (admin) {
-        const role = ((admin as { role?: string }).role as UserRole) ?? 'superadmin';
-        return { role, userId: user.id, isAdmin: true };
+        const a = admin as { role?: string; display_name?: string | null };
+        return {
+          role: (a.role as UserRole) ?? 'superadmin',
+          userId: user.id,
+          isAdmin: true,
+          displayName: a.display_name ?? null,
+          email,
+        };
       }
 
       // 2. Check school_staff_profiles
       const { data: staff } = await supabase
         .from('school_staff_profiles')
-        .select('role')
+        .select('role, display_name')
         .eq('user_id', user.id)
         .maybeSingle();
       if (staff) {
-        const role = ((staff as { role?: string }).role as UserRole) ?? 'manager';
-        return { role, userId: user.id, isAdmin: false };
+        const s = staff as { role?: string; display_name?: string | null };
+        return {
+          role: (s.role as UserRole) ?? 'manager',
+          userId: user.id,
+          isAdmin: false,
+          displayName: s.display_name ?? null,
+          email,
+        };
       }
 
       // 3. Check teacher_profiles
       const { data: teacher } = await supabase
         .from('teacher_profiles')
-        .select('id')
+        .select('id, display_name')
         .eq('user_id', user.id)
         .maybeSingle();
-      if (teacher) return { role: 'teacher' as UserRole, userId: user.id, isAdmin: false };
+      if (teacher) {
+        const t = teacher as { display_name?: string | null };
+        return {
+          role: 'teacher' as UserRole,
+          userId: user.id,
+          isAdmin: false,
+          displayName: t.display_name ?? null,
+          email,
+        };
+      }
 
-      return { role: 'unknown' as UserRole, userId: user.id, isAdmin: false };
+      return {
+        role: 'unknown' as UserRole,
+        userId: user.id,
+        isAdmin: false,
+        displayName: null,
+        email,
+      };
     },
   });
+}
+
+/** Fabrique des initiales max 2 lettres depuis un nom complet ou un email. */
+export function computeInitials(displayName: string | null, email: string | null): string {
+  const src = (displayName ?? email ?? '').trim();
+  if (!src) return '?';
+  const parts = src.split(/[\s@._-]+/).filter(Boolean);
+  const first = parts[0]?.[0] ?? '';
+  const second = parts[1]?.[0] ?? '';
+  return (first + second).toUpperCase() || src[0]?.toUpperCase() || '?';
+}
+
+/** Label lisible du rôle en francais. */
+export function labelForRole(role: UserRole): string {
+  switch (role) {
+    case 'superadmin': return 'Superadmin';
+    case 'manager':    return 'Manager';
+    case 'director':   return 'Directeur';
+    case 'censor':     return 'Censeur';
+    case 'teacher':    return 'Enseignant';
+    default:           return 'Utilisateur';
+  }
 }

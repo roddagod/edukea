@@ -14,6 +14,7 @@ import {
   RefreshCw,
   ChevronDown,
   GraduationCap,
+  LogOut,
 } from 'lucide-react';
 import {
   AppShell,
@@ -22,13 +23,21 @@ import {
   SidebarWorkspace,
   SidebarSection,
   SidebarItem,
+  SidebarDivider,
   SidebarUser,
   BottomNav,
   BottomNavItem,
   Avatar,
   Badge,
 } from '@edukea/ui';
-import { useSchoolContext, useSidebarBadges } from '@edukea/shared';
+import {
+  useSchoolContext,
+  useSidebarBadges,
+  useCurrentUserRole,
+  computeInitials,
+  labelForRole,
+} from '@edukea/shared';
+import { supabase } from '@edukea/shared';
 
 function buildSections(studentsBadge: React.ReactNode | null, recoveryBadge: React.ReactNode | null) {
   return [
@@ -121,6 +130,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const requestedYearId = searchParams.get('year');
   const { data: ctx } = useSchoolContext({ requestedSchoolId, requestedYearId });
   const { data: badges } = useSidebarBadges(ctx?.current_school?.id, ctx?.current_year?.id);
+  const { data: me } = useCurrentUserRole();
+
+  const displayName = me?.displayName ?? me?.email ?? 'Utilisateur';
+  const initials = computeInitials(me?.displayName ?? null, me?.email ?? null);
+  const roleLabel = me ? labelForRole(me.role) : '—';
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/auth/login');
+  };
 
   const studentsBadge = badges && badges.students_enrolled_year > 0
     ? <Badge>{badges.students_enrolled_year}</Badge>
@@ -164,11 +183,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           options={ctx.years.map((y) => ({ value: y.id, label: `Annee ${y.name}` }))}
         />
       )}
-      <Avatar initials="JA" tone="accent" size="md" />
+      <Avatar initials={initials} tone="accent" size="md" />
     </>
   );
 
-  const topbar = <Topbar right={topbarRight} rightMobile={<Avatar initials="JA" tone="accent" size="sm" />} />;
+  const topbar = <Topbar right={topbarRight} rightMobile={<Avatar initials={initials} tone="accent" size="sm" />} />;
 
   const sidebar = (
     <Sidebar
@@ -179,7 +198,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           sub={currentSchoolName}
         />
       }
-      user={<SidebarUser initials="JA" name="Joel Akoun" role={ctx?.is_superadmin ? 'Superadmin' : 'Directeur general'} />}
+      user={<SidebarUser initials={initials} name={displayName} role={ctx?.is_superadmin ? 'Superadmin' : roleLabel} />}
     >
       {sections.map((section) => (
         <div key={section.label}>
@@ -201,6 +220,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       ))}
       <div className="flex-1" />
+      <SidebarDivider />
+      <SidebarItem href="#" active={false} icon={<LogOut />} onClick={handleLogout}>
+        Deconnexion
+      </SidebarItem>
     </Sidebar>
   );
 

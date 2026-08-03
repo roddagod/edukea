@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSchoolStaff, type SchoolStaffRow } from '@edukea/shared';
+import { useSchoolStaff, useCurrentUserRole, type SchoolStaffRow } from '@edukea/shared';
 import { Modal, Button, Input, Badge } from '@edukea/ui';
 import { Plus, Trash2, Key } from 'lucide-react';
 import {
@@ -235,6 +235,7 @@ function ResetPasswordDialog({
 
 export function UsersListView({ schoolId }: Props) {
   const { data: staff, isLoading, refetch } = useSchoolStaff(schoolId);
+  const { data: me } = useCurrentUserRole();
 
   // Modal state lifted here to avoid nesting modals inside table cells
   const [createOpen, setCreateOpen] = useState(false);
@@ -247,6 +248,10 @@ export function UsersListView({ schoolId }: Props) {
   const rows = staff ?? [];
 
   const handleDelete = async (s: SchoolStaffRow) => {
+    if (me?.userId && s.user_id === me.userId) {
+      alert("Vous ne pouvez pas supprimer votre propre compte. Demandez a un autre administrateur.");
+      return;
+    }
     if (
       !confirm(
         `Supprimer ${s.display_name ?? 'ce compte'} ? Le compte Auth sera definitivement efface.`,
@@ -321,8 +326,9 @@ export function UsersListView({ schoolId }: Props) {
                       </button>
                       <button
                         onClick={() => handleDelete(s)}
-                        title="Supprimer"
-                        className="rounded p-1.5 text-red-500 hover:bg-red-50"
+                        disabled={me?.userId === s.user_id}
+                        title={me?.userId === s.user_id ? 'Impossible de supprimer votre propre compte' : 'Supprimer'}
+                        className="rounded p-1.5 text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

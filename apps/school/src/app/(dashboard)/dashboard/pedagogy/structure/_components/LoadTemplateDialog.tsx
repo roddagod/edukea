@@ -11,11 +11,17 @@ export function LoadTemplateDialog({ schoolId, onClose }: Props) {
   const { data: templates, isLoading } = useStructureTemplates();
   const seed = useSeedStructureFromTemplate();
   const [selected, setSelected] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const apply = async () => {
     if (!selected) return;
-    await seed.mutateAsync({ schoolId, templateKey: selected });
-    onClose();
+    setError(null);
+    try {
+      await seed.mutateAsync({ schoolId, templateKey: selected });
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur inconnue lors du chargement du template');
+    }
   };
 
   return (
@@ -40,9 +46,14 @@ export function LoadTemplateDialog({ schoolId, onClose }: Props) {
             ))}
           </div>
         )}
+        {error && (
+          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </div>
+        )}
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>Annuler</Button>
-          <Button onClick={apply} disabled={!selected || seed.isPending}>
+          <Button variant="accent" onClick={apply} disabled={!selected || seed.isPending}>
             {seed.isPending ? 'Chargement…' : 'Appliquer'}
           </Button>
         </div>
