@@ -540,6 +540,28 @@ export default function StudentPage() {
                 <Plus className="h-4 w-4" /> Nouveau versement
               </button>
             )}
+            {currentSsyl && (
+              <>
+                <a
+                  href={`/api/pdf/payment-status/${currentSsyl.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3.5 py-2 text-body-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
+                  title="Statut de paiement (PDF)"
+                >
+                  <Download className="h-4 w-4" /> Statut PDF
+                </a>
+                <a
+                  href={`/api/pdf/enrollment-receipt/${currentSsyl.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3.5 py-2 text-body-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
+                  title="Reçu d'inscription (PDF)"
+                >
+                  <Download className="h-4 w-4" /> Reçu inscription
+                </a>
+              </>
+            )}
             <Button variant="secondary" onClick={() => setEditOpen(true)}>
               <Pencil className="h-4 w-4" /> Editer
             </Button>

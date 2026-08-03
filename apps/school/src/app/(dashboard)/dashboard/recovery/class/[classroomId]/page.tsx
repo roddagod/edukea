@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Download } from 'lucide-react';
 import {
   PageHeader,
   Card,
@@ -66,6 +66,19 @@ export default function RecoveryClassPage() {
             cls
               ? `${cls.n_students} élèves · ${cls.solde_count} soldés · ${cls.debute_count} partiels · ${cls.impaye_count} impayés`
               : undefined
+          }
+          actions={
+            cls && (
+              <a
+                href={`/api/pdf/unpaid-report/${params.classroomId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3.5 py-2 text-body-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
+                title="Contrôle des impayés (PDF)"
+              >
+                <Download className="h-4 w-4" /> Impayés PDF
+              </a>
+            )
           }
         />
       </div>
