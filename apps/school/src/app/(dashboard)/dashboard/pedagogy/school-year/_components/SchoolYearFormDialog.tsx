@@ -21,7 +21,7 @@ export function SchoolYearFormDialog({ schoolId, year, onClose }: Props) {
   const [name, setName] = useState(year?.name ?? suggestName());
   const [dateStart, setDateStart] = useState(year?.date_start ?? '');
   const [dateEnd, setDateEnd] = useState(year?.date_end ?? '');
-  const [periodeType, setPeriodeType] = useState<'trimestre' | 'semestre'>(year?.periode_type ?? 'trimestre');
+  const [periodeType, setPeriodeType] = useState<'trimestre' | 'semestre' | null>(year?.periode_type ?? null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,7 +63,7 @@ export function SchoolYearFormDialog({ schoolId, year, onClose }: Props) {
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Type de période</label>
-            <div className="mt-1 flex gap-4">
+            <div className="mt-1 flex flex-wrap gap-4">
               <label className="flex items-center gap-2">
                 <input type="radio" checked={periodeType === 'trimestre'} onChange={() => setPeriodeType('trimestre')} />
                 Trimestres (T1/T2/T3)
@@ -72,7 +72,14 @@ export function SchoolYearFormDialog({ schoolId, year, onClose }: Props) {
                 <input type="radio" checked={periodeType === 'semestre'} onChange={() => setPeriodeType('semestre')} />
                 Semestres (S1/S2)
               </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" checked={periodeType === null} onChange={() => setPeriodeType(null)} />
+                Aucun
+              </label>
             </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Les écoles primaires peuvent laisser vide et configurer plus tard.
+            </p>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>

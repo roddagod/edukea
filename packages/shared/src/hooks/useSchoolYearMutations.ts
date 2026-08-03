@@ -8,7 +8,7 @@ export interface SchoolYearInput {
   name: string;
   date_start: string;
   date_end: string;
-  periode_type: 'trimestre' | 'semestre';
+  periode_type: 'trimestre' | 'semestre' | null;
 }
 
 export function useUpsertSchoolYear() {

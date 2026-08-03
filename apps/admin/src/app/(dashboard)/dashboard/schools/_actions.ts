@@ -21,7 +21,7 @@ interface CreateSchoolAtomicArgs {
     name: string;         // ex: "2026-2027"
     dateStart: string;    // ISO date
     dateEnd: string;
-    periodeType: 'trimestre' | 'semestre';
+    periodeType: 'trimestre' | 'semestre' | null;
   };
   // First manager (optional but recommended)
   manager?: {
@@ -97,7 +97,7 @@ export async function createSchoolAtomic(args: CreateSchoolAtomicArgs): Promise<
       name: args.year.name,
       date_start: args.year.dateStart,
       date_end: args.year.dateEnd,
-      periode_type: args.year.periodeType,
+      periode_type: args.year.periodeType, // NULL si l'ecole veut definir plus tard
     });
     if (yearErr) {
       // Rollback école

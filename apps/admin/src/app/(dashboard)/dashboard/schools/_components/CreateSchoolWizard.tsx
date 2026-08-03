@@ -33,7 +33,7 @@ export function CreateSchoolWizard({ open, onClose, onSuccess }: Props) {
   const [yearName, setYearName] = useState(`${currentYear}-${currentYear + 1}`);
   const [dateStart, setDateStart] = useState(`${currentYear}-09-01`);
   const [dateEnd, setDateEnd] = useState(`${currentYear + 1}-06-30`);
-  const [periodeType, setPeriodeType] = useState<'trimestre' | 'semestre'>('trimestre');
+  const [periodeType, setPeriodeType] = useState<'trimestre' | 'semestre' | null>(null);
 
   // Step 3 — manager
   const [createManager, setCreateManager] = useState(true);
@@ -293,8 +293,8 @@ export function CreateSchoolWizard({ open, onClose, onSuccess }: Props) {
                 />
               </div>
               <div>
-                <p className="mb-1 text-body-xs font-semibold text-ink-2">Type de periode *</p>
-                <div className="flex gap-4">
+                <p className="mb-1 text-body-xs font-semibold text-ink-2">Type de periode</p>
+                <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 text-sm text-ink-2">
                     <input
                       type="radio"
@@ -311,7 +311,18 @@ export function CreateSchoolWizard({ open, onClose, onSuccess }: Props) {
                     />
                     Semestres (S1/S2)
                   </label>
+                  <label className="flex items-center gap-2 text-sm text-ink-2">
+                    <input
+                      type="radio"
+                      checked={periodeType === null}
+                      onChange={() => setPeriodeType(null)}
+                    />
+                    Aucun (definir plus tard)
+                  </label>
                 </div>
+                <p className="mt-1 text-xs text-ink-3">
+                  Les ecoles primaires peuvent laisser vide et configurer plus tard.
+                </p>
               </div>
             </div>
           )}
