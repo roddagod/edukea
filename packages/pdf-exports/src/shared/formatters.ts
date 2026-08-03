@@ -1,4 +1,5 @@
-import { formatMoney as sharedFormatMoney, type Currency } from '@edukea/shared';
+// Autonome : pas d'import @edukea/shared (evite de tirer les hooks React dans le bundle server PDF)
+export type Currency = 'XOF' | 'XAF';
 
 const NUM = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 const DATE_LONG = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -11,13 +12,12 @@ export function fmtNumber(n: number | null | undefined): string {
 }
 
 /**
- * Formate un montant avec la devise. Utilise le helper commun.
+ * Formate un montant avec la devise. Impl local (pas d'import @edukea/shared).
  * Exemple : formatMoney(25000, 'XOF') -> "25 000 XOF"
- * Historiquement les docs affichaient "FCFA" -> on garde currency comme suffixe.
  */
 export function formatMoney(amount: number | null | undefined, currency: Currency = 'XOF'): string {
   if (amount == null) return '—';
-  return sharedFormatMoney(amount, currency);
+  return `${NUM.format(amount)} ${currency}`;
 }
 
 export function fmtDate(d: string | Date | null | undefined): string {

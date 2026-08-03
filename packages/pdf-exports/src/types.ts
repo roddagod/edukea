@@ -1,4 +1,5 @@
-import type { Currency } from '@edukea/shared';
+import type { Currency } from './shared/formatters';
+export type { Currency };
 
 // =============================================================================
 // Types communs a tous les documents PDF

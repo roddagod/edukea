@@ -8,7 +8,6 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@edukea/shared": "workspace:*",
     "@react-pdf/renderer": "^4.5.1"
   },
   "devDependencies": {

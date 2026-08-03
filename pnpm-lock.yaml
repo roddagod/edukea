@@ -211,6 +211,9 @@ importers:
 
   apps/school:
     dependencies:
+      '@edukea/pdf-exports':
+        specifier: workspace:*
+        version: link:../../packages/pdf-exports
       '@edukea/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -357,6 +360,25 @@ importers:
       tailwindcss:
         specifier: ^3.4.0
         version: 3.4.19
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/pdf-exports:
+    dependencies:
+      '@react-pdf/renderer':
+        specifier: ^4.5.1
+        version: 4.5.1(react@19.2.4)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.19.15
+        version: 22.19.15
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.14
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

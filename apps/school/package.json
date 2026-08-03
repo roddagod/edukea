@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@edukea/pdf-exports": "workspace:*",
     "@edukea/shared": "workspace:*",
     "@edukea/ui": "workspace:*",
     "@radix-ui/react-avatar": "^1.1.0",
