@@ -12,6 +12,8 @@ export interface EnrollmentFormState {
   mother?: { id?: string; firstname: string; lastname: string; phone: string; email: string; job: string; address: string; residence: string };
   tutor?:  { id?: string; firstname: string; lastname: string; phone: string; email: string; job: string; address: string; residence: string };
   classroomId: string;
+  /** Optionnel : selection intermediaire du niveau (persiste entre passages sur StepClassroom) */
+  levelId?: string;
   feesId: string;
   typeStudentId?: string;
   billedTotal: number;
