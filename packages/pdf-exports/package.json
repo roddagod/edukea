@@ -1,0 +1,23 @@
+{
+  "name": "@edukea/pdf-exports",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@edukea/shared": "workspace:*",
+    "@react-pdf/renderer": "^4.5.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.15",
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}
