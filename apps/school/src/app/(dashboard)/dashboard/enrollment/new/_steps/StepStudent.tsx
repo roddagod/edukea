@@ -110,19 +110,6 @@ export function StepStudent({
             onChange={(v) => onChange({ ...value, sex: v as 'M' | 'F' })}
           />
         </FormField>
-        <FormField label="Type d'élève" required>
-          <select
-            value={typeStudentId ?? ''}
-            onChange={(e) => onTypeStudentChange(e.target.value)}
-            required
-            className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm"
-          >
-            <option value="">— Sélectionner —</option>
-            {(studentTypes ?? []).map((t) => (
-              <option key={t.id} value={t.id}>{t.label}</option>
-            ))}
-          </select>
-        </FormField>
         <FormField label="Date de naissance" required>
           <DatePicker value={value.birthdate} onChange={(e) => onChange({ ...value, birthdate: e.target.value })} />
         </FormField>

@@ -113,11 +113,15 @@ export function useRecoveryStudents(params: UseRecoveryStudentsParams) {
 /**
  * Liste des classes d'une école × année (pour peupler le filtre classroomId).
  * Change rarement — cache 5 minutes.
+ * NOTE : les classrooms sont un template partage sur toutes les annees (structure ecole).
+ * On ne filtre PAS par school_year_id : classrooms cree via UI Structure ont school_year_id=NULL,
+ * et un classroom sert d'annee en annee.
+ * Le param schoolYearId reste dans la signature pour retrocompatibilite (ignore).
  */
-export function useSchoolClassrooms(schoolId: string | undefined, schoolYearId: string | undefined) {
+export function useSchoolClassrooms(schoolId: string | undefined, _schoolYearId?: string | undefined) {
   return useQuery<Array<{ id: string; name: string }>>({
-    queryKey: ['school-classrooms', schoolId, schoolYearId],
-    enabled: !!schoolId && !!schoolYearId,
+    queryKey: ['school-classrooms', schoolId],
+    enabled: !!schoolId,
     staleTime: 5 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -125,7 +129,6 @@ export function useSchoolClassrooms(schoolId: string | undefined, schoolYearId: 
         .from('classrooms')
         .select('id, name')
         .eq('school_id', schoolId!)
-        .eq('school_year_id', schoolYearId!)
         .is('deleted_at', null)
         .order('name');
       if (error) throw error;
