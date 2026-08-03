@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 import { createClient } from '@/lib/supabase-server';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { BrandingUploader } from './_components/BrandingUploader';
 
 export const metadata = { title: 'Personnalisation bulletin — Rentrée' };
 
@@ -35,24 +36,13 @@ export default async function BulletinTemplatePage({ searchParams }: PageProps) 
           </a>
           <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">Personnalisation bulletin</h1>
           <p className="text-sm text-slate-600">
-            Chargez votre logo, signatures et cachet pour personnaliser les bulletins émis.
+            Chargez le logo et la signature qui apparaitront sur les bulletins, reçus PDF et listes officielles.
+            Étape facultative.
           </p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-          <Sparkles className="h-6 w-6 text-orange-600" />
-        </div>
-        <h2 className="mt-4 text-lg font-semibold text-slate-900">Bientôt disponible</h2>
-        <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
-          L&apos;upload du logo, des signatures du directeur et du cachet arrive dans un prochain sprint.
-          Cette étape restera <span className="font-semibold">facultative</span> ; les bulletins fonctionneront sans.
-        </p>
-        <p className="mt-3 text-xs text-slate-500">
-          École : {ctx.current_school.name}
-        </p>
-      </div>
+      <BrandingUploader schoolId={ctx.current_school.id} />
     </div>
   );
 }
