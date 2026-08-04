@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -126,8 +126,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isBottomActive = (href: string) =>
     href === '/dashboard' ? pathname === '/dashboard' : pathname === href || pathname.startsWith(href + '/');
 
-  const requestedSchoolId = searchParams.get('school');
-  const requestedYearId = searchParams.get('year');
+  // Selection persistente ecole/annee via localStorage (superadmin uniquement,
+  // les school-staff normaux n'ont qu'une ecole donc pas de choix a memoriser).
+  const urlSchoolId = searchParams.get('school');
+  const urlYearId = searchParams.get('year');
+  const storedSchoolId = typeof window !== 'undefined' ? window.localStorage.getItem('edukea:preferred_school_id') : null;
+  const storedYearId = typeof window !== 'undefined' ? window.localStorage.getItem('edukea:preferred_year_id') : null;
+  const requestedSchoolId = urlSchoolId ?? storedSchoolId;
+  const requestedYearId = urlYearId ?? storedYearId;
   const { data: ctx } = useSchoolContext({ requestedSchoolId, requestedYearId });
   const { data: badges } = useSidebarBadges(ctx?.current_school?.id, ctx?.current_year?.id);
   const { data: me } = useCurrentUserRole();
@@ -156,10 +162,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       params.set(key, value);
       // Un changement d'ecole reset l'annee (car les annees sont school-specifiques)
       if (key === 'school') params.delete('year');
+      // Persiste dans localStorage pour survivre au reload et cross-tab
+      if (typeof window !== 'undefined') {
+        const storageKey = key === 'school' ? 'edukea:preferred_school_id' : 'edukea:preferred_year_id';
+        window.localStorage.setItem(storageKey, value);
+        if (key === 'school') window.localStorage.removeItem('edukea:preferred_year_id');
+      }
       router.replace(`${pathname}?${params.toString()}`);
     },
     [pathname, router, searchParams],
   );
+
+  // Sync localStorage <- current context : quand le back retourne un choix valide
+  // (ex. superadmin qui atterrit sur une ecole par defaut), on memorise pour la prochaine session.
+  const syncedRef = useRef<string>('');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!ctx?.current_school?.id) return;
+    const key = `${ctx.current_school.id}::${ctx.current_year?.id ?? ''}`;
+    if (syncedRef.current === key) return;
+    syncedRef.current = key;
+    window.localStorage.setItem('edukea:preferred_school_id', ctx.current_school.id);
+    if (ctx.current_year?.id) {
+      window.localStorage.setItem('edukea:preferred_year_id', ctx.current_year.id);
+    }
+  }, [ctx?.current_school?.id, ctx?.current_year?.id]);
 
   const currentSchoolName = ctx?.current_school?.name ?? '—';
   const currentYearName = ctx?.current_year?.name ?? '—';
