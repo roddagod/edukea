@@ -16,7 +16,7 @@ import {
   type LevelFeeInstallment,
 } from '@edukea/shared';
 import { Button, Input, Skeleton } from '@edukea/ui';
-import { Plus, Trash2, Copy } from 'lucide-react';
+import { Plus, Trash2, Copy, AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react';
 
 interface Props {
   schoolId: string;
@@ -48,6 +48,34 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
     .filter((l) => !l.is_optional)
     .reduce((s, l) => s + l.amount, 0);
   const totalWithOptions = (lines ?? []).reduce((s, l) => s + l.amount, 0);
+  const installmentsTotal = (installments ?? []).reduce((s, i) => s + (i.amount ?? 0), 0);
+  const hasLines = (lines ?? []).length > 0;
+  const hasInstallments = (installments ?? []).length > 0;
+  const installmentsMatchTotal = hasLines && hasInstallments && Math.abs(installmentsTotal - totalMandatory) < 1;
+
+  // Generer automatiquement les tranches par defaut a partir du total des lignes
+  const generateDefaultInstallments = () => {
+    if (!hasLines) return;
+    // 3 tranches par defaut : inscription (100% en septembre), scolarite 50% dec, 50% mars
+    const inscription = (lines ?? []).find((l) => l.category === 'inscription');
+    const tuitionTotal = (lines ?? []).filter((l) => l.category !== 'inscription' && !l.is_optional).reduce((s, l) => s + l.amount, 0);
+    let order = 1;
+    if (inscription && inscription.amount > 0) {
+      upInst.mutate({
+        level_id: levelId, student_type_id: typeId, order: order++,
+        label: 'Inscription', category: 'inscription',
+        due_month: 9, due_year_offset: 0, amount: inscription.amount, amount_percentage: null,
+      });
+    }
+    if (tuitionTotal > 0) {
+      const t1 = Math.round(tuitionTotal / 3);
+      const t2 = Math.round(tuitionTotal / 3);
+      const t3 = tuitionTotal - t1 - t2;
+      upInst.mutate({ level_id: levelId, student_type_id: typeId, order: order++, label: 'Tranche 1', category: 'tuition', due_month: 10, due_year_offset: 0, amount: t1, amount_percentage: null });
+      upInst.mutate({ level_id: levelId, student_type_id: typeId, order: order++, label: 'Tranche 2', category: 'tuition', due_month: 1, due_year_offset: 1, amount: t2, amount_percentage: null });
+      upInst.mutate({ level_id: levelId, student_type_id: typeId, order: order++, label: 'Tranche 3', category: 'tuition', due_month: 4, due_year_offset: 1, amount: t3, amount_percentage: null });
+    }
+  };
 
   const addLine = () => {
     const nextOrder = Math.max(0, ...(lines ?? []).map((l) => l.order)) + 1;
@@ -93,6 +121,67 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
 
   return (
     <div className="space-y-8">
+      {/* Bandeau statut : lignes OK + echeances OK/manquantes/decalees */}
+      <div className={`flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
+        !hasLines
+          ? 'border-slate-200 bg-slate-50'
+          : !hasInstallments
+            ? 'border-red-300 bg-red-50'
+            : !installmentsMatchTotal
+              ? 'border-amber-300 bg-amber-50'
+              : 'border-green-300 bg-green-50'
+      }`}>
+        <div className="flex items-start gap-3">
+          {!hasLines ? (
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">1</div>
+          ) : !hasInstallments ? (
+            <AlertTriangle className="h-5 w-5 shrink-0 text-red-600" />
+          ) : !installmentsMatchTotal ? (
+            <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+          ) : (
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+          )}
+          <div>
+            {!hasLines && (
+              <>
+                <p className="font-semibold text-slate-900">Étape 1 : ajoutez les lignes de frais</p>
+                <p className="text-xs text-slate-600">Commencez par lister ce qui est facturé (Inscription, Scolarité, Assurance…).</p>
+              </>
+            )}
+            {hasLines && !hasInstallments && (
+              <>
+                <p className="font-semibold text-red-900">⚠️ Échéances manquantes — inscriptions bloquées</p>
+                <p className="text-xs text-red-800">
+                  Total lignes : <strong>{formatMoney(totalMandatory, currency)}</strong> — mais aucune échéance définie.
+                  Sans échéances, aucun élève ne peut être inscrit sur ce niveau et aucun paiement ne se ventilera.
+                </p>
+              </>
+            )}
+            {hasLines && hasInstallments && !installmentsMatchTotal && (
+              <>
+                <p className="font-semibold text-amber-900">⚠️ Total des échéances différent du total des lignes</p>
+                <p className="text-xs text-amber-800">
+                  Lignes obligatoires : <strong>{formatMoney(totalMandatory, currency)}</strong> · Total échéances : <strong>{formatMoney(installmentsTotal, currency)}</strong>. Écart : {formatMoney(Math.abs(installmentsTotal - totalMandatory), currency)}
+                </p>
+              </>
+            )}
+            {installmentsMatchTotal && (
+              <>
+                <p className="font-semibold text-green-900">Configuration complète</p>
+                <p className="text-xs text-green-800">
+                  {(lines ?? []).length} lignes · {(installments ?? []).length} échéances · Total : <strong>{formatMoney(totalMandatory, currency)}</strong>
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+        {hasLines && !hasInstallments && (
+          <Button variant="accent" onClick={generateDefaultInstallments} disabled={upInst.isPending}>
+            <Sparkles className="mr-2 h-4 w-4" /> Générer 3 tranches par défaut
+          </Button>
+        )}
+      </div>
+
       {/* Type selector */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm text-slate-600">Type d&apos;élève :</span>
