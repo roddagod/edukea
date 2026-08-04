@@ -14,6 +14,7 @@ import {
   useEnrollmentDrafts,
   useUpsertEnrollmentDraft,
   useDeleteEnrollmentDraft,
+  useClassroomEffectiveFees,
   type EnrollmentDraft,
 } from '@edukea/shared';
 import { StepStudent } from './_steps/StepStudent';
@@ -94,11 +95,18 @@ export default function NewEnrollmentPage() {
     return p.toString() ? `?${p.toString()}` : '';
   })();
 
+  // Frais applicables pour la combo classe x type d'eleve (bloque Suivant si aucun)
+  const { data: effectiveFees } = useClassroomEffectiveFees(
+    state.classroomId || undefined,
+    state.typeStudentId || undefined,
+  );
+  const hasFees = (effectiveFees ?? []).length > 0;
+
   const isValid = (() => {
     switch (current) {
       case 0: return isStepStudentValid(state.student, state.typeStudentId);
       case 1: return isStepFamilyValid(state);
-      case 2: return isStepClassroomValid(state);
+      case 2: return isStepClassroomValid(state) && hasFees; // bloque si frais non configures
       case 3: return isStepFeesValid(state);
       case 4: return true;
       default: return false;

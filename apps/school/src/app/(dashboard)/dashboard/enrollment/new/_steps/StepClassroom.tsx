@@ -176,11 +176,17 @@ export function StepClassroom({
       {value.classroomId && value.typeStudentId && !feesLoading && (
         <div className="mt-1">
           {(effectiveFees ?? []).length === 0 ? (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
-              <p className="mb-1 font-medium">Aucun frais configure pour cette combinaison classe × type d&apos;eleve.</p>
+            <div className="rounded-xl border-2 border-red-300 bg-red-50 p-4 text-sm text-red-800">
+              <p className="mb-1 font-semibold">Inscription bloquée : aucun frais configuré pour cette combinaison classe × type d&apos;élève.</p>
               <p>
-                Contactez le manager pour configurer les frais dans{' '}
-                <code className="rounded bg-amber-100 px-1 text-xs">/pedagogy/fees</code>.
+                Configurez les frais dans{' '}
+                <a
+                  href="/dashboard/pedagogy/fees"
+                  className="font-semibold text-red-900 underline hover:text-red-700"
+                >
+                  Rentrée › Frais scolarité
+                </a>{' '}
+                avant de pouvoir inscrire cet élève.
               </p>
             </div>
           ) : (
