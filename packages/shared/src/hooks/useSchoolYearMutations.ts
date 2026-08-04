@@ -15,10 +15,14 @@ export function useUpsertSchoolYear() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: SchoolYearInput): Promise<SchoolYear> => {
+      // school_years.id est TEXT NOT NULL sans default -> generer si absent (creation)
+      const id = input.id ?? (typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `sy-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
       const { data, error } = await supabase
         .from('school_years')
         .upsert({
-          id: input.id,
+          id,
           school_id: input.school_id,
           name: input.name,
           date_start: input.date_start,

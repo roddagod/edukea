@@ -75,7 +75,15 @@ export function useDeleteLevel() {
   return useMutation({
     mutationFn: async ({ id, schoolId }: { id: string; schoolId: string }) => {
       const { error } = await supabase.from('levels').delete().eq('id', id);
-      if (error) throw error;
+      if (error) {
+        // FK violation : classes ou frais reliés
+        if (error.code === '23503') {
+          throw new Error(
+            'Impossible de supprimer ce niveau : il contient encore des classes ou des frais. Supprimez-les d\'abord.',
+          );
+        }
+        throw error;
+      }
     },
     onSuccess: (_, { schoolId }) => invalidateStructure(qc, schoolId),
   });
@@ -85,7 +93,7 @@ export function useUpsertClassroom() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: ClassroomInput) => {
-      const payload = {
+      const payload: Record<string, unknown> = {
         id: input.id ?? `${input.school_id}-cr-${crypto.randomUUID().slice(0, 8)}`,
         school_id: input.school_id,
         level_id: input.level_id,

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   usePedagogySetupStatus,
   usePeriodes,
@@ -20,6 +21,17 @@ export function PeriodesEditor({ schoolId }: Props) {
   const upsert = useUpsertPeriode();
   const del = useDeletePeriode();
   const gen = useGenerateDefaultPeriodes();
+  const [genError, setGenError] = useState<string | null>(null);
+
+  const handleGenerate = async () => {
+    if (!yearId) return;
+    setGenError(null);
+    try {
+      await gen.mutateAsync({ schoolYearId: yearId, schoolId });
+    } catch (e) {
+      setGenError(e instanceof Error ? e.message : 'Erreur inconnue');
+    }
+  };
 
   if (statusLoading || pLoading) return <Skeleton className="h-32 w-full" />;
 
@@ -36,6 +48,7 @@ export function PeriodesEditor({ schoolId }: Props) {
 
   const expected = status?.periode_type === 'semestre' ? 2 : 3;
   const hasNone = (periodes?.length ?? 0) === 0;
+  const noPeriodeType = !status?.periode_type;
 
   function handleUpsert(p: Periode, patch: Partial<Pick<Periode, 'name' | 'start_date' | 'end_date'>>) {
     upsert.mutate({
@@ -52,15 +65,34 @@ export function PeriodesEditor({ schoolId }: Props) {
 
   return (
     <div className="space-y-4">
-      {hasNone && (
+      {hasNone && noPeriodeType && (
+        <div className="rounded-xl border-2 border-dashed border-amber-300 bg-amber-50 p-6 text-sm text-amber-800">
+          <p className="font-semibold">Type de période non défini pour l&apos;année {status?.school_year_name}.</p>
+          <p className="mt-1">
+            Choisissez d&apos;abord Trimestres ou Semestres dans{' '}
+            <a href="/dashboard/pedagogy/school-year" className="font-semibold text-orange-600 underline">
+              Année scolaire
+            </a>{' '}
+            pour pouvoir générer les périodes automatiquement.
+          </p>
+        </div>
+      )}
+
+      {hasNone && !noPeriodeType && (
         <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50 p-6 text-center sm:flex-row sm:justify-between sm:text-left">
           <p className="text-sm text-slate-700">
             Aucune période configurée pour l&apos;année {status?.school_year_name}.
           </p>
-          <Button onClick={() => gen.mutate({ schoolYearId: yearId, schoolId })} disabled={gen.isPending}>
+          <Button variant="accent" onClick={handleGenerate} disabled={gen.isPending}>
             <Sparkles className="mr-2 h-4 w-4" />
-            Générer {expected} périodes par défaut
+            {gen.isPending ? 'Génération…' : `Générer ${expected} périodes par défaut`}
           </Button>
+        </div>
+      )}
+
+      {genError && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {genError}
         </div>
       )}
 
