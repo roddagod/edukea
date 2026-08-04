@@ -16,7 +16,28 @@ import {
   type LevelFeeInstallment,
 } from '@edukea/shared';
 import { Button, Input, Skeleton } from '@edukea/ui';
-import { Plus, Trash2, Copy, AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Copy, AlertTriangle, CheckCircle2, Sparkles, Scale } from 'lucide-react';
+
+// Labels FR des categories (au lieu des slugs techniques)
+const CATEGORY_LABELS: Record<string, string> = {
+  inscription: 'Inscription',
+  tuition:     'Scolarité',
+  insurance:   'Assurance',
+  canteen:     'Cantine',
+  transport:   'Transport',
+  other:       'Autre',
+};
+
+// Mois de l'annee scolaire (septembre à juin)
+const MONTHS_LABELS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+/** Repartit un total en N parts entieres (differences absorbees sur la derniere) */
+function distributeEqually(total: number, n: number): number[] {
+  if (n <= 0) return [];
+  const base = Math.floor(total / n);
+  const rest = total - base * n;
+  return Array.from({ length: n }, (_, i) => (i === n - 1 ? base + rest : base));
+}
 
 interface Props {
   schoolId: string;
@@ -53,27 +74,69 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
   const hasInstallments = (installments ?? []).length > 0;
   const installmentsMatchTotal = hasLines && hasInstallments && Math.abs(installmentsTotal - totalMandatory) < 1;
 
-  // Generer automatiquement les tranches par defaut a partir du total des lignes
-  const generateDefaultInstallments = () => {
+  // Genere N tranches equilibrees a partir du total des lignes.
+  // Wipe puis regenere : plus predictible et evite les doublons.
+  const generateInstallments = async (nTuitionTranches: number) => {
     if (!hasLines) return;
-    // 3 tranches par defaut : inscription (100% en septembre), scolarite 50% dec, 50% mars
+    // Purge les tranches existantes
+    for (const inst of installments ?? []) {
+      await delInst.mutateAsync({ id: inst.id, levelId, studentTypeId: typeId });
+    }
+    // Inscription : 1 tranche 100% en septembre si categorie 'inscription' presente
     const inscription = (lines ?? []).find((l) => l.category === 'inscription');
-    const tuitionTotal = (lines ?? []).filter((l) => l.category !== 'inscription' && !l.is_optional).reduce((s, l) => s + l.amount, 0);
+    const tuitionTotal = (lines ?? [])
+      .filter((l) => l.category !== 'inscription' && !l.is_optional)
+      .reduce((s, l) => s + l.amount, 0);
     let order = 1;
     if (inscription && inscription.amount > 0) {
-      upInst.mutate({
+      await upInst.mutateAsync({
         level_id: levelId, student_type_id: typeId, order: order++,
         label: 'Inscription', category: 'inscription',
         due_month: 9, due_year_offset: 0, amount: inscription.amount, amount_percentage: null,
       });
     }
-    if (tuitionTotal > 0) {
-      const t1 = Math.round(tuitionTotal / 3);
-      const t2 = Math.round(tuitionTotal / 3);
-      const t3 = tuitionTotal - t1 - t2;
-      upInst.mutate({ level_id: levelId, student_type_id: typeId, order: order++, label: 'Tranche 1', category: 'tuition', due_month: 10, due_year_offset: 0, amount: t1, amount_percentage: null });
-      upInst.mutate({ level_id: levelId, student_type_id: typeId, order: order++, label: 'Tranche 2', category: 'tuition', due_month: 1, due_year_offset: 1, amount: t2, amount_percentage: null });
-      upInst.mutate({ level_id: levelId, student_type_id: typeId, order: order++, label: 'Tranche 3', category: 'tuition', due_month: 4, due_year_offset: 1, amount: t3, amount_percentage: null });
+    if (tuitionTotal > 0 && nTuitionTranches > 0) {
+      const parts = distributeEqually(tuitionTotal, nTuitionTranches);
+      // Mois de repartition : 10, 12, 2, 4, 6 (max 5) puis mensuel si plus
+      const monthSequence = nTuitionTranches <= 5
+        ? [10, 12, 2, 4, 6].slice(0, nTuitionTranches)
+        : Array.from({ length: nTuitionTranches }, (_, i) => ((10 + i - 1) % 12) + 1);
+      for (let i = 0; i < parts.length; i++) {
+        const month = monthSequence[i];
+        const yearOffset = month < 9 ? 1 : 0;
+        await upInst.mutateAsync({
+          level_id: levelId, student_type_id: typeId, order: order++,
+          label: nTuitionTranches === 1 ? 'Scolarité (comptant)' : `Tranche ${i + 1}`,
+          category: 'tuition',
+          due_month: month, due_year_offset: yearOffset,
+          amount: parts[i], amount_percentage: null,
+        });
+      }
+    }
+  };
+
+  // Reequilibre : ajuste les montants des tranches pour matcher le total lignes
+  // Applique un facteur multiplicateur sur les tranches non-inscription.
+  const rebalanceInstallments = async () => {
+    if (!hasLines || !hasInstallments) return;
+    const inscriptionInst = (installments ?? []).find((i) => i.category === 'inscription');
+    const tuitionInsts = (installments ?? []).filter((i) => i.category !== 'inscription');
+    const tuitionTotalDue = (lines ?? [])
+      .filter((l) => l.category !== 'inscription' && !l.is_optional)
+      .reduce((s, l) => s + l.amount, 0);
+    const inscriptionDue = (lines ?? []).find((l) => l.category === 'inscription')?.amount ?? 0;
+    // Update inscription if present
+    if (inscriptionInst && inscriptionInst.amount !== inscriptionDue) {
+      await upInst.mutateAsync({ ...inscriptionInst, amount: inscriptionDue });
+    }
+    // Redistribue tuition equitablement
+    if (tuitionInsts.length > 0 && tuitionTotalDue > 0) {
+      const parts = distributeEqually(tuitionTotalDue, tuitionInsts.length);
+      for (let i = 0; i < tuitionInsts.length; i++) {
+        if (tuitionInsts[i].amount !== parts[i]) {
+          await upInst.mutateAsync({ ...tuitionInsts[i], amount: parts[i] });
+        }
+      }
     }
   };
 
@@ -176,11 +239,38 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
           </div>
         </div>
         {hasLines && !hasInstallments && (
-          <Button variant="accent" onClick={generateDefaultInstallments} disabled={upInst.isPending}>
+          <Button variant="accent" onClick={() => generateInstallments(3)} disabled={upInst.isPending || delInst.isPending}>
             <Sparkles className="mr-2 h-4 w-4" /> Générer 3 tranches par défaut
           </Button>
         )}
+        {hasLines && hasInstallments && !installmentsMatchTotal && (
+          <Button variant="accent" onClick={rebalanceInstallments} disabled={upInst.isPending}>
+            <Scale className="mr-2 h-4 w-4" /> Équilibrer automatiquement
+          </Button>
+        )}
       </div>
+
+      {/* Barre de progression visuelle de l'equilibre echeances / lignes */}
+      {hasLines && hasInstallments && (
+        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center justify-between text-xs">
+              <span className="font-semibold text-slate-700">Répartition des échéances</span>
+              <span className={installmentsMatchTotal ? 'font-semibold text-green-700' : 'font-semibold text-amber-700'}>
+                {formatMoney(installmentsTotal, currency)} / {formatMoney(totalMandatory, currency)}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div
+                className={`h-full transition-all ${
+                  installmentsMatchTotal ? 'bg-green-500' : installmentsTotal > totalMandatory ? 'bg-red-500' : 'bg-amber-500'
+                }`}
+                style={{ width: totalMandatory > 0 ? `${Math.min(100, (installmentsTotal / totalMandatory) * 100)}%` : '0%' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Type selector */}
       <div className="flex flex-wrap items-center gap-2">
@@ -269,25 +359,45 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
 
       {/* Installments section */}
       <section>
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-semibold text-slate-900">Échéances</h2>
-          <Button onClick={addInstallment} disabled={upInst.isPending}>
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter tranche
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {hasLines && (
+              <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1">
+                <span className="px-2 text-xs font-semibold text-slate-500">Répartir en :</span>
+                {[1, 3, 5, 9].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => {
+                      if (hasInstallments && !confirm(`Remplacer les ${installments!.length} échéances actuelles par ${n === 1 ? '1 tranche comptant' : `${n} tranches équilibrées`} ?`)) return;
+                      void generateInstallments(n);
+                    }}
+                    disabled={upInst.isPending || delInst.isPending}
+                    className="rounded px-2 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-primary/[0.08] hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {n === 1 ? 'Comptant' : `${n} tranches`}
+                  </button>
+                ))}
+              </div>
+            )}
+            <Button variant="secondary" size="sm" onClick={addInstallment} disabled={upInst.isPending}>
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              Ajouter
+            </Button>
+          </div>
         </div>
-        <div className="overflow-x-auto rounded-xl border border-slate-200">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
-                <th className="w-12 p-2 text-left">#</th>
+                <th className="w-10 p-2 text-left">#</th>
                 <th className="p-2 text-left">Libellé</th>
-                <th className="hidden w-40 p-2 text-left sm:table-cell">Catégorie</th>
-                <th className="w-24 p-2 text-left">Mois</th>
-                <th className="w-32 p-2 text-left">Année</th>
-                <th className="w-28 p-2 text-right">Montant ({currency})</th>
+                <th className="hidden w-32 p-2 text-left sm:table-cell">Catégorie</th>
+                <th className="w-32 p-2 text-left">Échéance</th>
+                <th className="w-32 p-2 text-right">Montant ({currency})</th>
                 <th className="hidden w-16 p-2 text-right sm:table-cell">%</th>
-                <th className="w-12 p-2"></th>
+                <th className="w-10 p-2"></th>
               </tr>
             </thead>
             <tbody>
@@ -295,6 +405,7 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
                 <InstallmentRow
                   key={i.id}
                   inst={i}
+                  totalMandatory={totalMandatory}
                   onSave={(p) => upInst.mutate({ ...i, ...p })}
                   onDelete={() =>
                     delInst.mutate({ id: i.id, levelId, studentTypeId: typeId })
@@ -304,7 +415,20 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
               {(installments ?? []).length === 0 && (
                 <tr>
                   <td colSpan={7} className="p-6 text-center text-sm text-slate-500">
-                    Aucune échéance. Cliquez &quot;Ajouter tranche&quot;.
+                    Aucune échéance configurée. Utilisez les presets ci-dessus (1/3/5/9) ou cliquez &quot;Ajouter&quot;.
+                  </td>
+                </tr>
+              )}
+              {(installments ?? []).length > 0 && (
+                <tr className="border-t bg-slate-50 font-semibold">
+                  <td colSpan={4} className="p-2 text-right text-xs text-slate-600">
+                    Total échéances
+                  </td>
+                  <td className={`p-2 text-right font-mono ${installmentsMatchTotal ? 'text-green-700' : 'text-amber-700'}`}>
+                    {formatMoney(installmentsTotal, currency)}
+                  </td>
+                  <td colSpan={2} className="p-2 text-right text-xs text-slate-500">
+                    {totalMandatory > 0 ? `${Math.round((installmentsTotal / totalMandatory) * 100)}%` : ''}
                   </td>
                 </tr>
               )}
@@ -345,7 +469,7 @@ function FeeLineRow({
         >
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
-              {c}
+              {CATEGORY_LABELS[c] ?? c}
             </option>
           ))}
         </select>
@@ -378,20 +502,43 @@ function FeeLineRow({
   );
 }
 
-const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+// Options d'echeances : mois de septembre annee N a juin annee N+1
+// Format : {label: "Sep N", month: 9, yearOffset: 0}
+const DUE_OPTIONS: { label: string; month: number; yearOffset: number }[] = [
+  { label: 'Sep N',   month: 9,  yearOffset: 0 },
+  { label: 'Oct N',   month: 10, yearOffset: 0 },
+  { label: 'Nov N',   month: 11, yearOffset: 0 },
+  { label: 'Déc N',   month: 12, yearOffset: 0 },
+  { label: 'Jan N+1', month: 1,  yearOffset: 1 },
+  { label: 'Fév N+1', month: 2,  yearOffset: 1 },
+  { label: 'Mar N+1', month: 3,  yearOffset: 1 },
+  { label: 'Avr N+1', month: 4,  yearOffset: 1 },
+  { label: 'Mai N+1', month: 5,  yearOffset: 1 },
+  { label: 'Jun N+1', month: 6,  yearOffset: 1 },
+];
+
+function dueKey(month: number, yearOffset: number): string {
+  return `${month}-${yearOffset}`;
+}
 
 function InstallmentRow({
   inst,
+  totalMandatory,
   onSave,
   onDelete,
 }: {
   inst: LevelFeeInstallment;
+  totalMandatory: number;
   onSave: (patch: Partial<LevelFeeInstallment>) => void;
   onDelete: () => void;
 }) {
+  const currentDueKey = dueKey(inst.due_month, inst.due_year_offset ?? 0);
+  const percentage = totalMandatory > 0 && inst.amount != null
+    ? Math.round((inst.amount / totalMandatory) * 100)
+    : null;
   return (
-    <tr className="border-t">
-      <td className="p-2 text-slate-500">{inst.order}</td>
+    <tr className="border-t hover:bg-slate-50/60">
+      <td className="p-2 text-slate-400 font-mono text-xs">{inst.order}</td>
       <td className="p-2">
         <Input
           defaultValue={inst.label}
@@ -409,32 +556,25 @@ function InstallmentRow({
         >
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
-              {c}
+              {CATEGORY_LABELS[c] ?? c}
             </option>
           ))}
         </select>
       </td>
       <td className="p-2">
         <select
-          defaultValue={inst.due_month}
-          onChange={(e) => onSave({ due_month: Number(e.target.value) })}
+          value={currentDueKey}
+          onChange={(e) => {
+            const opt = DUE_OPTIONS.find((o) => dueKey(o.month, o.yearOffset) === e.target.value);
+            if (opt) onSave({ due_month: opt.month, due_year_offset: opt.yearOffset });
+          }}
           className="w-full rounded-md border border-slate-200 px-2 py-2 text-sm text-slate-700 hover:border-slate-400 focus:border-orange-500 focus:outline-none"
         >
-          {MONTHS.map((m, idx) => (
-            <option key={idx + 1} value={idx + 1}>
-              {m}
+          {DUE_OPTIONS.map((o) => (
+            <option key={dueKey(o.month, o.yearOffset)} value={dueKey(o.month, o.yearOffset)}>
+              {o.label}
             </option>
           ))}
-        </select>
-      </td>
-      <td className="p-2">
-        <select
-          defaultValue={inst.due_year_offset}
-          onChange={(e) => onSave({ due_year_offset: Number(e.target.value) })}
-          className="w-full rounded-md border border-slate-200 px-2 py-2 text-sm text-slate-700 hover:border-slate-400 focus:border-orange-500 focus:outline-none"
-        >
-          <option value={0}>Année N</option>
-          <option value={1}>Année N+1</option>
         </select>
       </td>
       <td className="p-2">
@@ -448,16 +588,14 @@ function InstallmentRow({
           }}
         />
       </td>
-      <td className="hidden p-2 sm:table-cell">
-        <Input
-          type="number"
-          defaultValue={inst.amount_percentage ?? ''}
-          className="text-right"
-          onBlur={(e) => {
-            const v = e.target.value ? Number(e.target.value) : null;
-            if (v !== inst.amount_percentage) onSave({ amount_percentage: v });
-          }}
-        />
+      <td className="hidden p-2 text-right sm:table-cell">
+        {percentage != null ? (
+          <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-700" title="% du total obligatoire">
+            {percentage}%
+          </span>
+        ) : (
+          <span className="text-slate-400">—</span>
+        )}
       </td>
       <td className="p-2 text-right">
         <Button variant="ghost" size="sm" onClick={onDelete}>
