@@ -147,6 +147,7 @@ export default function NewEnrollmentPage() {
         school_year_id: schoolYearId,
         classroom_id: state.classroomId,
         school_fees_id: state.feesId || undefined,
+        type_student_id: state.typeStudentId,
         billed_total: state.billedTotal,
         student: {
           firstname: state.student.firstname,
