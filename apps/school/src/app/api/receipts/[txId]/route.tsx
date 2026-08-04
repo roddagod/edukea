@@ -20,10 +20,10 @@ export async function GET(
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  // Fetch transaction
+  // Fetch transaction (pas de colonne amount, elle vit dans ledger_entries)
   const { data: tx } = await supabase
     .from('ledger_transactions')
-    .select('id, amount, source, memo, occurred_at, ref_id, school_id')
+    .select('id, source, memo, occurred_at, ref_id, school_id')
     .eq('id', txId)
     .maybeSingle();
 
@@ -34,6 +34,16 @@ export async function GET(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const t = tx as any;
   const ssylId = t.ref_id;
+
+  // Compute amount from ledger_entries : somme d'un cote (debit ou credit)
+  const { data: entries } = await supabase
+    .from('ledger_entries')
+    .select('amount, direction')
+    .eq('transaction_id', txId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const txAmount = ((entries ?? []) as any[])
+    .filter((e) => e.direction === 'debit')
+    .reduce((s, e) => s + Number(e.amount ?? 0), 0);
 
   // Fetch enrollment + student + classroom + year + school
   const { data: ssylRaw } = await supabase
@@ -95,7 +105,7 @@ export async function GET(
       schoolYearName: ssyl.school_year?.name ?? '—',
     },
     payment: {
-      totalAmount: t.amount,
+      totalAmount: txAmount,
       source: t.source,
       memo: t.memo,
       occurredAt: t.occurred_at,

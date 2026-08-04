@@ -20,6 +20,7 @@ import {
   Plus,
   Pencil,
   Download,
+  ChevronDown,
   User,
   Wallet,
   Clock,
@@ -504,11 +505,11 @@ export default function StudentPage() {
         <ArrowLeft className="h-3.5 w-3.5" /> Retour à la liste
       </Link>
 
-      {/* Header */}
-      <PageHeader
-        title={fullName}
-        sub={
-          <div className="mt-1 flex flex-wrap items-center gap-2">
+      {/* Header : nom + meta + actions empilees verticalement pour laisser respirer */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-heading-lg font-semibold text-ink">{fullName}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             {student.matricule && (
               <>
                 <span className="text-body-xs text-ink-3">Matricule</span>
@@ -520,57 +521,62 @@ export default function StudentPage() {
             {currentSsyl && (
               <>
                 <span className="text-ink-3">·</span>
-                <Badge className="bg-primary/10 text-primary font-semibold">
+                <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                   {currentSsyl.classroom_name} · {currentSsyl.school_year_name}
-                </Badge>
+                </span>
               </>
             )}
             {student.student_type_label && (
-              <Badge className="bg-blue-100 text-blue-800">{student.student_type_label}</Badge>
+              <span className="inline-flex items-center rounded-md bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">
+                {student.student_type_label}
+              </span>
             )}
           </div>
-        }
-        actions={
-          <div className="flex gap-2">
-            {currentSsyl && (
-              <button
-                onClick={() => setShowPayment(true)}
-                className="inline-flex items-center gap-1.5 rounded-md bg-[#E97423] px-3.5 py-2 text-body-sm font-semibold text-white transition-colors hover:bg-[#c9621d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E97423] focus-visible:ring-offset-2"
-              >
-                <Plus className="h-4 w-4" /> Nouveau versement
-              </button>
-            )}
-            {currentSsyl && (
-              <>
+        </div>
+
+        {/* Actions : versement + dropdown PDF + editer + archiver */}
+        <div className="flex flex-wrap items-center gap-2">
+          {currentSsyl && (
+            <button
+              onClick={() => setShowPayment(true)}
+              className="inline-flex items-center gap-1.5 rounded-md bg-[#E97423] px-3.5 py-2 text-body-sm font-semibold text-white transition-colors hover:bg-[#c9621d]"
+            >
+              <Plus className="h-4 w-4" /> Nouveau versement
+            </button>
+          )}
+          {currentSsyl && (
+            <details className="group relative">
+              <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md border border-line bg-white px-3.5 py-2 text-body-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary [&::-webkit-details-marker]:hidden">
+                <Download className="h-4 w-4" /> Exports PDF <ChevronDown className="h-3 w-3" />
+              </summary>
+              <div className="absolute right-0 top-full z-20 mt-1 flex w-56 flex-col gap-0.5 rounded-md border border-line bg-white p-1 shadow-lg">
                 <a
                   href={`/api/pdf/payment-status/${currentSsyl.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3.5 py-2 text-body-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
-                  title="Statut de paiement (PDF)"
+                  className="rounded px-3 py-2 text-body-sm text-ink-2 hover:bg-primary/5 hover:text-primary"
                 >
-                  <Download className="h-4 w-4" /> Statut PDF
+                  Statut de paiement
                 </a>
                 <a
                   href={`/api/pdf/enrollment-receipt/${currentSsyl.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3.5 py-2 text-body-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
-                  title="Reçu d'inscription (PDF)"
+                  className="rounded px-3 py-2 text-body-sm text-ink-2 hover:bg-primary/5 hover:text-primary"
                 >
-                  <Download className="h-4 w-4" /> Reçu inscription
+                  Reçu d&apos;inscription
                 </a>
                 <a
                   href={`/api/pdf/student-payment-detail/${currentSsyl.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3.5 py-2 text-body-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
-                  title="Détail des versements (PDF)"
+                  className="rounded px-3 py-2 text-body-sm text-ink-2 hover:bg-primary/5 hover:text-primary"
                 >
-                  <Download className="h-4 w-4" /> Détail versements
+                  Détail versements
                 </a>
-              </>
-            )}
+              </div>
+            </details>
+          )}
             <Button variant="secondary" onClick={() => setEditOpen(true)}>
               <Pencil className="h-4 w-4" /> Editer
             </Button>
@@ -586,9 +592,8 @@ export default function StudentPage() {
             >
               <Trash2 className="mr-2 h-4 w-4" /> Archiver
             </Button>
-          </div>
-        }
-      />
+        </div>
+      </div>
 
       {/* Tab bar */}
       <div className="border-b border-slate-200">
