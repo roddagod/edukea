@@ -74,27 +74,42 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
   const hasInstallments = (installments ?? []).length > 0;
   const installmentsMatchTotal = hasLines && hasInstallments && Math.abs(installmentsTotal - totalMandatory) < 1;
 
-  // Genere N tranches equilibrees a partir du total des lignes.
-  // Wipe puis regenere : plus predictible et evite les doublons.
+  // Logique de generation :
+  //   - Chaque ligne non-'tuition' (inscription, assurance, cantine, transport,
+  //     autre) devient 1 echeance a 100% en septembre.
+  //     Le libelle et le montant sont repris tels quels de la ligne.
+  //   - Uniquement la scolarite (tuition) est repartie en N tranches sur l'annee.
+  //   -> permet de suivre distinctement : inscription payee, assurance payee,
+  //      tranche scolarite 1/2/3 payees, etc.
   const generateInstallments = async (nTuitionTranches: number) => {
     if (!hasLines) return;
     // Purge les tranches existantes
     for (const inst of installments ?? []) {
       await delInst.mutateAsync({ id: inst.id, levelId, studentTypeId: typeId });
     }
-    // Inscription : 1 tranche 100% en septembre si categorie 'inscription' presente
-    const inscription = (lines ?? []).find((l) => l.category === 'inscription');
-    const tuitionTotal = (lines ?? [])
-      .filter((l) => l.category !== 'inscription' && !l.is_optional)
-      .reduce((s, l) => s + l.amount, 0);
+
     let order = 1;
-    if (inscription && inscription.amount > 0) {
+
+    // 1. Toutes les lignes non-tuition = 1 echeance chacune (repris a l'identique)
+    const nonTuitionLines = (lines ?? [])
+      .filter((l) => l.category !== 'tuition' && !l.is_optional)
+      .sort((a, b) => a.order - b.order);
+    for (const line of nonTuitionLines) {
+      if (line.amount <= 0) continue;
       await upInst.mutateAsync({
         level_id: levelId, student_type_id: typeId, order: order++,
-        label: 'Inscription', category: 'inscription',
-        due_month: 9, due_year_offset: 0, amount: inscription.amount, amount_percentage: null,
+        label: line.label, // reprend le libelle de la ligne (Inscription, Assurance, etc.)
+        category: line.category,
+        due_month: 9, due_year_offset: 0, // par defaut : septembre a la rentree
+        amount: line.amount,
+        amount_percentage: null,
       });
     }
+
+    // 2. Total scolarite (tuition) uniquement -> reparti en N tranches equitables
+    const tuitionTotal = (lines ?? [])
+      .filter((l) => l.category === 'tuition' && !l.is_optional)
+      .reduce((s, l) => s + l.amount, 0);
     if (tuitionTotal > 0 && nTuitionTranches > 0) {
       const parts = distributeEqually(tuitionTotal, nTuitionTranches);
       // Mois de repartition : 10, 12, 2, 4, 6 (max 5) puis mensuel si plus
@@ -106,7 +121,7 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
         const yearOffset = month < 9 ? 1 : 0;
         await upInst.mutateAsync({
           level_id: levelId, student_type_id: typeId, order: order++,
-          label: nTuitionTranches === 1 ? 'Scolarité (comptant)' : `Tranche ${i + 1}`,
+          label: nTuitionTranches === 1 ? 'Scolarité (comptant)' : `Scolarité — Tranche ${i + 1}`,
           category: 'tuition',
           due_month: month, due_year_offset: yearOffset,
           amount: parts[i], amount_percentage: null,
@@ -115,21 +130,31 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
     }
   };
 
-  // Reequilibre : ajuste les montants des tranches pour matcher le total lignes
-  // Applique un facteur multiplicateur sur les tranches non-inscription.
+  // Reequilibre :
+  //   - Chaque echeance non-tuition reprend le montant de la ligne correspondante
+  //     (matchee par category ; si plusieurs lignes non-tuition existent, on prend
+  //     la ligne dont le label correspond a l'echeance).
+  //   - Les echeances tuition sont redistribuees equitablement sur le total scolarite.
   const rebalanceInstallments = async () => {
     if (!hasLines || !hasInstallments) return;
-    const inscriptionInst = (installments ?? []).find((i) => i.category === 'inscription');
-    const tuitionInsts = (installments ?? []).filter((i) => i.category !== 'inscription');
-    const tuitionTotalDue = (lines ?? [])
-      .filter((l) => l.category !== 'inscription' && !l.is_optional)
-      .reduce((s, l) => s + l.amount, 0);
-    const inscriptionDue = (lines ?? []).find((l) => l.category === 'inscription')?.amount ?? 0;
-    // Update inscription if present
-    if (inscriptionInst && inscriptionInst.amount !== inscriptionDue) {
-      await upInst.mutateAsync({ ...inscriptionInst, amount: inscriptionDue });
+
+    // Match echeances non-tuition avec lignes correspondantes (par label prioritaire, sinon category)
+    const nonTuitionInsts = (installments ?? []).filter((i) => i.category !== 'tuition');
+    const nonTuitionLines = (lines ?? []).filter((l) => l.category !== 'tuition' && !l.is_optional);
+    for (const inst of nonTuitionInsts) {
+      const matchByLabel = nonTuitionLines.find((l) => l.label.toLowerCase() === inst.label.toLowerCase());
+      const matchByCategory = nonTuitionLines.find((l) => l.category === inst.category);
+      const line = matchByLabel ?? matchByCategory;
+      if (line && line.amount !== inst.amount) {
+        await upInst.mutateAsync({ ...inst, amount: line.amount });
+      }
     }
-    // Redistribue tuition equitablement
+
+    // Tuition : redistribue le total sur N echeances existantes
+    const tuitionInsts = (installments ?? []).filter((i) => i.category === 'tuition');
+    const tuitionTotalDue = (lines ?? [])
+      .filter((l) => l.category === 'tuition' && !l.is_optional)
+      .reduce((s, l) => s + l.amount, 0);
     if (tuitionInsts.length > 0 && tuitionTotalDue > 0) {
       const parts = distributeEqually(tuitionTotalDue, tuitionInsts.length);
       for (let i = 0; i < tuitionInsts.length; i++) {
@@ -364,13 +389,13 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
           <div className="flex flex-wrap items-center gap-2">
             {hasLines && (
               <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1">
-                <span className="px-2 text-xs font-semibold text-slate-500">Répartir en :</span>
+                <span className="px-2 text-xs font-semibold text-slate-500">Scolarité en :</span>
                 {[1, 3, 5, 9].map((n) => (
                   <button
                     key={n}
                     type="button"
                     onClick={() => {
-                      if (hasInstallments && !confirm(`Remplacer les ${installments!.length} échéances actuelles par ${n === 1 ? '1 tranche comptant' : `${n} tranches équilibrées`} ?`)) return;
+                      if (hasInstallments && !confirm(`Remplacer les ${installments!.length} échéances actuelles par ${n === 1 ? '1 échéance scolarité comptant' : `${n} tranches scolarité`} (les autres frais restent en 1 échéance chacun) ?`)) return;
                       void generateInstallments(n);
                     }}
                     disabled={upInst.isPending || delInst.isPending}
@@ -387,6 +412,11 @@ export function FeeLevelEditor({ schoolId, levelId, initialTypeId }: Props) {
             </Button>
           </div>
         </div>
+        {hasLines && (
+          <p className="mb-3 text-xs text-slate-500">
+            Inscription, assurance, cantine, transport et autres frais sont créés en <strong>1 échéance chacun</strong> à leur montant exact. Seule la <strong>scolarité</strong> est répartie sur N tranches.
+          </p>
+        )}
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-slate-50 text-xs uppercase text-slate-500">
