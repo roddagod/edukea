@@ -19,6 +19,7 @@ export function useSchoolStaff(schoolId: string | undefined) {
         .from('school_staff_profiles')
         .select('id, user_id, school_id, role, display_name, created_at')
         .eq('school_id', schoolId!)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as SchoolStaffRow[];

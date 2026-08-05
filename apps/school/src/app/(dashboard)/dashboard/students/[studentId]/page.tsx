@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -459,6 +459,8 @@ function GradesTab() {
 export default function StudentPage() {
   const { studentId } = useParams<{ studentId: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const justCreated = searchParams.get('created') === '1';
   const [showPayment, setShowPayment] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
@@ -497,6 +499,31 @@ export default function StudentPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
+      {justCreated && (
+        <div className="flex items-start gap-3 rounded-lg border border-green-300 bg-green-50 p-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500 text-white">✓</div>
+          <div className="flex-1">
+            <p className="font-semibold text-green-900">Élève inscrit avec succès</p>
+            <p className="text-sm text-green-800">
+              {fullName} — Matricule <code className="rounded bg-green-100 px-1.5 py-0.5 font-mono text-xs">{student.matricule ?? '—'}</code>
+              . Vous pouvez maintenant enregistrer un premier versement ou éditer les informations.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              params.delete('created');
+              router.replace(`/dashboard/students/${studentId}${params.toString() ? `?${params.toString()}` : ''}`);
+            }}
+            className="text-green-700 hover:text-green-900"
+            aria-label="Fermer"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <Link
         href="/dashboard/students"

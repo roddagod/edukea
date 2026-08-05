@@ -176,7 +176,10 @@ export default function NewEnrollmentPage() {
       if (draftIdRef.current) {
         try { await deleteDraft.mutateAsync({ id: draftIdRef.current }); } catch { /* silencieux */ }
       }
-      router.push(`/dashboard/enrollment/${res.ssyl_id}${qs}`);
+      // Redirect vers la fiche eleve complete (onglets frais/paiements/historique)
+      // plutot que l'ecran enrollment/[ssylId] confus. Flag ?created=1 pour flash success.
+      const targetQs = qs ? `${qs}&created=1` : '?created=1';
+      router.push(`/dashboard/students/${res.student_id}${targetQs}`);
     } catch (e) {
       setError((e as Error).message ?? 'Erreur lors de l\'enregistrement.');
     }
