@@ -47,6 +47,36 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // -----------------------------------------------------------------
+  // Persistance ecole/annee selectionnee via cookie
+  // -----------------------------------------------------------------
+  // Si l'user est authentifie ET sur /dashboard/** ET l'URL n'a pas de ?school=
+  // ET un cookie edukea:school existe -> redirect vers l'URL enrichie.
+  // Idem pour ?year=. Un seul redirect combine les deux si applicable.
+  // -----------------------------------------------------------------
+  if (user && request.nextUrl.pathname.startsWith('/dashboard')) {
+    const url = request.nextUrl.clone();
+    const sp = url.searchParams;
+    const hasSchoolParam = sp.has('school');
+    const hasYearParam = sp.has('year');
+    const schoolCookie = request.cookies.get('edukea:school')?.value;
+    const yearCookie = request.cookies.get('edukea:year')?.value;
+
+    let redirectNeeded = false;
+    if (!hasSchoolParam && schoolCookie) {
+      sp.set('school', schoolCookie);
+      redirectNeeded = true;
+    }
+    if (!hasYearParam && yearCookie) {
+      sp.set('year', yearCookie);
+      redirectNeeded = true;
+    }
+
+    if (redirectNeeded) {
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }
 

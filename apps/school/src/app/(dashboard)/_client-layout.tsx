@@ -162,11 +162,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       params.set(key, value);
       // Un changement d'ecole reset l'annee (car les annees sont school-specifiques)
       if (key === 'school') params.delete('year');
-      // Persiste dans localStorage pour survivre au reload et cross-tab
       if (typeof window !== 'undefined') {
+        // localStorage : fallback client si cookie perdu ou navigation privee
         const storageKey = key === 'school' ? 'edukea:preferred_school_id' : 'edukea:preferred_year_id';
         window.localStorage.setItem(storageKey, value);
         if (key === 'school') window.localStorage.removeItem('edukea:preferred_year_id');
+        // Cookie : lu par le middleware Next pour ajouter automatiquement le ?school/?year
+        // sur toutes les URL /dashboard/** (evite les liens 'nus' qui perdent le contexte)
+        const cookieName = key === 'school' ? 'edukea:school' : 'edukea:year';
+        const oneYear = 60 * 60 * 24 * 365;
+        document.cookie = `${cookieName}=${encodeURIComponent(value)}; path=/; max-age=${oneYear}; SameSite=Lax`;
+        if (key === 'school') {
+          // Reset le cookie annee (annees school-specifiques)
+          document.cookie = `edukea:year=; path=/; max-age=0; SameSite=Lax`;
+        }
       }
       router.replace(`${pathname}?${params.toString()}`);
     },
