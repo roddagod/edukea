@@ -3,12 +3,83 @@
 import { useState } from 'react';
 import { useSchoolStaff, useCurrentUserRole, type SchoolStaffRow } from '@edukea/shared';
 import { Modal, Button, Input, Badge } from '@edukea/ui';
-import { Plus, Trash2, Key } from 'lucide-react';
+import { Plus, Trash2, Key, Pencil } from 'lucide-react';
 import {
   createStaffUser,
+  updateStaffUser,
   deleteStaffUser,
   resetStaffPassword,
 } from '../_actions';
+
+// ---------------------------------------------------------------------------
+// EditStaffDialog
+// ---------------------------------------------------------------------------
+
+function EditStaffDialog({
+  staff,
+  onClose,
+  onSaved,
+}: {
+  staff: SchoolStaffRow;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [displayName, setDisplayName] = useState(staff.display_name ?? '');
+  const [role, setRole] = useState<'manager' | 'director' | 'censor'>(staff.role as 'manager' | 'director' | 'censor');
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async () => {
+    setError(null);
+    setSaving(true);
+    const res = await updateStaffUser({ profileId: staff.id, displayName, role });
+    setSaving(false);
+    if (!res.ok) { setError(res.error ?? 'Erreur'); return; }
+    onSaved();
+    onClose();
+  };
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="Éditer le compte"
+      description={staff.display_name ?? '—'}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>Annuler</Button>
+          <Button variant="accent" onClick={handleSubmit} disabled={saving}>
+            {saving ? 'Enregistrement…' : 'Enregistrer'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <Input label="Nom affiché" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+        <div>
+          <p className="mb-1 text-body-xs font-semibold text-ink-2">Rôle</p>
+          <div className="grid grid-cols-3 gap-2">
+            {(['manager', 'director', 'censor'] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRole(r)}
+                className={`rounded-md border px-3 py-2 text-body-sm font-semibold transition-colors ${
+                  role === r
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-line bg-white text-ink-2 hover:border-ink-4'
+                }`}
+              >
+                {ROLE_LABEL[r]}
+              </button>
+            ))}
+          </div>
+        </div>
+        {error && <div className="text-caption text-destructive">{error}</div>}
+      </div>
+    </Modal>
+  );
+}
 
 interface Props {
   schoolId: string;
@@ -240,6 +311,7 @@ export function UsersListView({ schoolId }: Props) {
   // Modal state lifted here to avoid nesting modals inside table cells
   const [createOpen, setCreateOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState<SchoolStaffRow | null>(null);
+  const [editTarget, setEditTarget] = useState<SchoolStaffRow | null>(null);
 
   if (isLoading) {
     return <div className="h-64 w-full animate-pulse rounded-xl bg-slate-100" />;
@@ -318,6 +390,13 @@ export function UsersListView({ schoolId }: Props) {
                   <td className="px-4 py-2.5 text-right">
                     <div className="inline-flex gap-1">
                       <button
+                        onClick={() => setEditTarget(s)}
+                        title="Éditer"
+                        className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
                         onClick={() => setResetTarget(s)}
                         title="Reinitialiser mot de passe"
                         className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
@@ -357,6 +436,14 @@ export function UsersListView({ schoolId }: Props) {
           userId={resetTarget.user_id}
           displayName={resetTarget.display_name ?? '—'}
           onClose={() => setResetTarget(null)}
+        />
+      )}
+
+      {editTarget && (
+        <EditStaffDialog
+          staff={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSaved={() => { setEditTarget(null); void refetch(); }}
         />
       )}
     </div>

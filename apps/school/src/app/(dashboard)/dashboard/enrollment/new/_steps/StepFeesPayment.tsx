@@ -34,18 +34,30 @@ export function StepFeesPayment({
     value.typeStudentId || undefined,
   );
 
-  // Auto-remplir billedTotal depuis les frais effectifs
+  // Auto-remplir billedTotal depuis les frais effectifs.
+  // Pre-remplir le 1er versement avec l'echeance 'inscription' par defaut
+  // (ordre : categorie inscription > 1er installment > 0)
   useEffect(() => {
     if (fees && fees.length > 0) {
       const mandatoryTotal = fees
         .filter((f) => !['canteen', 'transport'].includes(f.category))
         .reduce((s, f) => s + f.amount, 0);
+      // Pre-remplissage intelligent :
+      //   1. Somme des echeances de categorie 'inscription' (plusieurs possibles)
+      //   2. Sinon la 1ere echeance
+      //   3. Sinon 0
+      const inscriptionTotal = (installments ?? [])
+        .filter((i) => i.category === 'inscription')
+        .reduce((s, i) => s + (i.amount ?? 0), 0);
+      const suggested = inscriptionTotal > 0
+        ? inscriptionTotal
+        : (installments?.[0]?.amount ?? 0);
       onChange({
         ...value,
         billedTotal: mandatoryTotal,
         firstPayment: {
           ...value.firstPayment,
-          amount: value.firstPayment.amount || (installments?.[0]?.amount ?? 0),
+          amount: value.firstPayment.amount || suggested,
         },
       });
     }

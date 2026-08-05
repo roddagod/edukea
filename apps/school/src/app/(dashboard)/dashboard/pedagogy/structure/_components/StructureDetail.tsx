@@ -113,12 +113,44 @@ export function StructureDetail({ schoolId, structure, selected, onSelect }: Pro
           </Button>
         )}
         {selected.type === 'level' && (
-          <Button variant="secondary" onClick={() => runSafely(async () => {
-            const n = prompt('Nom de la classe (ex: 6eme A)');
-            if (n) await ur.mutateAsync({ school_id: schoolId, level_id: selected.id, name: n });
-          })}>
-            <Plus className="mr-2 h-4 w-4" /> Ajouter classe
-          </Button>
+          <>
+            <Button variant="secondary" onClick={() => runSafely(async () => {
+              const n = prompt('Nom de la classe (ex: 6eme A)');
+              if (n) await ur.mutateAsync({ school_id: schoolId, level_id: selected.id, name: n });
+            })}>
+              <Plus className="mr-2 h-4 w-4" /> Ajouter classe
+            </Button>
+            <Button variant="secondary" onClick={() => runSafely(async () => {
+              const raw = prompt(
+                `Créer plusieurs classes en série. Le nom du niveau sera préfixé automatiquement.\n\nExemple : entrer "4" cree "${name} A", "${name} B", "${name} C", "${name} D".\n\nNombre de classes (1-26) :`,
+                '3',
+              );
+              if (!raw) return;
+              const count = parseInt(raw, 10);
+              if (!Number.isFinite(count) || count < 1 || count > 26) {
+                throw new Error('Nombre invalide : entre 1 et 26');
+              }
+              const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+              const level = findLevel(selected.id);
+              if (!level) throw new Error('Niveau introuvable');
+              // Detecter les classes deja existantes pour cet element pour eviter les collisions
+              const existingNames = new Set((level.classrooms ?? []).map((c) => c.name.toLowerCase()));
+              const toCreate: string[] = [];
+              for (let i = 0; i < count; i++) {
+                const proposedName = `${name} ${letters[i]}`;
+                if (!existingNames.has(proposedName.toLowerCase())) toCreate.push(proposedName);
+              }
+              if (toCreate.length === 0) {
+                throw new Error('Toutes les classes existent deja');
+              }
+              // Serie sequentielle (evite race conditions sur l'id auto-genere)
+              for (const cName of toCreate) {
+                await ur.mutateAsync({ school_id: schoolId, level_id: selected.id, name: cName });
+              }
+            })}>
+              <Plus className="mr-2 h-4 w-4" /> Classes en série
+            </Button>
+          </>
         )}
         <Button variant="ghost" onClick={() => runSafely(async () => {
           if (!confirm(`Supprimer ${name} et tous ses enfants ? Cascade.`)) return;

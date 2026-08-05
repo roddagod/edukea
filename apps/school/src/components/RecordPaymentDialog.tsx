@@ -29,12 +29,14 @@ export function RecordPaymentDialog({ ssylId, studentName, remaining, currency: 
   const [amountInput, setAmountInput] = useState('');
   const [source, setSource] = useState<'cash' | 'bank_transfer' | 'internal'>('cash');
   const [memo, setMemo] = useState('');
+  const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [error, setError] = useState<string | null>(null);
 
   const amount = Number(amountInput.replace(/\s/g, '')) || 0;
 
   const unpaidInstallments = (installments ?? []).filter((i) => i.status !== 'paid');
   const totalRemaining = remaining ?? unpaidInstallments.reduce((s, i) => s + (i.amount_due - i.amount_paid), 0);
+  const isOverpayment = totalRemaining > 0 && amount > totalRemaining;
 
   // Preview ventilation
   const sorted = [...unpaidInstallments].sort((a, b) => a.due_date.localeCompare(b.due_date));
@@ -52,13 +54,19 @@ export function RecordPaymentDialog({ ssylId, studentName, remaining, currency: 
   const handleSubmit = async () => {
     setError(null);
     if (amount <= 0) { setError('Le montant doit être > 0'); return; }
+    if (isOverpayment) {
+      setError(`Montant supérieur au restant dû (${formatMoney(totalRemaining, currency)}). Le versement ne peut pas être enregistré.`);
+      return;
+    }
     try {
       const txId = await record.mutateAsync({
         ssylId, amount, source, memo: memo || undefined,
+        occurredAt: paymentDate ? `${paymentDate}T12:00:00Z` : undefined,
       });
       onSuccess?.(txId);
       // Reset
       setAmountInput(''); setMemo(''); setSource('cash');
+      setPaymentDate(new Date().toISOString().slice(0, 10));
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur');
@@ -78,7 +86,12 @@ export function RecordPaymentDialog({ ssylId, studentName, remaining, currency: 
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={record.isPending}>Annuler</Button>
-          <Button variant="accent" onClick={handleSubmit} disabled={record.isPending || amount <= 0}>
+          <Button
+            variant="accent"
+            onClick={handleSubmit}
+            disabled={record.isPending || amount <= 0 || isOverpayment}
+            title={isOverpayment ? `Max : ${formatMoney(totalRemaining, currency)}` : undefined}
+          >
             {record.isPending ? 'Enregistrement…' : 'Enregistrer'}
           </Button>
         </>
@@ -92,8 +105,18 @@ export function RecordPaymentDialog({ ssylId, studentName, remaining, currency: 
           placeholder="Ex : 50 000"
           value={amountInput}
           onChange={(e) => setAmountInput(e.target.value)}
-          suffix={<span className="text-body-xs">FCFA</span>}
+          suffix={<span className="text-body-xs">{currency}</span>}
           autoFocus
+          hint={totalRemaining > 0 ? `Max : ${formatMoney(totalRemaining, currency)}` : undefined}
+          error={isOverpayment ? `Dépasse le restant dû de ${formatMoney(amount - totalRemaining, currency)}` : undefined}
+        />
+
+        <Input
+          label="Date du versement"
+          type="date"
+          value={paymentDate}
+          max={new Date().toISOString().slice(0, 10)}
+          onChange={(e) => setPaymentDate(e.target.value)}
         />
 
         <div className="flex flex-col gap-1.5">
