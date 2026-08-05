@@ -106,21 +106,44 @@ export async function createSchoolAtomic(args: CreateSchoolAtomicArgs): Promise<
     }
 
     let managerUserId: string | undefined;
+    let managerUserWasExisting = false;
     if (args.manager) {
-      // 3. Create Auth user
+      // 3. Create Auth user OU reutiliser si email deja existant (cas ecole
+      //    supprimee/recreee, ou manager qui gere plusieurs ecoles)
       const { data: created, error: authErr } = await admin.auth.admin.createUser({
         email: args.manager.email,
         password: args.manager.password,
         email_confirm: true,
       });
-      if (authErr || !created.user?.id) {
+
+      if (authErr) {
+        // Email deja pris ? tenter de recuperer l'user_id existant
+        const isEmailExists = authErr.message?.toLowerCase().includes('already') || authErr.message?.toLowerCase().includes('registered');
+        if (isEmailExists) {
+          // Chercher le user par email (pas d'API directe, on utilise listUsers avec filter)
+          const { data: usersList } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+          const existing = usersList?.users?.find((u) => u.email?.toLowerCase() === args.manager!.email.toLowerCase());
+          if (!existing) {
+            await (admin.from('school_years') as any).delete().eq('id', yearId);
+            await (admin.from('schools') as any).delete().eq('id', schoolId);
+            throw new Error(`Auth manager : email déjà pris mais user introuvable. ${authErr.message}`);
+          }
+          managerUserId = existing.id;
+          managerUserWasExisting = true;
+        } else {
+          await (admin.from('school_years') as any).delete().eq('id', yearId);
+          await (admin.from('schools') as any).delete().eq('id', schoolId);
+          throw new Error(`Auth manager : ${authErr.message}`);
+        }
+      } else if (!created.user?.id) {
         await (admin.from('school_years') as any).delete().eq('id', yearId);
         await (admin.from('schools') as any).delete().eq('id', schoolId);
-        throw new Error(`Auth manager : ${authErr?.message ?? 'user_id manquant'}`);
+        throw new Error(`Auth manager : user_id manquant apres creation`);
+      } else {
+        managerUserId = created.user.id;
       }
-      managerUserId = created.user.id;
 
-      // 4. Insert school_staff_profiles
+      // 4. Insert school_staff_profiles (nouvelle relation user <-> ecole)
       const { error: profileErr } = await (admin.from('school_staff_profiles') as any).insert({
         user_id: managerUserId,
         school_id: schoolId,
@@ -128,7 +151,10 @@ export async function createSchoolAtomic(args: CreateSchoolAtomicArgs): Promise<
         display_name: args.manager.displayName,
       });
       if (profileErr) {
-        await admin.auth.admin.deleteUser(managerUserId);
+        // Rollback : ne PAS deleteUser si l'user preexistait (aurait d'autres ecoles)
+        if (!managerUserWasExisting && managerUserId) {
+          await admin.auth.admin.deleteUser(managerUserId);
+        }
         await (admin.from('school_years') as any).delete().eq('id', yearId);
         await (admin.from('schools') as any).delete().eq('id', schoolId);
         throw new Error(`Profil manager : ${profileErr.message}`);
