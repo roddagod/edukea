@@ -70,9 +70,12 @@ export function SchoolYearList({ schoolId }: Props) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        if (confirm(`Supprimer ${y.name} ? (soft-delete)`)) {
-                          deleteYear.mutate({ id: y.id, schoolId });
+                      onClick={async () => {
+                        if (!confirm(`Supprimer ${y.name} ? Cette action est bloquée si des élèves y sont inscrits.`)) return;
+                        try {
+                          await deleteYear.mutateAsync({ id: y.id, schoolId });
+                        } catch (e) {
+                          alert(e instanceof Error ? e.message : 'Erreur');
                         }
                       }}
                     >

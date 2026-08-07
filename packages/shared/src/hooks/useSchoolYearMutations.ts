@@ -45,11 +45,19 @@ export function useDeleteSchoolYear() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, schoolId }: { id: string; schoolId: string }) => {
+      void schoolId;
       const { error } = await supabase
         .from('school_years')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', id);
-      if (error) throw error;
+      if (error) {
+        // Le trigger DB raise un message clair si des SSYL sont rattaches
+        const msg = error.message ?? '';
+        if (msg.includes('Impossible de supprimer cette annee')) {
+          throw new Error(msg);
+        }
+        throw error;
+      }
     },
     onSuccess: (_, { schoolId }) => {
       qc.invalidateQueries({ queryKey: ['school-years', schoolId] });
