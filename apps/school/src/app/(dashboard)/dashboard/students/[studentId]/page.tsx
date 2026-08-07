@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { RecordPaymentDialog } from '@/components/RecordPaymentDialog';
 import { EditStudentDialog } from './_components/EditStudentDialog';
+import { TransferClassDialog } from './_components/TransferClassDialog';
 import type { StudentPaymentHistoryRow } from '@edukea/shared';
 
 // ─── Formatters ─────────────────────────────────────────────────────────────
@@ -463,6 +464,7 @@ export default function StudentPage() {
   const justCreated = searchParams.get('created') === '1';
   const [showPayment, setShowPayment] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
   const currency = useSchoolCurrency();
@@ -604,6 +606,11 @@ export default function StudentPage() {
               </div>
             </details>
           )}
+            {currentSsyl && (
+              <Button variant="secondary" onClick={() => setTransferOpen(true)}>
+                <GraduationCap className="h-4 w-4" /> Transférer
+              </Button>
+            )}
             <Button variant="secondary" onClick={() => setEditOpen(true)}>
               <Pencil className="h-4 w-4" /> Editer
             </Button>
@@ -689,6 +696,19 @@ export default function StudentPage() {
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
       />
+
+      {/* Transfert de classe */}
+      {currentSsyl && (
+        <TransferClassDialog
+          ssylId={currentSsyl.id}
+          schoolId={data.student.school_id}
+          studentFullName={fullName}
+          currentClassroomId={currentSsyl.classroom_id}
+          currentClassroomName={currentSsyl.classroom_name}
+          isOpen={transferOpen}
+          onClose={() => setTransferOpen(false)}
+        />
+      )}
     </div>
   );
 }
