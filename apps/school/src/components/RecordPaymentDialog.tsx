@@ -38,6 +38,18 @@ export function RecordPaymentDialog({ ssylId, studentName, remaining, currency: 
   const totalRemaining = remaining ?? unpaidInstallments.reduce((s, i) => s + (i.amount_due - i.amount_paid), 0);
   const isOverpayment = totalRemaining > 0 && amount > totalRemaining;
 
+  // Regle metier : frais obligatoires non-scolarite (inscription/assurance/droit d'examen/etc)
+  // doivent etre solden AVANT toute allocation sur la scolarite.
+  // La ventilation FIFO le respecte naturellement (ces echeances sont en septembre,
+  // scolarite commence en octobre). On l'affiche explicitement.
+  const mandatoryUnpaid = unpaidInstallments
+    .filter((i) => i.category !== 'tuition')
+    .map((i) => ({ label: i.label, remaining: i.amount_due - i.amount_paid, category: i.category }));
+  const mandatoryUnpaidTotal = mandatoryUnpaid.reduce((s, i) => s + i.remaining, 0);
+  const hasMandatoryUnpaid = mandatoryUnpaidTotal > 0;
+  const paymentTouchesTuition = amount > mandatoryUnpaidTotal;
+  const wouldLeaveMandatoryUnpaid = hasMandatoryUnpaid && amount > 0 && amount < mandatoryUnpaidTotal;
+
   // Preview ventilation
   const sorted = [...unpaidInstallments].sort((a, b) => a.due_date.localeCompare(b.due_date));
   let left = amount;
@@ -98,6 +110,42 @@ export function RecordPaymentDialog({ ssylId, studentName, remaining, currency: 
       }
     >
       <div className="flex flex-col gap-4">
+        {/* Bandeau frais obligatoires a solder en premier */}
+        {hasMandatoryUnpaid && (
+          <div className={`rounded-lg border p-3 text-sm ${
+            paymentTouchesTuition ? 'border-green-300 bg-green-50' : 'border-amber-300 bg-amber-50'
+          }`}>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className={`font-semibold ${paymentTouchesTuition ? 'text-green-900' : 'text-amber-900'}`}>
+                Frais obligatoires à solder d&apos;abord
+              </p>
+              <button
+                type="button"
+                onClick={() => setAmountInput(String(mandatoryUnpaidTotal))}
+                className="rounded border border-current px-2 py-0.5 text-xs font-semibold hover:bg-white/50"
+                title="Pré-remplir avec ce montant"
+              >
+                Payer le minimum
+              </button>
+            </div>
+            <ul className="space-y-0.5 text-xs">
+              {mandatoryUnpaid.map((m, i) => (
+                <li key={i} className={`flex justify-between ${paymentTouchesTuition ? 'text-green-800' : 'text-amber-800'}`}>
+                  <span>{m.label}</span>
+                  <span className="font-mono">{formatMoney(m.remaining, currency)}</span>
+                </li>
+              ))}
+              <li className={`mt-1 flex justify-between border-t pt-1 font-semibold ${paymentTouchesTuition ? 'border-green-200 text-green-900' : 'border-amber-200 text-amber-900'}`}>
+                <span>Minimum</span>
+                <span className="font-mono">{formatMoney(mandatoryUnpaidTotal, currency)}</span>
+              </li>
+            </ul>
+            <p className={`mt-2 text-xs ${paymentTouchesTuition ? 'text-green-700' : 'text-amber-700'}`}>
+              La scolarité ne sera ventilée qu&apos;une fois ces frais soldés.
+            </p>
+          </div>
+        )}
+
         <Input
           label="Montant"
           type="text"
@@ -108,7 +156,13 @@ export function RecordPaymentDialog({ ssylId, studentName, remaining, currency: 
           suffix={<span className="text-body-xs">{currency}</span>}
           autoFocus
           hint={totalRemaining > 0 ? `Max : ${formatMoney(totalRemaining, currency)}` : undefined}
-          error={isOverpayment ? `Dépasse le restant dû de ${formatMoney(amount - totalRemaining, currency)}` : undefined}
+          error={
+            isOverpayment
+              ? `Dépasse le restant dû de ${formatMoney(amount - totalRemaining, currency)}`
+              : wouldLeaveMandatoryUnpaid
+                ? `Ne solde pas les frais obligatoires (reste ${formatMoney(mandatoryUnpaidTotal - amount, currency)} avant scolarité)`
+                : undefined
+          }
         />
 
         <Input
