@@ -158,6 +158,7 @@ export default function NewEnrollmentPage() {
         type_student_id: state.typeStudentId,
         billed_total: state.billedTotal,
         student: {
+          matricule: state.student.matricule,
           firstname: state.student.firstname,
           lastname: state.student.lastname,
           sex: state.student.sex as 'M' | 'F',

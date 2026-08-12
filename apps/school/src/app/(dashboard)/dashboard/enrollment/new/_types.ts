@@ -1,5 +1,6 @@
 export interface EnrollmentFormState {
   student: {
+    matricule: string;
     firstname: string;
     lastname: string;
     sex: 'M' | 'F' | '';
@@ -23,7 +24,7 @@ export interface EnrollmentFormState {
 }
 
 export const DEFAULT_ENROLLMENT_STATE: EnrollmentFormState = {
-  student: { firstname: '', lastname: '', sex: '', birthdate: '', birthplace: '', nationality: 'Ivoirienne', redoublant: false },
+  student: { matricule: '', firstname: '', lastname: '', sex: '', birthdate: '', birthplace: '', nationality: 'Ivoirienne', redoublant: false },
   father: undefined,
   mother: undefined,
   tutor: undefined,
@@ -35,7 +36,7 @@ export const DEFAULT_ENROLLMENT_STATE: EnrollmentFormState = {
 };
 
 export function isStepStudentValid(s: EnrollmentFormState['student'], typeStudentId: string | undefined): boolean {
-  return !!s.firstname.trim() && !!s.lastname.trim() && !!s.sex && !!s.birthdate && !!typeStudentId;
+  return !!s.matricule.trim() && !!s.firstname.trim() && !!s.lastname.trim() && !!s.sex && !!s.birthdate && !!typeStudentId;
 }
 
 export function isStepFamilyValid(state: EnrollmentFormState): boolean {

@@ -9,6 +9,7 @@ export interface EnrollNewStudentPayload {
   type_student_id?: string;
   billed_total: number;
   student: {
+    matricule: string;
     firstname: string;
     lastname: string;
     sex: 'M' | 'F';

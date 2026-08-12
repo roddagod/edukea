@@ -2,13 +2,66 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, UserCheck } from 'lucide-react';
+import { Search, UserCheck, Check, X, Loader2 } from 'lucide-react';
 import {
   FormField, Input, Checkbox, DatePicker, RadioCards, SearchInput,
   Card, Avatar, toneFromSeed,
 } from '@edukea/ui';
-import { useStudentSearch, useStudentTypes, useStudentReenrollStatus, reenrollStatusColor } from '@edukea/shared';
+import { useStudentSearch, useStudentTypes, useStudentReenrollStatus, reenrollStatusColor, supabase } from '@edukea/shared';
+import { useQuery } from '@tanstack/react-query';
 import type { EnrollmentFormState } from '../_types';
+
+// Verification unicite matricule en temps reel (debounce naturel via useQuery + staleTime)
+function useMatriculeAvailable(schoolId: string | undefined, matricule: string) {
+  const trimmed = matricule.trim();
+  return useQuery<boolean>({
+    queryKey: ['matricule-available', schoolId, trimmed],
+    enabled: !!schoolId && trimmed.length >= 2,
+    staleTime: 5 * 1000,
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: unknown }>)('check_matricule_available', {
+        p_school_id: schoolId,
+        p_matricule: trimmed,
+        p_exclude_student_id: null,
+      });
+      if (error) throw error as Error;
+      return Boolean(data);
+    },
+  });
+}
+
+function MatriculeInput({
+  schoolId,
+  value,
+  onChange,
+}: {
+  schoolId: string | undefined;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const { data: available, isFetching } = useMatriculeAvailable(schoolId, value);
+  const trimmed = value.trim();
+  const showStatus = trimmed.length >= 2 && !isFetching;
+  const isTaken = showStatus && available === false;
+  const isOk = showStatus && available === true;
+
+  return (
+    <Input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="Ex : 24BAC001234"
+      suffix={
+        isFetching ? <Loader2 className="h-4 w-4 animate-spin text-ink-3" /> :
+        isTaken ? <X className="h-4 w-4 text-destructive" /> :
+        isOk ? <Check className="h-4 w-4 text-green-600" /> : null
+      }
+      error={isTaken ? 'Ce matricule est déjà utilisé dans cette école' : undefined}
+    />
+  );
+}
 
 export function StepStudent({
   schoolId,
@@ -92,6 +145,18 @@ export function StepStudent({
       </Card>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField
+          label="Matricule (Ministère)"
+          required
+          hint="Numéro officiel du Ministère de l'Éducation. Doit être unique dans l'école."
+          className="sm:col-span-2"
+        >
+          <MatriculeInput
+            schoolId={schoolId}
+            value={value.matricule}
+            onChange={(v) => onChange({ ...value, matricule: v })}
+          />
+        </FormField>
         <FormField label="Nom" required>
           <Input value={value.lastname} onChange={(e) => onChange({ ...value, lastname: e.target.value })} />
         </FormField>
