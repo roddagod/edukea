@@ -3,6 +3,15 @@
 import { formatMoney } from '@edukea/shared';
 import type { EffectiveFee, Currency } from '@edukea/shared';
 
+const CATEGORY_LABELS: Record<string, string> = {
+  inscription: 'Inscription',
+  tuition:     'Scolarité',
+  insurance:   'Assurance',
+  canteen:     'Cantine',
+  transport:   'Transport',
+  other:       'Autre',
+};
+
 interface Props { fees: EffectiveFee[]; currency: Currency; }
 
 export function FeesLinesTable({ fees, currency }: Props) {
@@ -25,7 +34,7 @@ export function FeesLinesTable({ fees, currency }: Props) {
           {fees.map((f, i) => (
             <tr key={`${f.label}-${i}`} className="border-t">
               <td className="p-2">{f.label}</td>
-              <td className="p-2 text-xs text-slate-500">{f.category}</td>
+              <td className="p-2 text-xs text-slate-500">{CATEGORY_LABELS[f.category] ?? f.category}</td>
               <td className="p-2 text-right font-mono">{formatMoney(f.amount, currency)}</td>
             </tr>
           ))}
