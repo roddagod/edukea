@@ -36,7 +36,13 @@ export const DEFAULT_ENROLLMENT_STATE: EnrollmentFormState = {
 };
 
 export function isStepStudentValid(s: EnrollmentFormState['student'], typeStudentId: string | undefined): boolean {
-  return !!s.matricule.trim() && !!s.firstname.trim() && !!s.lastname.trim() && !!s.sex && !!s.birthdate && !!typeStudentId;
+  // Tolerant aux anciens drafts sauvegardes en base (avant l'ajout du champ matricule)
+  return !!(s.matricule ?? '').trim()
+    && !!(s.firstname ?? '').trim()
+    && !!(s.lastname ?? '').trim()
+    && !!s.sex
+    && !!s.birthdate
+    && !!typeStudentId;
 }
 
 export function isStepFamilyValid(state: EnrollmentFormState): boolean {

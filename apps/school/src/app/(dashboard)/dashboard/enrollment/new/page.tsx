@@ -189,8 +189,15 @@ export default function NewEnrollmentPage() {
   const resumeDraft = useCallback((d: EnrollmentDraft) => {
     // Restore le state (best-effort : payload est du JSONB, on trust son shape)
     try {
-      const restored = d.payload as unknown as EnrollmentFormState;
-      setState({ ...DEFAULT_ENROLLMENT_STATE, ...restored });
+      const restored = d.payload as unknown as Partial<EnrollmentFormState>;
+      // Merge profond du 'student' sinon un ancien draft sans champ matricule
+      // ecrase le default et crash (matricule.trim() undefined)
+      setState({
+        ...DEFAULT_ENROLLMENT_STATE,
+        ...restored,
+        student: { ...DEFAULT_ENROLLMENT_STATE.student, ...(restored.student ?? {}) },
+        firstPayment: { ...DEFAULT_ENROLLMENT_STATE.firstPayment, ...(restored.firstPayment ?? {}) },
+      });
       setDraftId(d.id);
       setLastSavedAt(d.updated_at);
       setCurrent(0);
