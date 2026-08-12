@@ -51,3 +51,4 @@ export * from './useSchoolKpis';
 export * from './useSchoolStaff';
 export * from './useSidebarBadges';
 export * from './useSchoolBranding';
+export * from './useRebuildAllocations';

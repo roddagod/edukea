@@ -10,6 +10,7 @@ import {
   useStudentPaymentHistory,
   useArchiveStudent,
   useSchoolCurrency,
+  useRebuildSsylAllocations,
   formatMoney,
   type Currency,
 } from '@edukea/shared';
@@ -246,6 +247,23 @@ function FeesTab({
 }) {
   const { data: installments } = useSsylInstallmentStatus(currentSsylId ?? undefined);
   const { data: history } = useStudentPaymentHistory(currentSsylId ?? undefined, 20);
+  const rebuild = useRebuildSsylAllocations();
+
+  // Detection paiements orphelins : historique non-vide mais aucune ventilation
+  const paidTotal = (installments ?? []).reduce((s, i) => s + i.amount_paid, 0);
+  const historyTotal = (history ?? []).reduce((s: number, h: StudentPaymentHistoryRow) => s + (h.amount ?? 0), 0);
+  const hasOrphanPayments = historyTotal > 0 && paidTotal < historyTotal;
+
+  const handleRebuild = async () => {
+    if (!currentSsylId) return;
+    if (!confirm('Ré-appliquer la ventilation FIFO sur tous les paiements de cet élève ? Les allocations actuelles seront remplacées.')) return;
+    try {
+      const res = await rebuild.mutateAsync({ ssylId: currentSsylId });
+      alert(`Ventilation refaite : ${res.transactions_processed} paiement(s), ${formatMoney(res.total_reallocated, currency)} ré-alloué(s).`);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erreur');
+    }
+  };
 
   if (!currentSsylId) {
     return (
@@ -257,6 +275,27 @@ function FeesTab({
 
   return (
     <div className="space-y-6">
+      {/* Bandeau paiements orphelins */}
+      {hasOrphanPayments && (
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-amber-900">
+              Des paiements ne sont pas ventilés
+            </p>
+            <p className="mt-1 text-sm text-amber-800">
+              Historique : {formatMoney(historyTotal, currency)} · Ventilé : {formatMoney(paidTotal, currency)} · Écart : {formatMoney(historyTotal - paidTotal, currency)}. Les frais ont probablement été configurés après les paiements.
+            </p>
+          </div>
+          <button
+            onClick={handleRebuild}
+            disabled={rebuild.isPending}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-amber-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
+          >
+            {rebuild.isPending ? 'Ré-application…' : 'Ré-appliquer la ventilation'}
+          </button>
+        </div>
+      )}
+
       {/* Echéancier */}
       <Card className="space-y-3">
         <div className="flex items-center justify-between">

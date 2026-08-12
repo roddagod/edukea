@@ -63,3 +63,4 @@ export * from './hooks/useSchoolKpis';
 export * from './hooks/useSchoolStaff';
 export * from './hooks/useSidebarBadges';
 export * from './hooks/useSchoolBranding';
+export * from './hooks/useRebuildAllocations';
