@@ -74,12 +74,18 @@ export function useDeleteLevel() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, schoolId }: { id: string; schoolId: string }) => {
+      void schoolId;
       const { error } = await supabase.from('levels').delete().eq('id', id);
       if (error) {
-        // FK violation : classes ou frais reliés
+        // Trigger DB : message clair si des SSYL sont rattaches aux classes
+        // (cascade classroom_fee_lines/_installments + fee_lines fait automatiquement)
+        const msg = error.message ?? '';
+        if (msg.includes('Impossible de supprimer la classe') || msg.includes('eleve(s) inscrit(s)')) {
+          throw new Error(msg);
+        }
         if (error.code === '23503') {
           throw new Error(
-            'Impossible de supprimer ce niveau : il contient encore des classes ou des frais. Supprimez-les d\'abord.',
+            'Impossible de supprimer ce niveau : il contient encore des donnees liees. Supprimez d\'abord les inscriptions.',
           );
         }
         throw error;
