@@ -69,6 +69,7 @@ export default function ReenrollPage() {
   const { data: effectiveInstallments, isLoading: instLoading } = useClassroomEffectiveInstallments(
     classroomId || undefined,
     studentTypeId || undefined,
+    schoolYearId,
   );
   const reenroll = useReenrollStudent();
 

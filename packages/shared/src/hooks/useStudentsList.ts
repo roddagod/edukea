@@ -38,7 +38,7 @@ export function useStudentsList(filters: StudentsFilters) {
           student_type_id,
           student_type:student_types(label),
           school_year_loggings:student_school_year_loggings(
-            id, classroom_id, created_at,
+            id, classroom_id, created_at, deleted_at,
             school_year:school_years(name),
             classroom:classrooms(name)
           )
@@ -60,9 +60,9 @@ export function useStudentsList(filters: StudentsFilters) {
 
       const rows = (data ?? []) as any[];
 
-      // Compute current ssyl côté client (le plus récent)
+      // Compute current ssyl côté client (le plus récent, en excluant les archivés)
       let list: StudentListRow[] = rows.map((s) => {
-        const loggings = (s.school_year_loggings ?? []) as any[];
+        const loggings = ((s.school_year_loggings ?? []) as any[]).filter((l) => !l.deleted_at);
         const latest = loggings.length > 0
           ? loggings.sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))[0]
           : null;

@@ -39,9 +39,10 @@ export function useDeleteStudentType() {
       const { count } = await supabase
         .from('students')
         .select('id', { count: 'exact', head: true })
-        .eq('student_type_id', id);
+        .eq('student_type_id', id)
+        .is('deleted_at', null);
       if ((count ?? 0) > 0) {
-        throw new Error(`Impossible de supprimer : ${count} élève(s) utilisent ce type`);
+        throw new Error(`Impossible de supprimer : ${count} élève(s) actifs utilisent ce type`);
       }
       const { error } = await supabase.from('student_types').delete().eq('id', id);
       if (error) throw error;

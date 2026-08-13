@@ -16,6 +16,7 @@ function fmt(n: number): string {
 }
 
 export function StepFeesPayment({
+  schoolYearId,
   value,
   onChange,
   currency,
@@ -32,6 +33,7 @@ export function StepFeesPayment({
   const { data: installments, isLoading: iL } = useClassroomEffectiveInstallments(
     value.classroomId || undefined,
     value.typeStudentId || undefined,
+    schoolYearId,
   );
 
   // Auto-remplir billedTotal depuis les frais effectifs.
