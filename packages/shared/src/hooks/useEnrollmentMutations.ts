@@ -42,10 +42,26 @@ export function useEnrollNewStudent() {
       if (error) throw error;
       return data as EnrollNewStudentResult;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      // Stats / dashboards / recouvrement
       qc.invalidateQueries({ queryKey: ['enrollment-stats'] });
       qc.invalidateQueries({ queryKey: ['recovery-students'] });
       qc.invalidateQueries({ queryKey: ['ledger'] });
+      qc.invalidateQueries({ queryKey: ['school-kpis'] });
+      qc.invalidateQueries({ queryKey: ['sidebar-badges'] });
+      qc.invalidateQueries({ queryKey: ['fees-overview-matrix'] });
+      // Liste + recherche eleves
+      qc.invalidateQueries({ queryKey: ['students-list'] });
+      qc.invalidateQueries({ queryKey: ['student-search'] });
+      qc.invalidateQueries({ queryKey: ['student-reenroll-status'] });
+      // Fiche eleve cible (evite stale-data sur redirect vers /students/[id])
+      qc.invalidateQueries({ queryKey: ['student-with-enrollment', result.student_id] });
+      qc.invalidateQueries({ queryKey: ['student-detail', result.ssyl_id] });
+      qc.invalidateQueries({ queryKey: ['ssyl-detail', result.ssyl_id] });
+      qc.invalidateQueries({ queryKey: ['ssyl-installment-status', result.ssyl_id] });
+      qc.invalidateQueries({ queryKey: ['student-payment-history', result.ssyl_id] });
+      // Draft utilise -> maintenant caduc
+      qc.invalidateQueries({ queryKey: ['enrollment-drafts'] });
     },
   });
 }
@@ -77,11 +93,23 @@ export function useReenrollStudent() {
       if (error) throw error;
       return data as ReenrollStudentResult;
     },
-    onSuccess: () => {
+    onSuccess: (result, variables) => {
       qc.invalidateQueries({ queryKey: ['enrollment-stats'] });
       qc.invalidateQueries({ queryKey: ['recovery-students'] });
       qc.invalidateQueries({ queryKey: ['ledger'] });
       qc.invalidateQueries({ queryKey: ['year-advancement-preview'] });
+      qc.invalidateQueries({ queryKey: ['school-kpis'] });
+      qc.invalidateQueries({ queryKey: ['sidebar-badges'] });
+      qc.invalidateQueries({ queryKey: ['fees-overview-matrix'] });
+      qc.invalidateQueries({ queryKey: ['students-list'] });
+      qc.invalidateQueries({ queryKey: ['student-search'] });
+      qc.invalidateQueries({ queryKey: ['student-reenroll-status'] });
+      qc.invalidateQueries({ queryKey: ['student-with-enrollment', variables.existing_student_id] });
+      qc.invalidateQueries({ queryKey: ['student-detail', result.ssyl_id] });
+      qc.invalidateQueries({ queryKey: ['ssyl-detail', result.ssyl_id] });
+      qc.invalidateQueries({ queryKey: ['ssyl-installment-status', result.ssyl_id] });
+      qc.invalidateQueries({ queryKey: ['student-payment-history', result.ssyl_id] });
+      qc.invalidateQueries({ queryKey: ['enrollment-drafts'] });
     },
   });
 }
@@ -119,10 +147,17 @@ export function useBulkAdvanceYear() {
       return data as BulkAdvanceResult;
     },
     onSuccess: () => {
+      // Bulk : on invalide large plutot que par-eleve (potentiellement 100+ SSYL)
       qc.invalidateQueries({ queryKey: ['enrollment-stats'] });
       qc.invalidateQueries({ queryKey: ['recovery-students'] });
       qc.invalidateQueries({ queryKey: ['ledger'] });
       qc.invalidateQueries({ queryKey: ['year-advancement-preview'] });
+      qc.invalidateQueries({ queryKey: ['school-kpis'] });
+      qc.invalidateQueries({ queryKey: ['sidebar-badges'] });
+      qc.invalidateQueries({ queryKey: ['fees-overview-matrix'] });
+      qc.invalidateQueries({ queryKey: ['students-list'] });
+      qc.invalidateQueries({ queryKey: ['student-reenroll-status'] });
+      qc.invalidateQueries({ queryKey: ['student-with-enrollment'] });
     },
   });
 }
