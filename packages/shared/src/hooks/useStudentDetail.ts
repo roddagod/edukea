@@ -27,6 +27,7 @@ export interface StudentPaymentHistoryRow {
   amount: number;
   source: string | null;
   memo: string | null;
+  ref_type: string | null;
 }
 
 /**
@@ -94,7 +95,8 @@ export function useStudentPaymentHistory(ssylId: string | undefined, limit = 50)
         txById.set(t.id, { source: t.source, memo: t.memo, ref_type: t.ref_type });
       }
 
-      // Filtrer les openings (ce sont des "billed", pas des paiements)
+      // Filtrer les openings (ce sont des "billed", pas des paiements).
+      // Discount + payment sont conservés (les 2 diminuent la creance).
       return rows
         .filter((r) => txById.get(r.transaction_id)?.ref_type !== 'opening')
         .map((r) => ({
@@ -103,6 +105,7 @@ export function useStudentPaymentHistory(ssylId: string | undefined, limit = 50)
           amount: Number(r.amount),
           source: txById.get(r.transaction_id)?.source ?? null,
           memo: txById.get(r.transaction_id)?.memo ?? null,
+          ref_type: txById.get(r.transaction_id)?.ref_type ?? null,
         }));
     },
   });

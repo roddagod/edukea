@@ -249,10 +249,17 @@ function FeesTab({
   const { data: history } = useStudentPaymentHistory(currentSsylId ?? undefined, 20);
   const rebuild = useRebuildSsylAllocations();
 
-  // Detection paiements orphelins : historique non-vide mais aucune ventilation
+  // Detection paiements orphelins : historique non-vide mais aucune ventilation.
+  // paidTotal (from v_ssyl_installment_status) inclut discount + payments allocations.
+  // historyTotal inclut aussi les 2 -> comparaison directe reste valide.
   const paidTotal = (installments ?? []).reduce((s, i) => s + i.amount_paid, 0);
   const historyTotal = (history ?? []).reduce((s: number, h: StudentPaymentHistoryRow) => s + (h.amount ?? 0), 0);
   const hasOrphanPayments = historyTotal > 0 && paidTotal < historyTotal;
+
+  // Detection remise appliquee (affichage recap)
+  const discountTotal = (history ?? []).filter((h) => h.ref_type === 'discount')
+    .reduce((s: number, h: StudentPaymentHistoryRow) => s + (h.amount ?? 0), 0);
+  const paymentTotal = historyTotal - discountTotal;
 
   const handleRebuild = async () => {
     if (!currentSsylId) return;
@@ -293,6 +300,30 @@ function FeesTab({
           >
             {rebuild.isPending ? 'Ré-application…' : 'Ré-appliquer la ventilation'}
           </button>
+        </div>
+      )}
+
+      {/* Bandeau récap financier : remise appliquée */}
+      {discountTotal > 0 && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-sm">
+            <div>
+              <div className="text-xs uppercase text-emerald-800/70">Facturé</div>
+              <div className="font-mono font-semibold text-ink">{formatMoney(paidTotal + (installments ?? []).reduce((s, i) => s + (i.amount_due - i.amount_paid), 0), currency)}</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase text-emerald-800/70">Remise</div>
+              <div className="font-mono font-semibold text-emerald-700">−{formatMoney(discountTotal, currency)}</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase text-emerald-800/70">Versé</div>
+              <div className="font-mono font-semibold text-ink">{formatMoney(paymentTotal, currency)}</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase text-emerald-800/70">Restant</div>
+              <div className="font-mono font-semibold text-ink">{formatMoney(Math.max(0, (installments ?? []).reduce((s, i) => s + (i.amount_due - i.amount_paid), 0)), currency)}</div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -383,37 +414,41 @@ function FeesTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
-                {(history as StudentPaymentHistoryRow[]).map((row) => (
-                  <tr key={row.tx_id} className="hover:bg-slate-50/50">
-                    <td className="px-5 py-2.5 text-ink-3">{fmtDatetime(row.occurred_at)}</td>
-                    <td className="px-3 py-2.5 text-right font-mono font-semibold text-ink">
-                      {formatMoney(row.amount, currency)}
-                    </td>
-                    <td className="px-3 py-2.5 text-ink">
-                      {row.source === 'cash'
-                        ? 'Espèces'
-                        : row.source === 'bank_transfer'
-                        ? 'Virement'
-                        : row.source === 'internal'
-                        ? 'Interne'
+                {(history as StudentPaymentHistoryRow[]).map((row) => {
+                  const isDiscount = row.ref_type === 'discount';
+                  return (
+                    <tr key={row.tx_id} className={`hover:bg-slate-50/50 ${isDiscount ? 'bg-emerald-50/40' : ''}`}>
+                      <td className="px-5 py-2.5 text-ink-3">{fmtDatetime(row.occurred_at)}</td>
+                      <td className={`px-3 py-2.5 text-right font-mono font-semibold ${isDiscount ? 'text-emerald-700' : 'text-ink'}`}>
+                        {isDiscount ? '−' : ''}{formatMoney(row.amount, currency)}
+                      </td>
+                      <td className="px-3 py-2.5 text-ink">
+                        {isDiscount ? (
+                          <span className="inline-flex rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                            Remise
+                          </span>
+                        ) : row.source === 'cash' ? 'Espèces'
+                        : row.source === 'bank_transfer' ? 'Virement'
+                        : row.source === 'internal' ? 'Interne'
                         : row.source ?? '—'}
-                    </td>
-                    <td className="px-3 py-2.5 text-body-xs text-ink-3">{row.memo ?? '—'}</td>
-                    <td className="px-3 py-2.5 text-right">
-                      {row.tx_id && (
-                        <a
-                          href={`/api/receipts/${row.tx_id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-primary hover:underline text-xs"
-                        >
-                          <Download className="h-3 w-3" />
-                          PDF
-                        </a>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-3 py-2.5 text-body-xs text-ink-3">{row.memo ?? '—'}</td>
+                      <td className="px-3 py-2.5 text-right">
+                        {row.tx_id && !isDiscount && (
+                          <a
+                            href={`/api/receipts/${row.tx_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-primary hover:underline text-xs"
+                          >
+                            <Download className="h-3 w-3" />
+                            PDF
+                          </a>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
