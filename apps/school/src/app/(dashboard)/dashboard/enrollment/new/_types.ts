@@ -58,5 +58,9 @@ export function isStepClassroomValid(state: EnrollmentFormState): boolean {
 
 export function isStepFeesValid(state: EnrollmentFormState): boolean {
   if (!state.firstPaymentEnabled) return true;
-  return state.firstPayment.amount > 0;
+  if (state.firstPayment.amount <= 0) return false;
+  // Guard overpayment : miroir de la RPC record_student_payment
+  const netAfterDiscount = state.billedTotal - (state.discount?.amount ?? 0);
+  if (netAfterDiscount > 0 && state.firstPayment.amount > netAfterDiscount) return false;
+  return true;
 }

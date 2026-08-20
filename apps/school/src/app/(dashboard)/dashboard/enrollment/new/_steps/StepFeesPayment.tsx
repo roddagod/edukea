@@ -67,6 +67,10 @@ export function StepFeesPayment({
   }, [fees, installments]);
 
   const netAfterDiscount = value.billedTotal - (value.discount?.amount ?? 0);
+  // Guard overpayment client : miroir de la RPC record_student_payment.
+  // Bloque l'input avant meme l'appel serveur.
+  const isFirstPaymentOverpayment =
+    value.firstPaymentEnabled && value.firstPayment.amount > netAfterDiscount && netAfterDiscount > 0;
 
   if (fL || iL) {
     return <Skeleton className="h-64 w-full" />;
@@ -177,7 +181,12 @@ export function StepFeesPayment({
         />
         {value.firstPaymentEnabled && (
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <FormField label="Montant" required>
+            <FormField
+              label="Montant"
+              required
+              hint={`Max : ${fmt(netAfterDiscount)} FCFA (net après remise)`}
+              error={isFirstPaymentOverpayment ? `Montant supérieur au restant dû (${fmt(netAfterDiscount)} FCFA)` : undefined}
+            >
               <Input
                 type="text"
                 inputMode="numeric"
